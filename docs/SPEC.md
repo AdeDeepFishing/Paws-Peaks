@@ -6,6 +6,27 @@
 > Delivery window: four competition days. Day 1–4 below are relative milestones, not calendar dates.
 > This document specifies planned work. It does not claim that these features already exist.
 
+## Table of contents
+
+1. [Product vision](#1-product-vision)
+2. [Decisions and current status](#2-decisions-and-current-status)
+3. [Release scope](#3-release-scope)
+4. [Exploration, traversal, camera, and coins](#4-exploration-traversal-camera-and-coins)
+5. [Player flow and asynchronous state](#5-player-flow-and-asynchronous-state)
+6. [Encounter content proposals](#6-encounter-content-proposals)
+7. [Drawing and object presentation](#7-drawing-and-object-presentation)
+8. [AI contract and reliability](#8-ai-contract-and-reliability)
+9. [Art, interface, and asset delivery](#9-art-interface-and-asset-delivery)
+10. [Music, effects, narration, and dialogue](#10-music-effects-narration-and-dialogue)
+11. [Technical structure and Web delivery](#11-technical-structure-and-web-delivery)
+12. [Team responsibilities and collaboration](#12-team-responsibilities-and-collaboration)
+13. [Four-day schedule and scope control](#13-four-day-schedule-and-scope-control)
+14. [Backlog ready for tickets](#14-backlog-ready-for-tickets)
+15. [Acceptance and playtesting](#15-acceptance-and-playtesting)
+16. [Open decisions](#16-open-decisions)
+17. [Reuse strategy and researched candidates](#17-reuse-strategy-and-researched-candidates)
+18. [References and changes](#18-references-and-changes)
+
 ## 1. Product vision
 
 **Explore a storybook mountain trail, draw objects, and use your creations to help animals and solve encounters.**
