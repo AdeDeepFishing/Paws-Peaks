@@ -1,0 +1,16 @@
+# Godot-generated cache and imported translation binaries.
+.godot/
+*.translation
+
+# Local exports and credentials.
+builds/
+exports/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Operating system files.
+.DS_Store
+Thumbs.db
