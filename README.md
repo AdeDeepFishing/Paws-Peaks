@@ -1,4 +1,4 @@
-# Four Otters
+# Paws & Peaks
 
 Draw something. Help someone.
 
@@ -9,7 +9,7 @@ A four-day game jam project about drawing objects to solve animal encounters.
 1. Use **Godot 4.7.2 Standard** to match the initial project setup.
 2. In Godot's Project Manager, click **Import** and select `project.godot` from this folder.
 3. Open the project and press **F5** (or click Run Project).
-4. You should see the Four Otters title and "Our first Godot scene is running."
+4. You should see the Paws & Peaks title and "Our first Godot scene is running."
 
 Godot includes a script editor; VS Code is optional. Future scripts will use GDScript.
 
