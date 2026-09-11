@@ -4,6 +4,12 @@ Draw something. Help someone.
 
 A four-day game jam project about drawing objects to solve animal encounters.
 
+## Game specification
+
+Read [SPEC.md](SPEC.md) for the draft gameplay scope, encounter proposals, AI contract,
+music and sound requirements, team responsibilities, four-day milestones, and acceptance checks.
+Open decisions are marked explicitly; this specification describes planned work, not implemented features.
+
 ## Open and run
 
 1. Use **Godot 4.7.2 Standard** to match the initial project setup.
