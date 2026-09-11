@@ -4,12 +4,15 @@ Draw something. Help someone.
 
 A four-day game jam project about drawing objects to solve animal encounters.
 
-## Game specification
+## Documentation
 
-Read [SPEC.md](SPEC.md) for the draft gameplay scope, traversal and coins, background AI and item stats,
+Read [SPEC.md](docs/SPEC.md) for the draft gameplay scope, traversal and coins, background AI and item stats,
 narration/dialogue, music and sound, team responsibilities, milestones, and acceptance checks.
 See [reuse research](docs/REUSE_RESEARCH.md) for candidate Godot foundations, version pins, and license notes.
 Open decisions are marked explicitly; this specification describes planned work, not implemented features.
+
+Keep specifications, research, planning, and credits in `docs/`. This README stays at the repository
+root as the project entry point; [AGENTS.md](AGENTS.md) stays here for coding-assistant conventions.
 
 ## Open and run
 

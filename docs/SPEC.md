@@ -457,7 +457,7 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - Prefer transparent PNGs for illustrated characters and props. Use real English UI text rather than text baked into images.
 - Example names: `otter_idle.png`, `crow_perched.png`, `bg_stream.png`.
 - Use a small set of character poses before considering full animation sets.
-- Record asset author, source, license or usage basis, and required attribution for images, fonts, and audio in a future `CREDITS.md`.
+- Record asset author, source, license or usage basis, and required attribution for images, fonts, and audio in a future `docs/CREDITS.md` (repository-relative path).
 - Check competition rules for AI-generated and pre-existing assets and disclose their use when required.
 
 ## 10. Music, effects, narration, and dialogue
@@ -518,7 +518,7 @@ Minimum delivery: **one BGM track, ten SFX event categories, and the agreed narr
 - Tab hide/show should suspend/resume once, respect mute, and avoid duplicate music or stale queued voice.
 - Audio failure must not block collection, dialogue progression, or encounter completion.
 - Prefer compressed music/voice and suitable short effect files; test loop points, import formats, leading/trailing silence, and perceived loudness in the Web build.
-- Record source, author/voice, usage basis, and required attribution for every external or generated asset in `CREDITS.md`.
+- Record source, author/voice, usage basis, and required attribution for every external or generated asset in `docs/CREDITS.md` (repository-relative path).
 - No voice cloning or additional voice service integration is required for this release.
 
 ## 11. Technical structure and Web delivery
@@ -552,7 +552,6 @@ Suggested folders, to create only when needed:
 
 ```text
 project.godot
-SPEC.md
 README.md
 AGENTS.md
 scenes/             # World, player, encounters, canvas, and UI
@@ -563,8 +562,10 @@ assets/
   audio/music/
   audio/sfx/
   audio/voice/
-docs/               # Research and implementation notes
-CREDITS.md          # Asset attribution and team credits
+docs/               # Specifications, research, and planning documents
+  SPEC.md
+  REUSE_RESEARCH.md
+  CREDITS.md        # Planned asset attribution and team credits
 ```
 
 Decide the server code location after selecting the hosting approach. Fixed responses may unblock early integration, but must be marked as test mode and replaced with a real call in the Day 1 vertical slice.
@@ -736,7 +737,7 @@ The game is done when P0 passes or an explicit scope revision has been recorded,
 
 ## 17. Reuse strategy and researched candidates
 
-See [REUSE_RESEARCH.md](docs/REUSE_RESEARCH.md) for source links, version pins, license distinctions, maintenance evidence, and missing features. These are researched candidates, not dependencies already installed or tested in our game.
+See [REUSE_RESEARCH.md](REUSE_RESEARCH.md) for source links, version pins, license distinctions, maintenance evidence, and missing features. These are researched candidates, not dependencies already installed or tested in our game.
 
 - Initial movement/coin candidate: [Kenney 3D Platformer Starter Kit](https://github.com/KenneyNL/Starter-Kit-3D-Platformer). Reuse its narrow movement/collection foundation after the Web spike, not the entire game unchanged.
 - Controller alternative: [GDQuest Godot 4 third-person controller](https://github.com/gdquest-demos/godot-4-3d-third-person-controller). Inspect code separately from assets; asset permissions differ from the code license.
@@ -760,7 +761,7 @@ See [REUSE_RESEARCH.md](docs/REUSE_RESEARCH.md) for source links, version pins, 
 - [Godot InputMap](https://docs.godotengine.org/en/stable/classes/class_inputmap.html): named input actions.
 - [ElevenLabs Text to Speech](https://elevenlabs.io/docs/overview/capabilities/text-to-speech): voice-generation capability; exact account access remains unverified.
 - [ElevenLabs audio downloads](https://help.elevenlabs.io/hc/en-us/articles/14129286847505-How-do-I-download-generated-files-from-Text-to-Speech): exporting generated clips for an asset workflow.
-- [Reuse research](docs/REUSE_RESEARCH.md): verified candidate evidence and adaptation limits.
+- [Reuse research](REUSE_RESEARCH.md): verified candidate evidence and adaptation limits.
 - [Repository](https://github.com/AdeDeepFishing/Paws-Peaks)
 - [Four Otters - Dev Board](https://github.com/users/AdeDeepFishing/projects/1/views/1)
 
