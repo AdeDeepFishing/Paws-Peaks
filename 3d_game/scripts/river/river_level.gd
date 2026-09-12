@@ -19,12 +19,13 @@ var drawing_export_directory := "user://drawings"
 var unlocked := false
 var bridge_built := false
 var completed := false
+var transitioning := false
+@export var auto_advance := true
 var collected: Dictionary = {}
 var current_item: Dictionary = {}
 var current_png := PackedByteArray()
 var panel_mode := ""
 var muted := false
-var panel_tween: Tween
 
 var hud: CanvasLayer
 var title: Label
@@ -34,9 +35,6 @@ var status_label: Label
 var book: Button
 var controls: Label
 var modal: Control
-var panel: PanelContainer
-var panel_title: Label
-var panel_description: Label
 var surface: Control
 var normal_hud: Control
 var drawing_overlay: Control
@@ -44,13 +42,11 @@ var drawing_toolbar: PanelContainer
 var drawing_hint: Label
 var drawing_cancel: Button
 var in_drawing_area := false
-var info: Label
 var choices: OptionButton
 var undo_button: Button
 var clear_button: Button
 var submit_button: Button
 var cancel_button: Button
-var restart_button: Button
 var audio: AudioStreamPlayer
 var tones: Dictionary = {}
 
@@ -80,6 +76,8 @@ func _process(delta: float) -> void:
 		status_label.text = "Back on dry land. Your drawing and coins are safe."
 	if bridge_built and not completed and not presentation.busy and player.position.x > 5.8 and player.is_on_floor():
 		_finish()
+	if completed and auto_advance and not transitioning and player.position.x >= 18.0 and player.position.z >= -8.5 and player.position.z <= -3.5 and player.is_on_floor():
+		_enter_woodland()
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -133,30 +131,18 @@ func _show_panel(mode: String) -> void:
 	if mode == "draw" and (not near_crossing() or not player.is_on_floor() or bridge_built or request.state == "PENDING"):
 		status_label.text = "Return to the left riverbank to draw."
 		return
-	if mode not in ["draw", "complete"]:
-		return
+	if mode != "draw": return
 	panel_mode = mode
 	player.set_input_enabled(false)
-	modal.visible = mode == "complete"
-	drawing_overlay.visible = mode == "draw"
-	normal_hud.visible = mode != "draw"
+	modal.hide()
+	drawing_overlay.show()
+	normal_hud.hide()
 	choices.visible = request.mock_mode
 	submit_button.disabled = not surface.has_drawing()
-	if mode == "draw":
-		drawing_hint.text = "Draw over the scene. Submit when ready."
-		if request.state == "FAILED":
-			drawing_hint.text = request.message + " Try again."
-		get_viewport().gui_release_focus()
-		return
-	panel_title.text = "You drew a way forward."
-	panel_description.text = "Across the River · Complete"
-	info.text = "Coins collected: %d / %d\n\nThis is the end of the first-stage prototype. The next four encounters are still to come." % [collected.size(), $Coins.get_child_count()]
-	if panel_tween:
-		panel_tween.kill()
-	panel.modulate.a = 0.0
-	panel_tween = create_tween()
-	panel_tween.tween_property(panel, "modulate:a", 1.0, 0.16)
-	restart_button.grab_focus()
+	drawing_hint.text = "Draw over the scene. Submit when ready."
+	if request.state == "FAILED":
+		drawing_hint.text = request.message + " Try again."
+	get_viewport().gui_release_focus()
 
 func _close_panel(_resume: bool) -> void:
 	surface.drawing = false
@@ -329,7 +315,16 @@ func _finish() -> void:
 	completed = true
 	_update_hud()
 	_play("bridge")
-	_show_panel("complete")
+	status_label.text = "Follow the path into the woodland."
+	player.set_input_enabled(true)
+
+func _enter_woodland() -> void:
+	transitioning = true
+	get_tree().current_scene = self
+	var error := get_tree().change_scene_to_file("res://scenes/woodland/woodland_path.tscn")
+	if error != OK:
+		transitioning = false
+		status_label.text = "The woodland could not be opened. Keep exploring and try again."
 
 func restart() -> void:
 	request.reset()
@@ -343,6 +338,7 @@ func restart() -> void:
 	unlocked = false
 	in_drawing_area = false
 	completed = false
+	transitioning = false
 	bridge_built = false
 	bridge.hide()
 	$Bridge/Deck/CollisionShape3D.set_deferred("disabled", true)
@@ -355,7 +351,7 @@ func _update_hud() -> void:
 	coins_label.text = "COINS  %02d / %02d" % [collected.size(), $Coins.get_child_count()]
 	_update_drawing_entry()
 	generation_modes.disabled = presentation.busy or request.state == "PENDING"
-	objective.text = "Walk across your bridge." if bridge_built else "Find a way across the river."
+	objective.text = "Follow the path into the woodland." if completed else ("Walk across your bridge." if bridge_built else "Find a way across the river.")
 
 func _build_ui() -> void:
 	hud = CanvasLayer.new()
@@ -475,27 +471,6 @@ func _build_ui() -> void:
 	modal = Control.new()
 	modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_root.add_child(modal)
-	var shade := ColorRect.new()
-	shade.color = Color(0.07, 0.13, 0.13, 0.65)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	modal.add_child(shade)
-	panel = PanelContainer.new()
-	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	panel.offset_left = -290
-	panel.offset_right = 290
-	panel.offset_top = -170
-	panel.offset_bottom = 170
-	panel.add_theme_stylebox_override("panel", _paper_style())
-	modal.add_child(panel)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 10)
-	panel.add_child(content)
-	panel_title = _label(content, "", 27)
-	panel_description = _label(content, "", 16)
-	info = _label(content, "", 18)
-	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	restart_button = _button(content, "Play again", restart)
 	modal.hide()
 	_build_drawing_overlay(ui_root)
 

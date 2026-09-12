@@ -34,6 +34,7 @@ func screenshot(name: String) -> void:
 func run() -> void:
 	root.size = Vector2i(1152, 720)
 	level = Level.instantiate()
+	level.auto_advance = false
 	level.get_node("EncounterPresentation").duration_scale = 0.01
 	level.get_node("DesktopGeneration").mode = 0
 	level.drawing_export_directory = "user://test-drawings/river-smoke"

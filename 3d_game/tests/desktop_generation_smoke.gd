@@ -14,6 +14,7 @@ func _initialize() -> void:
 
 func run() -> void:
 	var level = Level.instantiate()
+	level.auto_advance = false
 	level.get_node("EncounterPresentation").duration_scale = 0.01
 	root.add_child(level)
 	await process_frame

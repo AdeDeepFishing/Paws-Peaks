@@ -141,3 +141,12 @@ export templates, an export preset, hosting, and browser verification remain to 
 
 See [construction flow and movement](docs/ENCOUNTER_FLOW.md) for the latest camera,
 reward timing, and map-boundary changes.
+
+## Preview the woodland scene
+
+After crossing the river, keep walking along the far-bank path to its lower-right
+edge to enter the woodland automatically, without a completion dialog. You can also run
+`3d_game/scenes/woodland/woodland_path.tscn` directly in Godot. Stage 2 currently
+provides the imported environment, wind and shadow animation, fixed-angle camera,
+and walking/jumping. Dog encounter gameplay is not yet implemented.
+See [Stage 02 integration](docs/STAGE02_INTEGRATION.md) for source ownership and checks.

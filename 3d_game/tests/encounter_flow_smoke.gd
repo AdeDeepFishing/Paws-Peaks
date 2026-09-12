@@ -30,6 +30,7 @@ func capture(name: String):
 	root.get_texture().get_image().save_png("/private/tmp/paws-" + name + ".png")
 func run():
 	level = Level.instantiate()
+	level.auto_advance = false
 	level.get_node("DesktopGeneration").mode = 0
 	level.drawing_export_directory = "user://test-drawings/encounter-flow"
 	root.add_child(level)

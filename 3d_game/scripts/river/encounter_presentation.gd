@@ -9,6 +9,7 @@ var coin_tweens: Array[Tween] = []
 var coins_released := false
 var coin_rng := RandomNumberGenerator.new()
 const COIN_SPACING := 3.2
+var overview: Transform3D
 var home: Transform3D
 var home_size := 22.0
 @export var duration_scale := 1.0
@@ -17,6 +18,7 @@ var home_size := 22.0
 
 func _ready() -> void:
 	home = camera.transform
+	overview = camera.transform
 	home_size = camera.size
 	coin_rng.randomize()
 	reset_coins()
@@ -209,6 +211,11 @@ func scatter_positions(count: int) -> Array[Vector3]:
 
 func follow_player(delta: float) -> void:
 	if busy or level.panel_mode != "": return
+	# Hold the original composition on the far bank so the path exit stays
+	# near the lower-right screen edge instead of following the player away.
+	if level.completed:
+		camera.position = camera.position.lerp(overview.origin, 1.0 - exp(-delta * 4.0))
+		return
 	var viewport := get_viewport().get_visible_rect().size
 	var screen := camera.unproject_position(level.player.global_position)
 	var safe := screen.clamp(viewport * 0.22, viewport * 0.78)

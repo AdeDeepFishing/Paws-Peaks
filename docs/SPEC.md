@@ -891,3 +891,12 @@ object. Collection and provider completion are independent. Keep fixed camera an
 allow edge-follow panning, and gently assist bridge traversal while preserving stop
 and reverse input. Remove obsolete interior map boundaries while preserving real
 terrain/prop collision. See [implementation and verification](ENCOUNTER_FLOW.md).
+
+## September 12 asset update: Stage 2 woodland
+
+The supplied woodland environment is now available as a playable scene preview
+with its reference camera, wind/shadow animation and player movement. Stage 1
+now transitions into it when the player keeps walking along the far bank,
+without a completion modal. E02 dog confrontation and success rules remain open;
+this asset integration does not resolve those design decisions. See
+[Stage 02 integration](STAGE02_INTEGRATION.md).
