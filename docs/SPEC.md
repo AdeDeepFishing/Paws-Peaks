@@ -1,9 +1,12 @@
 # Paws & Peaks — Game Jam Specification
 
-> Version: 0.2 | Updated: 2026-09-12 | Status: Working draft
+> Version: 0.3 | Updated: 2026-09-12 | Status: Working draft
 >
 > Team: Four Otters — two designers and two developers, all new to Godot.
-> Delivery window: four competition days. Day 1–4 below are relative milestones, not calendar dates.
+> Production: September 12–15, 2026 (Asia/Tokyo, JST, UTC+09:00). September 12 is Day 1; production and asset generation may begin now, as confirmed by the team.
+> Required submission: a playable game URL and a gameplay video.
+> Internal target: submit before September 15 at 21:00 JST. Hard deadline: Tuesday, September 15 at 23:59 JST.
+> Any teammate may submit; yanwen checks completion and takes over if submission is still missing at 21:00 JST.
 > This document specifies planned work. It does not claim that these features already exist.
 
 ## Table of contents
@@ -13,7 +16,7 @@
 3. [Release scope](#3-release-scope)
 4. [Exploration, traversal, camera, and coins](#4-exploration-traversal-camera-and-coins)
 5. [Player flow and asynchronous state](#5-player-flow-and-asynchronous-state)
-6. [Encounter content proposals](#6-encounter-content-proposals)
+6. [Five-stage progression and design status](#6-five-stage-progression-and-design-status)
 7. [Drawing and object presentation](#7-drawing-and-object-presentation)
 8. [AI contract and reliability](#8-ai-contract-and-reliability)
 9. [Art, interface, and asset delivery](#9-art-interface-and-asset-delivery)
@@ -37,13 +40,13 @@ The moment we want players to remember:
 
 Working tagline: **Draw something. Help someone.**
 
-Drawing to solve encounters is the core mechanic. A confrontation may appear as an encounter, but a separate real-time combat system is outside the baseline scope.
+Drawing to solve encounters is the core mechanic. The confirmed five-stage route includes a large-dog confrontation and a final boss. Their exact action/combat implementation must be defined explicitly; a general-purpose real-time combat framework is not assumed.
 
 ### Design principles
 
 1. Drawing skill is not a requirement. Rough sketches are welcome, and recognition failures do not consume opportunities.
 2. Keep the player's artwork visible. The resulting object retains the original drawing in its card and use sequence.
-3. Support multiple reasonable solutions. Each major encounter has at least two supported solution routes.
+3. Support multiple reasonable solutions. The working target remains at least two supported routes per stage; specific routes and thresholds require team agreement and are not established solely by the concept illustration.
 4. Explain the outcome. Success and unsuccessful attempts communicate why the object did or did not help.
 5. Keep trying inexpensive. Coins reward exploration; a lack of coins or an exhausted item must never block the next essential drawing.
 6. Combine open expression with finite mechanics. The player draws freely; the game executes a small set of implemented effects.
@@ -66,7 +69,11 @@ Drawing to solve encounters is the core mechanic. A confrontation may appear as 
 |---|---|---|
 | Game name | Confirmed | Paws & Peaks |
 | Team name | Existing team identity | Four Otters |
-| Team and schedule | Confirmed | Two designers, two developers, four days, Godot beginners |
+| Team and schedule | Confirmed | Two designers, two developers, Godot beginners; Day 1 is September 12, production runs through September 15, 2026 |
+| Production start | Confirmed by user | Work and asset generation may begin now; this is not a claim that any specific asset license or service access has been verified |
+| Hard deadline | Confirmed by user | Tuesday, September 15, 2026 at 23:59 JST (UTC+09:00) |
+| Internal submission target | Confirmed | Before September 15 at 21:00 JST |
+| Submission responsibility | Confirmed | Any teammate may submit; yanwen verifies and takes over if still unsubmitted at 21:00 JST |
 | Engine | Confirmed | Godot; current starter uses 4.7.2 Standard |
 | Core mechanic | Confirmed | Draw objects to solve encounters |
 | Exploration | Confirmed | The player can freely walk and explore within the playable area |
@@ -81,10 +88,12 @@ Drawing to solve encounters is the core mechanic. A confrontation may appear as 
 | Narration and dialogue | Confirmed correction | English spoken narration and key NPC dialogue, with English subtitles |
 | Voice production | Available option | User has an ElevenLabs subscription; proposed pre-generated audio, with exact voice/plan/credits still to verify |
 | AI item fields | Required | Type, Attack power, Range, Speed, Durability, plus identification and encounter-effect tags |
-| Otter NPC | Included in baseline | Tutorial character and one later act of help |
-| Web submission | Expected, not yet verified | Confirm the official submission rules |
+| Otter NPC | Stage 4 confirmed; details open | The fourth stage is an otter encounter. What the player helps with and what the otter does afterward remain undecided |
+| Submission deliverables | Confirmed | Playable game URL plus gameplay video so judges can both play and watch; exact portal/video format/browser requirements still need checking |
 | Hosting | Open | Vercel is a candidate; sponsorship does not establish deployment access or credits |
-| Encounters and story details | Proposed | Three encounters described in Section 6, subject to team review |
+| Five-stage route | Confirmed | River crossing -> large dog -> crows -> otter -> final boss |
+| First three stage premises | Confirmed | Use the team's Concept 01 reference; exact solution rules, balancing, and English scripts still need implementation decisions |
+| Stages 4 and 5 | Intentionally open | Otter task/payoff and final boss identity/details/strategy have not been finalized |
 | AI provider, model, and budget | Open | Select and test early on Day 1 |
 
 ### Existing project
@@ -108,13 +117,13 @@ Drawing to solve encounters is the core mechanic. A confrontation may appear as 
 | F04 | Drawing canvas | One pen, undo last stroke, clear, submit, and back |
 | F05 | Real AI interpretation | Analyze actual drawings and return validated type, attack_power, range, speed, durability, name, description, and tags |
 | F06 | Original-art object | Original sketch, interpretation, a readable stat card, and visible use feedback |
-| F07 | Three short encounters | Tutorial, middle encounter, and finale; at least two supported routes per encounter |
-| F08 | Otter | Tutorial guidance and one visible contribution in the finale |
+| F07 | Five stages | River crossing, large dog, crows, otter, final boss in that order; finalize and implement the solution rules for all five before submission |
+| F08 | Otter encounter | A complete fourth-stage interaction after the team defines the task and outcome; no assumed tutorial role or mandatory boss assistance |
 | F09 | Recovery | Invalid objects, uncertainty, timeout, network failure, and repeated input cannot soft-lock play |
 | F10 | Audio and voice | Looping BGM, essential SFX, narrated story beats, key NPC dialogue, subtitles, global mute, and Music/SFX/Voice volume |
 | F11 | Web delivery | Hosted build supports movement, drawing, requests, sound, and a complete playthrough |
 | F12 | Readability | Legible text, clear interaction prompts, and visual/text equivalents for necessary audio information |
-| F13 | Submission package | Playable link, run instructions, asset/code credits, known limitations, and demonstration backup |
+| F13 | Submission package | Required playable URL and gameplay video, plus instructions, credits/notices, known limitations, and recorded submission confirmation |
 | F14 | Coins | Route and nearby activity pickups, session counter, one-time collection, and ending tally |
 | F15 | Background interpretation | Move and collect during processing; receive a non-modal ready/error notification and inspect when safe |
 
@@ -124,14 +133,14 @@ Drawing to solve encounters is the core mechanic. A confrontation may appear as 
 - Extra solution routes, richer descriptions, and more object-specific feedback.
 - Additional camera transitions, reveal effects, and small environmental details.
 - A closing gallery of player drawings.
-- Simple confrontation actions that reuse existing effects.
+- Extra confrontation effects beyond the approved large-dog and final-boss mechanics.
 - A few optional scenic inspection points with short text and no new quest system.
 
 ### Out of scope
 
 - Arbitrary sketch-to-3D mesh generation, rigging, generated collision, or unique generated mechanics.
 - A large open world, unrestricted wall climbing, advanced parkour, swimming controls, moving-platform puzzles, or arbitrary physics construction. Basic jump/sprint, limited mouse orbit, designated climbing, and bounded crate pushing are included.
-- A full real-time combat framework, equipment progression, or deep weapon balancing. Required item statistics are included; they do not imply a complete combat system.
+- A general-purpose real-time combat framework, equipment progression, or deep weapon balancing. The dog confrontation and final boss are required, but their approved mechanics may be compact authored actions; do not assume they can be omitted or require a full combat engine.
 - Mandatory paid drawing attempts, a full shop/trading system, and a crafting economy. Collectible coins are included; optional spending remains a separate decision.
 - Multiplayer, accounts, leaderboards, cloud saves, and mandatory persistent progress.
 - Free-form NPC chat, player voice input, runtime music generation, and mandatory runtime speech synthesis of every generated item. Pre-generated narration and key NPC dialogue are included.
@@ -143,7 +152,7 @@ Drawing to solve encounters is the core mechanic. A confrontation may appear as 
 
 ### World layout
 
-- One compact 3D trail with three ordered encounter zones and a summit destination. Previously opened areas remain accessible.
+- One compact 3D route with five ordered stage zones: river, large dog, crows, otter, and final boss. Previously opened areas remain accessible; the exact ending location is still a story decision.
 - Place coins along the route between encounters and in optional pockets near each drawing interaction.
 - Each processing area offers a short loop: a few ground coins, a low jump ledge, or a reusable traversal toy. Players can start exploring immediately after submission.
 - Place at least one small pushable crate and one marked climb route in the game. These are optional coin detours, so controller problems cannot block the main drawing path.
@@ -184,7 +193,7 @@ WASD/arrows move the character; mouse input controls the camera, interactions, a
 
 - Working name: Coins. Use original artwork/audio or properly licensed assets; Mario is a reference for the collection feel, not an asset source.
 - Each coin has a stable ID and can be collected once per session. Pickup increments a visible counter and triggers brief visual and audio feedback.
-- Proposed initial layout: 24 coins across the three zones, roughly five on each route and three in a nearby optional pocket. Counts are tuning values, not a content promise before grayboxing.
+- Keep a small total coin budget and distribute it across the five-stage route, including safe activity pockets near drawing interactions. Replan counts after grayboxing; the previous three-zone allocation is retired, and no new fixed total is confirmed.
 - Coins are present regardless of whether AI is processing. Do not spawn rewards only after submitting or respawn them when a request retries.
 - Default proposal pending user feedback: use coins for a completion tally and an ending badge/message. No mandatory drawing fee, no loss on failed recognition, no lives system, and no hard coin gate.
 - If spending is later chosen, basic drawings remain free; spending may buy optional cosmetic or bonus opportunities. That economy requires an explicit update before implementation.
@@ -195,7 +204,7 @@ WASD/arrows move the character; mouse input controls the camera, interactions, a
 ## 5. Player flow and asynchronous state
 
 ```text
-Start -> Narration -> Explore / collect -> Approach NPC -> Dialogue -> Draw
+Start -> Narration -> Explore / collect -> Approach stage target -> Observe / dialogue -> Draw
                                                                          |
                                                                        Submit
                                                                          |
@@ -209,8 +218,10 @@ Start -> Narration -> Explore / collect -> Approach NPC -> Dialogue -> Draw
                                                                                               |
                                                                                 Use -> Outcome -> Route opens
                                                                                               |
-                                                                                Explore next zone -> Summit
+                                                                                Next stage -> Final boss -> Ending
 ```
+
+**Stage order:** E01 River -> E02 Large dog -> E03 Crows -> E04 Otter -> E05 Final boss -> Ending.
 
 ### Two independent state systems
 
@@ -240,6 +251,7 @@ The previous blocking INTERPRETING game state is removed. **A pending network re
 - Bind each request to a request ID, originating encounter ID, and local session generation. Store request state outside transient encounter UI nodes.
 - Walking into a previously solved area is not cancellation. The response belongs to its original encounter even if the player is elsewhere when it arrives.
 - A result never teleports the player, opens a blocking panel, starts a cutscene, or steals the camera. Show a small ready message and a short cue.
+- Provide safe waiting space around hostile stages. Proposed rule: dog/crow/boss threats do not pursue or damage the player in drawing UI or the marked processing pocket; AI latency must not become a combat penalty. Final encounter behavior must preserve this protection.
 - Queue an Inspect action until the player is grounded and outside climbing/other modal states. The notification remains available until handled.
 - Inspecting is allowed away from the encounter. Applying the item requires returning to its originating unsolved target and being within interaction range; otherwise disable Use and explain where to return.
 - If a voice line is already playing, defer or soften the ready cue and avoid a second simultaneous spoken announcement.
@@ -250,60 +262,95 @@ The previous blocking INTERPRETING game state is removed. **A pending network re
 - Keep an upper bound on waiting even while the player is occupied. Re-evaluate deadlines when the browser regains focus; hidden-tab suspension must not leave a request pending indefinitely.
 - No required persistent save in this release. Refresh may restart the session; record that limitation in the README.
 
-## 6. Encounter content proposals
+## 6. Five-stage progression and design status
 
-**These scenarios make the scope concrete; they are not yet final story decisions. Replacements should preserve three short encounters, reusable effects, and two routes per encounter.**
+**Meeting update, September 12:** retain the five-stage sequence shown in the team's Concept 01 image. The river, large dog, and crows are confirmed stage premises. The otter belongs in Stage 4, and the final boss belongs in Stage 5, but their detailed tasks and solutions remain open.
 
-### E01 — The otter's drifting bag
+The image's Japanese writing is reference material only. All shipped titles, narration, dialogue, UI, and repository text remain English. Sketches in the reference suggest example objects; they do not by themselves settle every allowed solution, stat threshold, or combat rule.
 
-- Situation: the otter's bag has drifted into a shallow stream beyond reach from the bank.
-- Introduction: the player walks to the otter, hears a short subtitled exchange, and follows a prompt to open the drawing canvas. After submitting, a nearby coin loop introduces background processing without requiring a detour.
-- Route A: draw a long pole or long-handled net; `LONG_REACH` with validated `range >= 2.0` retrieves the bag. The bag is staged about two world units from the interaction point; this threshold is a tuning proposal.
-- Route B: draw a raft or flotation board; `FLOATS` supports a preset sequence in which the otter retrieves the bag.
-- Outcome: the otter thanks the player and promises to help later. Set `otter_helped = true` and open the onward route.
-- Level dressing must explain why the onward route is initially unavailable; its exact obstacle is a design task.
-- Acceptance: a new player completes a real drawing-to-outcome loop, can move and collect during processing, and understands both solution routes. Narration/dialogue can be skipped without skipping required game state.
+### Stage overview
 
-### E02 — The crow and the missing direction
+| ID | Working English title | Confirmed content | Still to decide |
+|---|---|---|---|
+| E01 | Across the River | The player needs to reach the far bank of a river too wide to cross unaided; draw something useful | Supported crossing objects, alternative routes, trigger and reach/size rules |
+| E02 | The Large Dog | A large growling dog blocks the path; the player must deal with the confrontation | Exact weapon/action interaction, whether alternatives are supported, damage/retreat conditions, retries |
+| E03 | The Crows | A flock descends and blocks or harasses the player; draw an object to deal with them | How shielding/repelling works, accepted alternatives, duration and success condition |
+| E04 | Meeting the Otter | The player meets an otter in the fourth stage | What it needs, how the player helps or interacts, and any later help/reward |
+| E05 | Final Boss | The fifth stage is the final boss encounter | Final identity/presentation, phases or actions, winning strategy, failure/retry rules, and ending |
 
-- Situation: a crow has taken the arrow from the trail sign and refuses to leave its perch.
-- Route A: `FOOD` lures the crow away.
-- Route B: `SOUND` uses a bell, drum, or similar object to attract its attention elsewhere.
-- Outcome: the sign is restored and the route forward becomes accessible; a coin trail guides the next walk. A short subtitle/voice cue acknowledges the solution.
-- An unrelated object receives specific feedback. For example, a long pole is unhelpful because the crow keeps hopping out of reach.
-- The crow's attention to food or sound should be suggested visually or through hints.
-- Muting the game does not disable a sound-producing item's gameplay effect.
-- Acceptance: both routes have understandable outcomes; unsuccessful attempts consume no opportunities.
+E01–E05 now have these meanings in scene configuration, prompt context, fixtures, scripts, and voice manifests. The former otter-bag tutorial, stolen-sign crow scenario, and final broken crossing are superseded; do not implement them as additional levels.
 
-### E03 — The broken crossing
+### E01 — Across the River
 
-- Situation: the last crossing before the summit is broken. The player and the otter need a way across.
-- Route A: `FLOATS` creates a floating aid; the otter guides it through the shallow crossing in a preset sequence.
-- Route B: `LONG_REACH` and `STURDY` together create a temporary span; the otter secures the far end.
-- Use fixed sequences and simple route changes. Do not simulate structural strength, water currents, or free platform placement.
-- The floating route may reposition the player safely across the water after its sequence. The span route can enable a predefined walkable crossing.
-- Both routes lead to the same reachable summit destination with no collision traps.
-- Helping the otter earlier has a visible payoff here. Companion following and pathfinding are not necessary; the otter appears at scripted encounter positions.
-- Ending: a warm narrated exchange at the summit, followed by completion text, collected-coin tally, credits, and restart.
-- Acceptance: both routes reach the ending; otter help is visible; walking after resolution works reliably.
+- **Confirmed premise:** the player wants to reach the other bank, but the river is too wide to cross unaided.
+- **Reference example:** the concept shows a raft-like drawing. Preserve the experience of drawing an aid and then using it to cross.
+- **Implementation proposal:** use E01 for the first drawing tutorial, guided by the narrator and short English UI prompts. The otter does not appear as the tutorial guide.
+- **Candidate solutions, not final rules:** a floating aid using FLOATS; or a long, sturdy span using LONG_REACH and STURDY. The team must confirm both routes before treating either as a committed implementation.
+- Use authored crossing positions and a safe endpoint instead of simulating water or arbitrary bridge construction. Prevent normal jumps or crate-assisted jumps from bypassing the intended crossing.
+- While analysis runs, the player may explore and collect in a safe near-bank pocket. Returning a ready result must not start the crossing automatically.
+- **Completion:** using an accepted object gets the player safely to the far bank and opens E02.
+- **Acceptance:** the player learns draw -> submit -> explore while waiting -> inspect -> use; approved crossing routes work; failures permit retry without losing coins.
 
-### Supported effects and consistency
+### E02 — The Large Dog
 
-| Tag | Meaning | Example |
+- **Confirmed premise:** a large growling dog stands in the player's way.
+- **Reference example:** the image shows the player with a drawn sword. A drawn weapon confronting the dog is the reference direction; exact attack and victory rules have not been specified in the meeting.
+- **Implementation proposal:** start with one bounded, pre-authored confrontation action rather than building a general combat engine. The team must decide whether it is a click-to-use sequence, timed action, or short real-time exchange.
+- Define which types/tags can trigger the action, how accepted attack_power/range/speed/durability affect it, and how the dog yields, retreats, or is otherwise overcome. Do not invent fixed health values or a final damage formula in this document.
+- Food, distraction, intimidation, or other alternatives may be discussed, but none is confirmed merely because the previous spec had FOOD or SOUND tags.
+- Provide a safe processing pocket; retries and recognition delays must not expose the player to unavoidable harm.
+- **Completion:** the approved resolution clears the dog obstruction and unlocks E03.
+- **Acceptance:** the intended drawn object visibly participates in the confrontation; the approved success and failure rules are observable and cannot soft-lock the route.
+
+### E03 — The Crows
+
+- **Confirmed premise:** multiple crows descend, flap around the player, and obstruct the way.
+- **Reference examples:** the player holds a shield-like object; the drawing card shows an umbrella. Protection or repelling the flock is the reference direction, not restoring a stolen road sign.
+- **Candidate implementation:** a pre-authored protective effect for a shield or umbrella, represented by a proposed PROTECTS tag. The team must decide how this causes the flock to disperse or lets the player pass.
+- Other deterrents, such as sound, may be accepted if agreed; they are not automatically finalized alternatives.
+- Specify how long the effect must last and whether any interaction/timing is required. Do not assume that all shields, food, or sound objects always succeed.
+- **Completion:** the approved action resolves the flock obstruction and opens the route to E04.
+- **Acceptance:** the original sketch is visible during protection/repelling; flock feedback makes the outcome clear; waiting and retry remain safe.
+
+### E04 — Meeting the Otter — DETAILS OPEN
+
+- **Confirmed:** the fourth stage features meeting the otter. It follows the crow encounter.
+- **Reference tone:** a small otter appears lonely or interested in company. The illustration suggests gifts or play, including fish, flowers, or friendship motifs.
+- **Not yet decided:** the actual need/task, accepted drawings, success condition, dialogue, reward, and whether the otter provides later assistance.
+- These illustrated possibilities are discussion inputs, not a finalized feeding quest, fetch quest, friendship meter, or combat companion.
+- Reserve a stage scene, interaction point, and transition to E05. A development stub may keep integration moving but does not count as a completed submission stage.
+- **Decision required before final implementation:** write the player's objective, supported solution routes, visible outcome, and any persisted otter state. Add a later-help dependency only if the team explicitly adopts it.
+
+### E05 — Final Boss — DETAILS OPEN
+
+- **Confirmed:** the fifth stage is a final boss encounter, followed by the ending.
+- **Reference concept only:** the illustration labels the boss as the story itself and shows a figure made of pages, with a possible connection to the narrator. Treat that identity/twist and its visual form as a proposal, not a finalized story decision.
+- **Not yet decided:** the boss's final identity, behavior, attacks or phases, what the player draws, the winning strategy, role of item statistics, failure/retry behavior, and the ending.
+- Do not prescribe a sword-only fight, a health-bar system, a fixed phase count, an otter-assisted victory, or a specific ending without team agreement.
+- Reserve a boss scene and ending transition for integration. A placeholder is not a finished boss.
+- Preserve safe background processing, original-art use feedback, and valid retry paths regardless of the eventual boss design.
+- **Decision required before final implementation:** define one minimum complete boss loop and its ending, then document any alternative solutions. Update affected state flags, tags, stat rules, voice lines, and tests together.
+
+### Effect vocabulary and solution rules
+
+The type/stat JSON contract remains required. Effect tags below are a working vocabulary for interpreting drawings; they do not replace an encounter-specific rule sheet.
+
+| Tag | Meaning | Example / status |
 |---|---|---|
-| LONG_REACH | Suitable for extending reach or spanning a distance | Long pole, long board |
-| FLOATS | Interpreted as a flotation aid | Raft, flotation ring |
-| FOOD | Something an animal could reasonably be attracted to as food | Fruit, fish |
-| SOUND | An object intended to produce noticeable sound | Bell, drum |
-| STURDY | Suitable as a firm support in the story's simplified rules | Solid wooden board |
-| OTHER | Recognized or described, but no supported effect applies | An unrelated decorative object |
+| LONG_REACH | Extends reach or spans distance | Long pole or board; candidate for E01 |
+| FLOATS | Functions as a flotation aid | Raft or flotation ring; candidate for E01 |
+| STURDY | Provides firm support | Solid board; candidate for a crossing solution |
+| PROTECTS | Provides cover or shielding | Shield or umbrella; proposed addition for E03, subject to rule confirmation |
+| FOOD | Something an animal may consider food | Available vocabulary; no E02/E04 feeding solution is finalized |
+| SOUND | Produces noticeable sound | Available vocabulary; deterrent effectiveness must be agreed per stage |
+| OTHER | No supported effect applies | Unrelated object |
 
-- Each item has one or two supported tags. OTHER is exclusive and cannot accompany other tags.
-- The bridge route requires both LONG_REACH and STURDY. A flimsy long object does not automatically make a bridge.
-- Tags describe game affordances, not physically accurate material analysis. Rough drawings may not make length, strength, or buoyancy clear.
-- Test at least 12 varied sketches before locking the tag set. Include rough, ambiguous, combined, unrelated, and text-bearing drawings.
-- If a tag repeatedly fails recognition, revise the encounter or offer an explicit purpose-confirmation path. Do not rely on endless prompt changes.
-- Reasonable reuse is allowed. Do not invalidate a useful object solely to force a particular drawing.
+- Keep one or two tags per item; OTHER is exclusive. Confirm the final allowed tag set before wiring server validation and fixtures.
+- E02/E05 may use accepted type and statistics with an authored action; adding a generic weapon tag is not required until a rule needs it.
+- The design target remains multiple reasonable solutions. Record accepted examples, rejected examples, action/threshold conditions, and feedback for each finalized route. Do not claim ten implemented routes simply because five stages are planned.
+- Test at least 12 varied sketches before locking rules, including raft/bridge candidates, weapons, shields/umbrellas, rough or unrelated shapes, mixed objects, and text-bearing drawings.
+- Tags and statistics express simplified game affordances, not reliable physical measurements inferred from a sketch.
+- If a tag repeatedly fails recognition, adjust the rule or offer explicit purpose confirmation. A model result alone must not declare the stage solved.
 
 ## 7. Drawing and object presentation
 
@@ -354,7 +401,7 @@ Both developers must agree on this contract before implementing their respective
 {
   "schema_version": 2,
   "request_id": "unique-request-id",
-  "encounter_id": "E03",
+  "encounter_id": "E01",
   "locale": "en",
   "image_base64": "<PNG bytes encoded as base64>"
 }
@@ -423,9 +470,9 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - Godot checks the same contract and displays only the accepted numbers. No raw model output directly changes the game.
 - UNKNOWN is an item type; OTHER is an exclusive effect tag. They are different fields. Uncertain recognition still returns `item: null` rather than inventing an item.
 - Type is not a winning-answer lookup. Keep effect tags because FOOD versus ANIMAL, or MAGIC versus SWORD, can overlap semantically.
-- P0 includes all stats in real AI output, validation, and the item card. E01's reach solution demonstrates `range`; `speed` can adjust an implemented use sequence within a comfortable duration; `durability` decrements only after a successful use commits once.
+- P0 includes all stats in real AI output, validation, and the item card. Finalize their concrete use in the E02 dog confrontation and E05 boss rule sheets; any E01 span/reach threshold remains a candidate rather than the former bag-retrieval rule. `speed` can scale an approved use sequence; `durability` decrements only after a successful use commits once.
 - Failed attempts, inspection, drawing, network errors, and canceled actions never spend durability. An exhausted item can always be replaced with a free basic drawing; no progression soft-lock.
-- Attack power is informational until an explicit attack/break action is implemented. Do not build an entire combat system merely to consume that field. Any later action must use a pre-authored behavior and damage budget.
+- Define whether and how `attack_power` affects the approved dog/boss actions before implementing those stages. It remains informational for unrelated actions. Do not apply arbitrary model numbers directly to health or invent a full combat engine merely to consume the field.
 - Do not derive an overall Power Score yet. Keep each field interpretable and avoid rewarding unrealistic text written into the sketch.
 - Manual mode creates items through the same type/stat templates and tag rules, with clear manual provenance; it must not return an incompatible object shape.
 
@@ -452,7 +499,7 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 
 ### Visual direction
 
-- A warm storybook mountain environment with streams, trees, wooden signs, and a summit view.
+- A warm storybook route with a broad river, a large dog, a flock of crows, an otter area, and a final boss space. Mountain/ruin scenery is a visual direction; the final setting and ending view remain open.
 - Gentle, playful stakes; no realistic violence required.
 - Use simple 3D scenery with illustrated characters or props where helpful. Keep the camera and asset pipeline achievable for beginners.
 - Paper framing or soft shadows can integrate rough player artwork into the scene.
@@ -479,7 +526,7 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - Example names: `otter_idle.png`, `crow_perched.png`, `bg_stream.png`.
 - Use a small set of character poses before considering full animation sets.
 - Record asset author, source, license or usage basis, and required attribution for images, fonts, and audio in a future `docs/CREDITS.md` (repository-relative path).
-- Check competition rules for AI-generated and pre-existing assets and disclose their use when required.
+- Production and asset generation may begin now, as confirmed by the user on September 12. Continue checking the usage terms and any disclosure requirements for specific external assets or reused code; the production-start confirmation does not settle those details.
 
 ## 10. Music, effects, narration, and dialogue
 
@@ -490,10 +537,10 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - The user has an ElevenLabs subscription and can arrange voice production. Verify the selected voice, available credits, and intended usage for that account before generation; this document does not claim access or consume credits.
 - Create the approved script first, then pre-generate short audio files and include them as game assets. Runtime requests are for sketch analysis, not mandatory speech generation.
 - Start with one narrator and one otter voice; the same narrator may cover other animals. Extra character voices are optional polish.
-- Proposed voice budget: 12–16 short clips, usually one or two sentences each, with approximately 60–90 seconds of speech across the main route. Calibrate after script approval.
-- Required coverage: opening narration, otter introduction, drawing instructions, one line explaining background processing, encounter introductions, short success responses, otter's finale help, and the ending.
+- Proposed voice budget: keep a compact set of short clips, usually one or two sentences each. Re-estimate coverage for five stages before recording; the prior three-stage recording estimate is not a fixed requirement.
+- Required coverage: opening narration, E01 drawing instructions, background-processing guidance, E01–E03 introductions/resolutions, and then E04 dialogue plus E05/ending lines once their design is approved. Do not record an otter tutorial, promised boss assistance, or a narrator-as-boss reveal as established facts.
 - Random AI item names and descriptions remain English text in P0. Fixed voice lines must avoid claiming an exact generated object name that the audio cannot know.
-- Deliver a line manifest with stable line ID, speaker, exact English subtitle, audio path, measured duration, trigger, priority, and replay policy. Suggested file names: `narrator_intro_01.ogg`, `otter_draw_01.ogg`.
+- Deliver a line manifest with stable line ID, speaker, exact English subtitle, audio path, measured duration, trigger, priority, and replay policy. Suggested file names: `narrator_intro_01.ogg`, `otter_meeting_01.ogg`.
 - Exported source audio can be downloaded from ElevenLabs and converted if required for the chosen Godot pipeline. Listen to the actual import and Web playback; do not assume a subscription alone provides every voice or format.
 
 ### Voice and subtitle behavior
@@ -603,7 +650,7 @@ Decide the server code location after selecting the hosting approach. Fixed resp
 - Keep test modes, internal errors, and secrets out of the public player experience.
 - Record download size and initial load time early. Simplify art and audio when later builds regress noticeably.
 - Aim for at least 30 FPS during walking on an agreed team laptop, then document its browser/device and observed result. No universal performance guarantee is implied.
-- A demo recording is useful backup material, not a replacement for a playable Web build.
+- Both a playable game URL and a gameplay video are required submission deliverables. The video complements the playable build; neither replaces the other. Verify both links from a judge-like browser session.
 
 ## 12. Team responsibilities and collaboration
 
@@ -614,7 +661,9 @@ Decide the server code location after selecting the hosting approach. Fixed resp
 | Designer A | Art direction, player/NPC assets, compact level and coin-route layout | One readable zone with an optional nearby coin pocket |
 | Designer B | Encounter rules/stat budgets, English script, ElevenLabs voice production, music/SFX, playtests | Solution/stat matrix, short script manifest, and audio samples |
 
-- Roles are proposals; name owners at kickoff. Developer A is proposed integration owner, while Developer B owns dialogue/voice playback wiring and its shared AudioManager interface.
+- Role assignments remain proposals; teammates should claim their work. Developer A is proposed integration owner, while Developer B owns dialogue/voice playback wiring and its shared AudioManager interface.
+- Any teammate may submit the final package. The submitter posts confirmation and links for the team; yanwen checks the internal target and takes over if submission is still missing at 21:00 JST on September 15.
+- Teammates may update this specification as meeting decisions evolve. Preserve the distinction between confirmed stage premises, proposed mechanics, and unresolved E04/E05 design; record the date and affected sections rather than silently treating suggestions as final.
 - Both developers agree on session/request identity, item schema, pickup persistence, and input locking before separate implementation.
 - Use a single movement base. Compare reuse candidates in an isolated spike rather than merging whole starter games into the main project.
 - Assign each shared scene to one editor. Integrate at least twice daily with short-lived branches and verification notes.
@@ -623,32 +672,48 @@ Decide the server code location after selecting the hosting approach. Fixed resp
 
 ## 13. Four-day schedule and scope control
 
-The v0.2 request expands the plan materially. Reuse reduces implementation effort only after integration and Web compatibility are demonstrated; it does not remove testing or content work.
+### Confirmed dates and submission ownership
 
-| Day | Main work | Exit condition |
+All times are **Asia/Tokyo (JST, UTC+09:00)**.
+
+| Milestone | Confirmed date/time | Meaning |
 |---|---|---|
-| Day 1 | Verify rules/access; time-box reuse spike; Web export; basic walk/jump/sprint and coins; canvas; real AI/stat response; one voice sample | Hosted slice lets the player submit, move/collect during analysis, inspect the full item, return, and solve one encounter; BGM and a subtitled voice clip work |
-| Day 2 | Complete encounters/end; non-modal result lifecycle; safe respawn; limited crate/climb; dialogue controls | Beginning-to-ending build with all requested baseline systems represented; jumping/respawn/late replies cannot lose coins or progress |
-| Day 3 | Final level/art, coin placement, recorded lines, sound mix, stats/hints tuning, outside tests | Required content integrated and principal usability/blocking issues corrected |
-| Day 4 | Freeze features; regression on final host; credits, licenses, submission and backup | Playable final URL with verified audio, traversal, AI, state recovery, and submission materials |
+| Day 1 / production begins | Saturday, September 12, 2026 | The team has started; work and asset generation may begin now |
+| Internal submission target | Before Tuesday, September 15, 2026 at 21:00 JST | Submit the playable URL and gameplay video before the last-evening rush |
+| Submission fallback | September 15 at 21:00 JST if still unsubmitted | yanwen verifies status and takes over coordination/submission |
+| Hard deadline | Tuesday, September 15, 2026 at 23:59 JST | Final submission cutoff reported by the user |
+
+Machine-readable hard deadline: `2026-09-15T23:59:00+09:00`. Internal target boundary: `2026-09-15T21:00:00+09:00`; aim to finish before it.
+
+Any teammate may submit. The person who does so should share the submitted URL, video link/file reference, timestamp, and confirmation/receipt in the team's shared channel. A deployed build alone is not proof that the competition submission has been completed.
+
+### Working delivery plan
+
+The five-stage route is now the baseline. E04 and E05 have reserved places but incomplete designs; those decisions are dependencies, not implemented content.
+
+| Day / date | Main work | Exit condition |
+|---|---|---|
+| Day 1 — Sat, Sep 12 | Reuse/Web spike; controls and coins; drawing and real JSON; E01 river prototype; refine E02/E03 rules; discuss E04/E05 | Hosted E01 drawing-to-crossing loop works with exploration during processing; E02/E03 have concrete next tasks; unresolved E04/E05 choices have named discussion owners |
+| Day 2 — Sun, Sep 13 | Complete E01–E03 interactions, safe async handling, traversal, dialogue controls; build E04/E05 from approved rules | First three stages are playable in order; E04/E05 rules are recorded and integrated or explicitly flagged as incomplete, not silently replaced by old scenarios |
+| Day 3 — Mon, Sep 14 | Complete all five stages and ending; integrate art/voice; test full route; prepare gameplay recording | Beginning-to-ending five-stage build works; final content, narrated beats, coin tally, and principal blockers are addressed |
+| Day 4 — Tue, Sep 15 | Feature freeze; browser regression; final video; license/credits check; submit and verify | Both required deliverables are submitted before 21:00 JST if possible; yanwen takes over any missing submission at 21:00; hard cutoff 23:59 JST |
 
 ### Decision gates
 
-- Early Day 1: verify permitted pre-existing code/assets, competition times, browser requirements, API ownership, and a minimal Web export.
-- Time-box the initial controller/reuse spike to approximately 2–3 hours. If it fails, isolate the failing dependency and choose the simpler documented candidate; do not spend the competition upgrading multiple frameworks.
-- End of Day 1: if background drawing-to-item does not work, stop growing content and resolve that loop. Reduce scenery and the footprint of optional traversal areas.
-- End of Day 2: if the full loop is incomplete, simplify the finale, reduce recording length and visual polish, and raise any required scope reduction explicitly.
-- Jump/sprint, bounded pushing/climbing, coins during processing, narration/dialogue, English content, and five item fields are now requested scope. Do not silently return to the v0.1 exclusions.
+- Production may start now. Verify remaining portal, video-format/duration, browser/network, external-code and asset-use details without treating the known deadline or permission to begin as unanswered questions.
+- Time-box the initial reuse/controller spike to about 2–3 hours; simplify integration if it fails rather than combining multiple frameworks.
+- Proposed design target: settle the minimum E04 task/outcome and E05 boss loop by the end of Day 1, or at the next explicit team decision slot. This is a scheduling recommendation, not a claim that those designs are already approved.
+- Until E04/E05 are decided, implement shared interfaces or clearly marked development stubs only. Do not finalize dependent art, voice, or combat rules from an assumed solution.
+- End of Day 2: escalate any missing E04/E05 design or core-loop blocker so all five stages can be finished before final-day testing and recording.
+- Before the internal submission target, verify the playable URL and video are accessible to judges, record the submission confirmation, and communicate who completed it.
 
 ### Cut order and limits
 
-Cut extra voices beyond narrator/otter, a second music track, ambience, additional camera effects, additional coin routes, and extra solution variants before removing required systems.
+Reduce extra voices, second music, ambience, elaborate scenery, additional coin detours, and optional effects before removing a confirmed stage.
 
-Keep at least one small crate interaction and one safe marked climbing route unless the user agrees otherwise. Arbitrary-wall climbing and elaborate physics puzzles are not assumed.
+The river, dog, crows, otter, and final boss are the agreed sequence. Reducing the stage count requires an explicit team decision and corresponding spec update; do not silently revert to the earlier three-stage plan.
 
-If even the bounded feature set cannot be completed, record the tradeoff and request a decision about encounter count or movement scope. The document must not label an unimplemented requirement as delivered.
-
-Keep a real AI call, five-field validation, original artwork, non-blocking processing, subtitle/voice basics, failure recovery, a clear ending, and actual Web verification.
+Preserve the requested traversal scope unless changed by the team, while keeping crates and climbing bounded. Preserve real AI, required JSON fields, original-art feedback, non-blocking processing, subtitles/voice, recovery, a complete boss/ending, and both submission deliverables.
 
 ## 14. Backlog ready for tickets
 
@@ -656,22 +721,24 @@ These are proposed tasks, not issues already created on GitHub.
 
 | ID | Priority | Task | Owner | Dependencies | Acceptance |
 |---|---|---|---|---|---|
-| T01 | P0 | Rules, access, engine version, API/voice owners | Team | None | Shared starter runs; external-code rules and budget owners recorded |
+| T01 | P0 | Remaining submission details, access, version, API/voice owners | Team | None | Shared starter runs; known dates recorded; portal/video/browser and external-code details checked |
 | T02 | P0 | Reuse spike and minimal Web deployment | Both devs | T01 | Pinned candidate runs in 4.7.2 Compatibility on the actual host; licenses recorded |
 | T03 | P0 | Walk/jump/sprint, mouse camera, interaction, checkpoint | Dev A | T02 | Grounded controls work; safe reset preserves session state |
 | T04 | P0 | Canvas, snapshot, undo/clear | Dev B | T01 | Valid PNG submission; no empty calls or cursor conflicts |
 | T05 | P0 | AI type/stats/tags contract and server bounds | Dev B + Designer B | T04 | All five requested fields returned and validated; malformed data is recoverable |
 | T06 | P0 | Coin IDs, route pickups, counter and tally | Dev A + Designer A | T03 | Each coin counts once; fall/retry does not reset or duplicate it |
 | T07 | P0 | Background request and non-modal ready/error lifecycle | Dev B | T03–T06 | Move/collect while pending; late reply, respawn, cancel and restart handled correctly |
-| T08 | P0 | One integrated encounter and original-art stat card | Both devs | T05, T07 | Real drawing solves E01 after returning from a coin detour |
+| T08 | P0 | E01 river crossing and original-art stat card | Both devs | T05, T07 | Real drawing enables an approved safe crossing after a coin detour; narrator guides the first drawing |
 | T09 | P0 | Bounded crate pushing and designated climb route | Dev A | T03, T06 | Safe optional traversal, no gate bypass or permanent blockage |
-| T10 | P0 | Three encounter rules, gates, hints and stat budgets | Designer B + Dev A | T08 | Two routes each, stat units clear, one range-dependent example |
-| T11 | P0 | English script and ElevenLabs production | Designer B | T10 | Approved line manifest and narrator/NPC clips; no runtime TTS dependency |
+| T10 | P0 | Finalize E01–E03 solution rules and implement dog/crow interactions | Designer B + Dev A | T08 | Confirmed river/dog/crow premises implemented; accepted alternatives, stat use, gates and retry rules documented |
+| T11 | P0 | English script and ElevenLabs production | Designer B | T10; T17/T18 for later-stage lines | Narrator covers E01 tutorial; E04/E05 voice is based on approved designs, with matching subtitles |
 | T12 | P0 | Dialogue, subtitles, Voice channel and skip/ducking | Dev B | T11 | Next/Skip, missing audio, mute, and simultaneous ready notification behave correctly |
 | T13 | P0 | BGM and ten SFX event categories | Designer B + Dev A | T06–T09 | Comfortable loop, pickup, traversal and AI-ready feedback without sound spam |
-| T14 | P0 | Remaining world, otter payoff, ending and final assets | Designer A + Dev A | T09, T10 | Complete safe route; coin tally and ending reachable |
+| T14 | P0 | Implement E04 otter, E05 boss, ending and final assets | Designer A + Dev A | T09, T10, T17, T18 | Five-stage route and approved boss victory reach the ending; no old otter-bag or final-bridge substitution |
 | T15 | P0 | Limits, manual mode and final browser playtests | Both devs; Designer B coordinates | T12–T14 | Section 15 results recorded; real and simulated slow/failing requests tested |
-| T16 | P0 | Licenses, README, credits, submission and demo | Submission owner | T15 | Final URL and required acknowledgements complete |
+| T16 | P0 | Gameplay video, credits, submission and confirmation | Any teammate; yanwen fallback | T15 | Playable URL and gameplay video submitted before Sep 15 21:00 JST target; yanwen takes over if missing; hard deadline 23:59 JST |
+| T17 | P0 | Decide E04 otter task and outcome | Team design discussion | Confirmed five-stage sequence | Objective, valid solutions, outcome and any later help explicitly approved; no assumed quest |
+| T18 | P0 | Decide E05 boss strategy and ending | Team design discussion | Confirmed five-stage sequence; T17 only if linked | Minimum boss loop, accepted drawings/stat use, failure/retry, victory and ending explicitly approved |
 
 ## 15. Acceptance and playtesting
 
@@ -679,7 +746,7 @@ These are proposed tasks, not issues already created on GitHub.
 
 | Case | Expected result |
 |---|---|
-| First visit and Start | Controls, narration and subtitles are clear; sound starts without login |
+| First visit and Start | Controls, narration and subtitles guide E01 river crossing; sound starts without login; otter is not introduced as the tutorial NPC |
 | WASD/arrows, jump, sprint, mouse camera | Consistent movement; no diagonal speed boost, UI input leakage, or right-drag context-menu conflict |
 | Small crate and marked climb route | Bounded push force, safe climb entry/exit, no launches or permanent blocks |
 | Walls, water edge, gates, and sprint-jumps | Cannot bypass unsolved gates even with crate assistance; falls recover at a safe checkpoint |
@@ -695,7 +762,13 @@ These are proposed tasks, not issues already created on GitHub.
 | Empty drawing | No network call; useful feedback |
 | Release pointer outside canvas | Stroke ends correctly; other controls remain usable |
 | Undo, clear, and reopen canvas | Draft behavior matches Section 7; progress is unchanged |
-| Two valid routes in each encounter | At least six successful routes have understandable outcomes |
+| Confirmed stage order | River -> large dog -> crows -> otter -> final boss; no extra old scenario or skipped stage |
+| Approved solution routes | Every finalized route is tested; two per stage remains the design target, not evidence of implemented routes |
+| E01 river crossing | Approved drawing enables safe bank-to-bank traversal and opens E02 |
+| E02 large dog | Approved weapon/action visibly resolves the confrontation and opens E03 |
+| E03 crows | Approved protection/repelling effect resolves the flock and opens E04; no stolen-sign objective |
+| E04 otter | Matches the task/outcome the team eventually records; a placeholder does not pass |
+| E05 boss | Approved strategy, retry and victory rules work; not marked done while design remains open |
 | Unrelated recognized item | Contextual retry message, no resource penalty |
 | Invalid/missing type or stat, unknown tag, NaN, infinite or oversized text | Agreed validation/normalization prevents broken UI or unbounded game effects |
 | Range, item speed and remaining durability | Range uses world units, speed never changes player sprint, and only a committed successful use spends durability once |
@@ -704,7 +777,7 @@ These are proposed tasks, not issues already created on GitHub.
 | Cancel/restart followed by late response | Old data cannot replace current state or advance the game; ordinary walking does not invalidate a valid request |
 | Rapid Submit or Use clicks | One pending request and one resolution; no duplicate effects |
 | Revisit solved encounter | Progress stays solved; rewards/sequences do not repeat |
-| Both final crossing routes | Safe destination, working collision, reachable summit |
+| E01 crossings and E05 ending transition | Crossing endpoints are safe; boss resolution reaches the approved ending without requiring an invented bridge or otter-help condition |
 | Ending and restart | Narrated ending and coin tally; full restart resets world/items/draft/coins/request generation and story flags |
 | Muted playthrough | All required information remains understandable; SOUND tags still work |
 | Two BGM loops, sustained drawing, rapid clicks | No obvious seam, duplicate music, clipping from piled-up sounds, or SFX spam |
@@ -714,7 +787,9 @@ These are proposed tasks, not issues already created on GitHub.
 | Voice plus coin/AI-ready cues | Dialogue remains intelligible; no overlapping spoken lines; music returns to its chosen volume |
 | Hide tab, return, and restart | No duplicate music or unwanted unmuting; no stuck movement |
 | Two target window sizes | Readable text, accessible controls, correct drawing coordinates |
-| Final URL on teammate device | Movement, drawing, AI, audio, and complete playthrough work |
+| Final URL on teammate device | Movement, drawing, AI, audio, and all five stages through the ending work |
+| Required submission package | Both playable URL and gameplay video are accessible and entered into the submission portal; confirmation is recorded |
+| Internal deadline fallback | At 21:00 JST on Sep 15, yanwen confirms completion or takes over the remaining submission work before 23:59 JST |
 
 ### Outside-player goals
 
@@ -737,24 +812,28 @@ These are design targets. Record actual results and never mark untested behavior
 
 A task is done when it is integrated, checked in the relevant target environment, has no blocking failure, and includes its required text, visual feedback, and sound hooks.
 
-The game is done when P0 passes or an explicit scope revision has been recorded, the final deployment is playable, and credits, limitations, and submission materials are complete.
+The game is done when P0 passes or an explicit scope revision is recorded, all five approved stages and the ending are playable, credits and limitations are documented, and the required playable URL plus gameplay video have been submitted with confirmation. Unresolved E04/E05 design is not completed content.
 
 ## 16. Open decisions
 
-| Question | Current proposal | Decide by |
+Already settled: production has begun on September 12; five-stage order and the first three premises; English content; playable URL plus gameplay video; September 15 at 23:59 JST hard deadline; before-21:00 submission target; any teammate may submit with yanwen as fallback. Do not reopen these as missing information without a new team decision.
+
+| Question | Current status / proposal | Decide by |
 |---|---|---|
-| Exact competition start/end and rules | Not supplied | Before scheduling competition work or assuming pre-work is allowed |
-| Required submission format, browser, and online AI availability | Web expected; desktop Chrome proposed | Early Day 1 |
+| E04 otter task and outcome | Meeting the otter is confirmed; what to do, accepted drawings, reward and later help are open | Proposed target: end of Day 1, before dependent implementation/assets |
+| E05 boss and winning strategy | Final boss is confirmed; identity/twist, actions, phases, stat use, retry and ending are open | Proposed target: end of Day 1, before dependent implementation/assets |
+| E01–E03 exact solution rules | Premises confirmed; raft/sword/shield-umbrella are reference examples, not a complete ruleset | Day 1 design/integration |
+| Submission portal and video details | URL and gameplay video required; video duration, format/hosting and portal fields not supplied | Before recording/final submission |
+| Judge browser/network and remaining asset/code rules | Web delivery planned; exact constraints and reuse/disclosure details still to verify | Early Day 1 |
 | Camera feel and player appearance | Third-person trail with limited mouse orbit; illustrated or low-detail character | During controller spike |
-| Coin purpose | Count and ending reward; optional spending remains undecided | Before economy/UI implementation |
-| Climbing scope | Marked ladder/vine plus small crates; not arbitrary walls | Before traversal implementation |
-| Use the three encounter stories in Section 6? | Otter bag, crow sign, broken crossing | After the first prototype playtest |
-| Location and story flavor | Fictional mountain trail; Fuji-inspired scenery optional | Before final environment art |
-| Narrator/otter voices and exact script | Pre-generated ElevenLabs clips, English subtitles, warm/playful delivery | Before voice generation |
-| Audio references and sources | Instrumental BGM, SFX and scripted voices | Before final audio selection |
-| Item stat budgets and action coverage | Bounds and units in Section 8; attack power informational without an implemented attack | Day 1 integration |
-| AI provider/model, account owner, and spending cap | Not selected | Before real integration and public access |
-| Named owners and final submission owner | Role split in Section 12 | Kickoff |
+| Coin purpose | Count and ending reward proposed; optional spending undecided | Before economy/UI implementation |
+| Climbing scope | Marked ladder/vine and small crates proposed; not arbitrary walls | Before traversal implementation |
+| Final setting and ending presentation | Storybook trail; paper/story boss and narrator connection are visual-reference proposals | E05 design decision, before final art/voice |
+| Narrator/otter voices and exact English script | Pre-generated ElevenLabs clips and subtitles; later-stage lines await design | Before voice generation |
+| Audio sources | Instrumental BGM, SFX and scripted voices | Before final audio selection |
+| Item stat budgets and action coverage | Five fields required; dog/boss action rules determine their approved use | E02/E05 rules and integration |
+| AI provider/model, account owner, spending cap | Not selected | Before real integration/public access |
+| Named implementation owners | Role split remains a proposal; submission fallback already assigned to yanwen | Team task assignment |
 
 ## 17. Reuse strategy and researched candidates
 
@@ -786,9 +865,10 @@ See [REUSE_RESEARCH.md](REUSE_RESEARCH.md) for source links, version pins, licen
 - [Repository](https://github.com/AdeDeepFishing/Paws-Peaks)
 - [Four Otters - Dev Board](https://github.com/users/AdeDeepFishing/projects/1/views/1)
 
-This file is the shared scope reference. Update it when the team resolves open choices or changes scope. A new feature needs an owner, an acceptance condition, and an explicit explanation of what it displaces within four days.
+This file is the shared scope reference and may be updated by teammates as decisions evolve. Pull the latest version, preserve others' changes, and record which decisions are confirmed versus proposed. When E04/E05 are resolved, update their stage sections, dependent tasks, rules, voice coverage and acceptance checks together. New features need an owner, an acceptance condition, and a clear tradeoff within the September 12–15 production window.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-09-12 | Recorded confirmed production/submission dates and yanwen fallback; replaced old three-stage proposal with river/dog/crows/otter/boss; first three premises confirmed, E04/E05 design open; synchronized schedule, tasks, voice and acceptance |
 | 0.2 | 2026-09-12 | Added voiced narration/dialogue, background AI with playable coin collection, jump/sprint/bounded push/climb and mouse controls, five required item fields, reuse research, and corresponding milestones/tests |
 | 0.1 | 2026-09-12 | Initial English specification; confirmed free walking, English-only project content, and warm/playful audio; encounter stories and camera details remain proposals |
