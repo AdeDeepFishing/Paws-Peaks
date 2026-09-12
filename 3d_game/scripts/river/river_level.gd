@@ -49,9 +49,12 @@ var submit_button: Button
 var cancel_button: Button
 var audio: AudioStreamPlayer
 var tones: Dictionary = {}
+var book_key := "X/Square"
 
 func _ready() -> void:
 	_build_ui()
+	Input.joy_connection_changed.connect(_update_controller_hints)
+	_update_controller_hints()
 	audio = AudioStreamPlayer.new()
 	add_child(audio)
 	for cue in ["coin", "ready", "bridge", "submit"]:
@@ -79,18 +82,16 @@ func _process(delta: float) -> void:
 	if completed and auto_advance and not transitioning and player.position.x >= 18.0 and player.position.z >= -8.5 and player.position.z <= -3.5 and player.is_on_floor():
 		_enter_woodland()
 
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.physical_keycode == KEY_E and unlocked and not completed:
-			if panel_mode != "":
-				_close_panel(true)
-			else:
-				_open_book()
-			get_viewport().set_input_as_handled()
-		elif event.physical_keycode == KEY_ESCAPE:
-			if panel_mode != "" and not completed:
-				_close_panel(false)
-			get_viewport().set_input_as_handled()
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("sketchbook") and unlocked and not completed:
+		if panel_mode != "":
+			_close_panel(true)
+		else:
+			_open_book()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel") and panel_mode != "" and not completed:
+		_close_panel(false)
+		get_viewport().set_input_as_handled()
 
 func _on_drawing_area(body: Node3D) -> void:
 	if body != player:
@@ -98,7 +99,7 @@ func _on_drawing_area(body: Node3D) -> void:
 	in_drawing_area = true
 	if not unlocked:
 		unlocked = true
-		status_label.text = "Could you draw a way across? E · Draw"
+		status_label.text = "Could you draw a way across? E / %s · Draw" % book_key
 	_update_drawing_entry()
 
 func _on_leaving_drawing_area(body: Node3D) -> void:
@@ -108,7 +109,7 @@ func _on_leaving_drawing_area(body: Node3D) -> void:
 
 func _update_drawing_entry() -> void:
 	book.visible = not presentation.busy and in_drawing_area and not completed and not bridge_built and request.state != "PENDING"
-	book.text = "E · Draw again" if request.state in ["FAILED", "READY"] else "E · Draw"
+	book.text = "E / %s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
 	cancel_button.visible = not presentation.busy and request.state == "PENDING" and not completed
 
 func _on_coin(body: Node3D, coin: Area3D) -> void:
@@ -143,7 +144,7 @@ func _show_panel(mode: String) -> void:
 	drawing_hint.text = "Draw over the scene. Submit when ready."
 	if request.state == "FAILED":
 		drawing_hint.text = request.message + " Try again."
-	get_viewport().gui_release_focus()
+	drawing_cancel.grab_focus()
 
 func _close_panel(_resume: bool) -> void:
 	surface.drawing = false
@@ -355,6 +356,19 @@ func _update_hud() -> void:
 	generation_modes.disabled = presentation.busy or request.state == "PENDING"
 	objective.text = "Follow the path into the woodland." if completed else ("Walk across your bridge." if bridge_built else "Find a way across the river.")
 
+func _update_controller_hints(_device: int = -1, _connected: bool = false) -> void:
+	var switch_layout := false
+	for device in Input.get_connected_joypads():
+		if "Nintendo" in Input.get_joy_name(device) or "Switch" in Input.get_joy_name(device):
+			switch_layout = true
+	book_key = "Y" if switch_layout else "X/Square"
+	var jump_key := "B" if switch_layout else "A/Cross"
+	var sprint_key := "R" if switch_layout else "RB/R1"
+	var close_key := "A" if switch_layout else "B/Circle"
+	controls.text = "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint\nStick / D-pad  Move    %s  Jump    %s  Sprint\nE / %s  Draw    Esc / %s  Close" % [jump_key, sprint_key, book_key, close_key]
+	drawing_cancel.text = "Cancel · Esc / " + close_key
+	_update_hud()
+
 func _build_ui() -> void:
 	hud = CanvasLayer.new()
 	hud.name = "RiverHUD"
@@ -431,6 +445,7 @@ func _build_ui() -> void:
 	var sound_button := _button(root, "Sound: on", func():
 		muted = not muted
 	)
+	sound_button.focus_mode = Control.FOCUS_NONE
 	sound_button.pressed.connect(func(): sound_button.text = "Sound: off" if muted else "Sound: on")
 	sound_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	sound_button.offset_left = -180
@@ -439,7 +454,7 @@ func _build_ui() -> void:
 	sound_button.offset_bottom = 172
 	status_label = _label(root, "Follow the pink path to the river.", 19)
 	status_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	status_label.position += Vector2(28, -132)
+	status_label.position += Vector2(28, -154)
 	status_label.size = Vector2(690, 64)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.add_theme_color_override("font_color", Color("fff9ed"))
@@ -448,14 +463,15 @@ func _build_ui() -> void:
 	status_label.add_theme_constant_override("shadow_offset_y", 2)
 	controls = _label(root, "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint\nFixed overhead view    E  Draw    ESC  Close panel", 14)
 	controls.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	controls.position += Vector2(28, -56)
+	controls.position += Vector2(28, -78)
 	controls.add_theme_color_override("font_color", Color("fff9ed"))
 	controls.add_theme_color_override("font_outline_color", Color("273d36"))
 	controls.add_theme_constant_override("outline_size", 4)
 	book = _button(root, "E · Draw", _open_book)
+	book.focus_mode = Control.FOCUS_NONE
 	book.icon = load("res://ui/pen.svg")
 	book.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	book.offset_left = -240
+	book.offset_left = -310
 	book.offset_right = -28
 	book.offset_top = -92
 	book.offset_bottom = -28

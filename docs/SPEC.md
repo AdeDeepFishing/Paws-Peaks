@@ -60,7 +60,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Target main-path playthrough: approximately 5–10 minutes; optional coin exploration may extend this. Check both with actual playtests.
 - Primary target: desktop browser, keyboard and mouse or trackpad.
 - No player account, personal API key, or installation required for the intended Web release.
-- Mobile controls, pen pressure, controllers, and full keyboard-only drawing are outside the baseline unless competition rules require them.
+- Mobile controls, pen pressure, and full keyboard-only drawing are outside the baseline unless competition rules require them. Controller traversal and panel navigation are an explicitly requested extension; drawing still uses a mouse or trackpad.
 - All game text, repository documentation, code, comments, and textual asset content must be in English. Team conversation with the assistant may remain in Chinese.
 
 ## 2. Decisions and current status

@@ -21,6 +21,7 @@ var window_focused := true
 var idle_seconds := 0.0
 var moving_seconds := 0.0
 var drawing_active := false
+var jump_armed := true
 @onready var visual: Node3D = $Model
 
 func _ready() -> void:
@@ -30,13 +31,15 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity += get_gravity() * delta
+	if not Input.is_action_pressed("jump"):
+		jump_armed = true
 	var direction := Vector3.ZERO
 	if input_enabled and window_focused:
 		var axes := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		var camera := get_viewport().get_camera_3d()
 		var yaw := camera.global_rotation.y if camera else 0.0
 		direction = Basis(Vector3.UP, yaw) * Vector3(axes.x, 0, axes.y)
-		if is_on_floor() and Input.is_action_just_pressed("jump"):
+		if jump_armed and is_on_floor() and Input.is_action_just_pressed("jump"):
 			velocity.y = jump_velocity
 	if get_parent().has_method("assist_crossing"):
 		direction = get_parent().assist_crossing(direction)
@@ -62,6 +65,8 @@ func set_drawing_active(active: bool) -> void:
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
 	moving_seconds = 0.0
+	# Accept and jump share the south button; closing a panel must not jump.
+	jump_armed = not Input.is_action_pressed("jump")
 	velocity.x = 0.0
 	velocity.z = 0.0
 	_reset_idle_hops()
