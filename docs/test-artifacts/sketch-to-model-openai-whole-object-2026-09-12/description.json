@@ -1,0 +1,16 @@
+{
+  "status": "recognized",
+  "item": {
+    "name": "Wooden Ladder",
+    "description": "A simple wooden ladder with diagonal supports for climbing up or down safely in adventure areas.",
+    "type": "TOOL",
+    "attack_power": 0,
+    "range": 5,
+    "speed": 1.0,
+    "durability": 7,
+    "tags": [
+      "LONG_REACH",
+      "STURDY"
+    ]
+  }
+}

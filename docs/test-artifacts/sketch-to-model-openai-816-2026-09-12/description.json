@@ -1,0 +1,16 @@
+{
+  "status": "recognized",
+  "item": {
+    "name": "Wooden Ladder",
+    "description": "A simple, angled wooden ladder with visible rungs and side rails, whole object, all parts visible.",
+    "type": "TOOL",
+    "attack_power": 0,
+    "range": 3,
+    "speed": 1,
+    "durability": 6,
+    "tags": [
+      "LONG_REACH",
+      "STURDY"
+    ]
+  }
+}

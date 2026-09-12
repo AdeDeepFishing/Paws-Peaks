@@ -1,5 +1,10 @@
 # Sketch-to-model live-run report
 
+Current retained setup: OpenAI description → OpenAI image edit (Flare, low-quality
+816 × 816 JPEG) → untextured Meshy T2. Run `backend/.venv/bin/python backend/sketch_to_model/run.py`.
+Sections below preserve historical settings and commands; removed provider switches
+are no longer needed. Section 10 records the accepted setup and its limitations.
+
 Run date: **2026-09-12**. Outcome: **SUCCEEDED**. One live pipeline run; no generation calls were made to prepare this report.
 
 - Pipeline run ID: `54e17e2fce574b37a59c8894d4c7a306`
@@ -363,6 +368,285 @@ b9f685d77167b49b6715e94146b0e03073bda5a89c9f7148640273904f2d19d8  tests/fixtures
 - All three live stages succeeded in one pipeline run.
 - 40 offline tests passed at the time of the live run; later model-selection/timing work increased the suite to 42. Those later tests do not represent additional live generation.
 - Reference image visually inspected; GLB structure and 934 triangles checked; no textures or embedded images in the GLB.
-- Main latency bottleneck was reference-image generation. No alternative image model was tested.
+- Main latency bottleneck in this baseline was reference-image generation. A subsequent OpenAI alternative is recorded in Section 8.
 - Object recognition and art-style consistency remain qualitative and unverified against human labels.
 - Current script has additional options added after this run; the payloads above document the settings actually used.
+
+## 8. OpenAI image-edit candidate: subsequent test
+
+Date: **2026-09-12**. Run ID: `e1c68de85dd74c56bb8b0157adb50d23`.
+Profile ID: `93e07f6c05f0458a9c05fad70ae02885`.
+
+```sh
+backend/.venv/bin/python backend/sketch_to_model/run.py --reference-provider openai
+```
+
+The same original sketch was used. This run replaced Meshy image-to-image with
+OpenAI image editing, while retaining OpenAI interpretation and untextured Meshy T2.
+One live run was performed for this initial candidate; no retries were made. The later framing-fix run is recorded in Section 9.
+
+### Inputs and settings
+
+- Description: configured `gpt-4.1-mini`, using the equipment-interpretation prompt
+  before the later whole-object constraint was added.
+- Image edit: `POST https://api.openai.com/v1/images/edits`, model
+  `gpt-image-2.5-flare`, one image, `quality=low`, `size=1024x1024`, JPEG output,
+  compression 70, and opaque background.
+- T2: `model_type=smart-topology`, `ai_model=meshy-t2`, target 1,000 faces,
+  `should_texture=false`, GLB output. The edited JPEG was supplied as a data URI.
+
+OpenAI identified the object as **wooden ladder** and returned this description:
+
+> A simple wooden ladder with side rails and diagonal rungs for climbing and reaching higher places.
+
+Other returned fields: type `TOOL`, attack power 0, range 2, speed 1, durability 5,
+and tag `STURDY`. These fields were saved but not used for reference-image generation.
+
+The exact image-edit prompt was:
+
+```text
+Turn this rough sketch into a clear, three-dimensional reference of the object described below. Preserve its silhouette and proportions. Hand-drawing style, isolated object, plain background, no text. Show one complete object in a single view, not a collage.
+Object description: wooden ladder. A simple wooden ladder with side rails and diagonal rungs for climbing and reaching higher places.
+Use simple solid forms with minimal shading. No fine surface detail, decorative textures, scenery, labels or extra objects. Prioritize readable geometry.
+```
+
+### Performance and output
+
+| Stage | Meshy reference baseline | OpenAI reference candidate |
+|---|---:|---:|
+| OpenAI description | 3.049 s | 2.366 s |
+| Reference image | 134.446 s | 10.929 s |
+| T2, polling and download | 5.609 s | 5.187 s |
+| **End to end** | **143.108 s** | **18.485 s** |
+
+The candidate was approximately **7.7 times faster**, but **did not meet the 15-second
+target**. Stage values include network/local work and, for T2, three-second polling.
+T2 provider processing was 2.627 seconds with 6 ms queue time. This is a comparison
+of single runs with independently generated descriptions, not a controlled latency distribution.
+
+| Output | Result |
+|---|---|
+| Reference image | 1024 × 1024 JPEG, 68,409 bytes |
+| GLB | 20,604 bytes, 1,091 triangles |
+| Textures / embedded images in GLB | 0 / 0 |
+| Provider completion | All stages succeeded |
+| Offline tests | 44 passed |
+
+The following artifacts remain in ignored local output storage; unlike the baseline
+assets in Section 6, they are not yet committed:
+
+- [Reference JPEG](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/reference.jpg)
+- [Generated GLB](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/model.glb)
+- [Description JSON](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/description.json)
+- [Image-edit settings and prompt](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/image_edit_settings.json)
+
+### Cropping defect and pending fix
+
+The user reported that the reference image was cropped and that this propagated to
+the 3D model. Provider success and structural GLB checks therefore do **not** establish
+acceptable visual output. The assistant inspected the reference image but did not
+visually inspect the GLB or import it into Godot.
+
+After this test, the prompts were updated:
+
+- First OpenAI call: describe the complete object and include "whole object, all parts visible."
+- Reference image: keep at least 10% empty margin on every side, show every endpoint
+  and part, avoid cropping or touching frame edges, and zoom out as needed.
+
+All 44 offline tests passed after the prompt edit. The artifacts and timings in this section predate it. Section 9 records the subsequent live validation.
+
+## 9. Whole-object prompt: live validation
+
+Date: **2026-09-12**. Run ID: `4b7dbb44da4e4b338275a1064454c91f`.
+Profile ID: `126b455009fd410fa6cc45bd800b24fc`.
+
+The same sketch was tested once after the whole-object constraints were added, using:
+
+```sh
+backend/.venv/bin/python backend/sketch_to_model/run.py --reference-provider openai
+```
+
+### Inputs
+
+The first OpenAI prompt added these exact instructions:
+
+```text
+Describe the complete object, not a cropped fragment. If the sketch touches the image
+edge, describe its likely complete form without inventing unrelated parts. Include
+"whole object, all parts visible" in the description to guide the next image stage.
+```
+
+The original source remains the same [512 × 512 sketch](../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png).
+The image-edit request used these settings and exact prompt (original image supplied as multipart input):
+
+```json
+{
+  "model": "gpt-image-2.5-flare",
+  "prompt": "Turn this rough sketch into a clear, three-dimensional reference of the object described below. Preserve its silhouette and proportions. Hand-drawing style, isolated object, plain background, no text. Show one complete object in a single view, not a collage. Fit the entire object inside the frame with at least 10% empty margin on every side. All endpoints, rails, handles and other parts must be fully visible. No cropping, cut-off parts, close-up framing or objects touching the image edges. Zoom out as needed; preserve the complete object's proportions.\nObject description: Wooden Ladder. A simple wooden ladder with diagonal supports for climbing up or down safely in adventure areas.\nUse simple solid forms with minimal shading. No fine surface detail, decorative textures, scenery, labels or extra objects. Prioritize readable geometry.",
+  "n": "1",
+  "size": "1024x1024",
+  "quality": "low",
+  "output_format": "jpeg",
+  "output_compression": "70",
+  "background": "opaque"
+}
+```
+
+T2 used the generated JPEG as a data URI, `ai_model=meshy-t2`,
+`model_type=smart-topology`, `target_polycount=1000`, `should_texture=false`,
+and `target_formats=["glb"]`.
+
+### Actual description output
+
+```json
+{
+  "status": "recognized",
+  "item": {
+    "name": "Wooden Ladder",
+    "description": "A simple wooden ladder with diagonal supports for climbing up or down safely in adventure areas.",
+    "type": "TOOL",
+    "attack_power": 0,
+    "range": 5,
+    "speed": 1.0,
+    "durability": 7,
+    "tags": [
+      "LONG_REACH",
+      "STURDY"
+    ]
+  }
+}
+```
+
+The description did **not** include the requested literal phrase "whole object, all
+parts visible." The reference-image prompt independently contained the explicit
+whole-object, margin, and no-cropping constraints, so those instructions still reached
+the image model. A prompt request is not a guaranteed output constraint.
+
+### Timing comparison
+
+| Stage | Before framing change | After framing change |
+|---|---:|---:|
+| OpenAI description | 2.366 s | 4.027 s |
+| OpenAI reference image | 10.929 s | 17.601 s |
+| T2, polling and download | 5.187 s | 5.032 s |
+| **End to end** | **18.485 s** | **26.664 s** |
+
+T2 provider processing took 3.858 seconds with 5 ms queue time. All three stages
+succeeded. No retries were made. The 15-second target remains unmet. A single run
+before and after the prompt change cannot establish whether the longer prompt caused
+the slowdown; provider variability and the generated description also differ.
+
+### Outputs and visual finding
+
+![Whole-object reference](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference.jpg)
+
+The reference was visually inspected: all visible rails, braces and endpoints are
+inside the image boundaries. The requested 10% empty margin is **not fully met**,
+particularly on the right. This sample shows improved framing but does not prove
+reliable cropping prevention across sketches.
+
+The GLB passed header/size and triangle-accessor checks: 1006 triangles,
+19,212 bytes, zero textures and zero embedded images. No 3D visual inspection or
+Godot import was performed, so model completeness remains unverified.
+
+The following shareable copies are included alongside this report (included in this change).
+They preserve the generated bytes; task manifests, profile files, keys and signed
+URLs remain in ignored local storage.
+
+| Artifact | Link |
+|---|---|
+| Generated reference JPEG, 1024 × 1024, 60,149 bytes | [reference.jpg](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference.jpg) |
+| Untextured model | [model.glb](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/model.glb) |
+| OpenAI description | [description.json](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/description.json) |
+| Exact reference prompt | [reference_prompt.txt](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference_prompt.txt) |
+
+Both binary copies were checked against the originals. Offline test suite: **44 tests passed**.
+
+## 10. Smaller reference image: 816 × 816 test
+
+Date: **2026-09-12**. Run ID: `5143d516357a4b16a1ce019ece4d68e4`.
+Profile ID: `f8079b38c5df4ac196527ccb10eb1e56`.
+
+```sh
+backend/.venv/bin/python backend/sketch_to_model/run.py --reference-provider openai --openai-image-size 816x816
+```
+
+One live pipeline run used the same source sketch and whole-object prompt template.
+The image-edit size changed from 1024 × 1024 to 816 × 816; Flare, low quality, JPEG
+compression 70, one image, opaque background and untextured T2 at 1,000 target faces
+remained unchanged. OpenAI interpretation was regenerated, so the description differs.
+No automatic retries were made.
+
+### Exact image-edit settings and prompt
+
+```json
+{
+  "model": "gpt-image-2.5-flare",
+  "prompt": "Turn this rough sketch into a clear, three-dimensional reference of the object described below. Preserve its silhouette and proportions. Hand-drawing style, isolated object, plain background, no text. Show one complete object in a single view, not a collage. Fit the entire object inside the frame with at least 10% empty margin on every side. All endpoints, rails, handles and other parts must be fully visible. No cropping, cut-off parts, close-up framing or objects touching the image edges. Zoom out as needed; preserve the complete object's proportions.\nObject description: Wooden Ladder. A simple, angled wooden ladder with visible rungs and side rails, whole object, all parts visible.\nUse simple solid forms with minimal shading. No fine surface detail, decorative textures, scenery, labels or extra objects. Prioritize readable geometry.",
+  "n": "1",
+  "size": "816x816",
+  "quality": "low",
+  "output_format": "jpeg",
+  "output_compression": "70",
+  "background": "opaque"
+}
+```
+
+### Actual description output
+
+```json
+{
+  "status": "recognized",
+  "item": {
+    "name": "Wooden Ladder",
+    "description": "A simple, angled wooden ladder with visible rungs and side rails, whole object, all parts visible.",
+    "type": "TOOL",
+    "attack_power": 0,
+    "range": 3,
+    "speed": 1,
+    "durability": 6,
+    "tags": [
+      "LONG_REACH",
+      "STURDY"
+    ]
+  }
+}
+```
+
+### Results
+
+| Stage | Previous 1024 × 1024 whole-object run | 816 × 816 run |
+|---|---:|---:|
+| OpenAI description | 4.027 s | 2.240 s |
+| OpenAI reference image | 17.601 s | 12.444 s |
+| T2, polling and download | 5.032 s | 5.013 s |
+| **End to end** | **26.664 s** | **19.700 s** |
+
+Image editing was about 29% faster and end-to-end time about 26% lower in this pair.
+The **15-second goal remains unmet**. Single-run results and a changed description
+prevent attributing the entire difference to output size. T2 reported 2.951 seconds
+of provider processing and 6 ms queue time.
+
+Reference JPEG: **816 × 816**, 52,063 bytes. GLB: **891 triangles**, 17,668 bytes,
+zero textures and zero embedded images. All stages succeeded; **45 offline tests passed**.
+
+### Visual inspection and artifacts
+
+![816-pixel reference](test-artifacts/sketch-to-model-openai-816-2026-09-12/reference.jpg)
+
+The whole object fits inside the frame, although the requested 10% margins are not
+fully achieved on both sides. The generated object has conventional ladder rungs:
+it **does not preserve the original sketch's triangular bracing**. This is a structural
+fidelity issue, not simply reduced image detail. The OpenAI description also describes
+rungs rather than diagonal supports. No claim is made that resolution caused this change.
+The GLB was structurally checked but not visually inspected or imported into Godot.
+
+Shareable output copies are included alongside this report, included in this change:
+
+- [Reference JPEG](test-artifacts/sketch-to-model-openai-816-2026-09-12/reference.jpg)
+- [Untextured GLB](test-artifacts/sketch-to-model-openai-816-2026-09-12/model.glb)
+- [Description JSON](test-artifacts/sketch-to-model-openai-816-2026-09-12/description.json)
+- [Exact reference prompt](test-artifacts/sketch-to-model-openai-816-2026-09-12/reference_prompt.txt)
+
+Task manifests, profile files, credentials and signed URLs remain local and ignored.
+After this test, 816 × 816 was selected as the default. The 1024 × 1024 comparison remains available through `--openai-image-size 1024x1024`.

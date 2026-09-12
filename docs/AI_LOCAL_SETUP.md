@@ -10,6 +10,14 @@ The separate Meshy adapter supports image -> an untextured 3D generation job and
 download; see [3D setup](AI_IMAGE_TEXT_TO_3D.md). Godot still uses its mock responses.
 Player-action invocation, application packaging, and hosted browser integration are not implemented.
 
+## Primary sketch-to-3D flow
+
+After setting both API keys, run `backend/.venv/bin/python backend/sketch_to_model/run.py`.
+It uses OpenAI description → low-quality 816 × 816 OpenAI image edit → untextured
+Meshy T2 at approximately 1,000 faces. Add `--dry-run` for no-cost input validation.
+See [backend instructions](BACKEND.md) for options, outputs and recovery. The standalone
+narrative and Meshy commands below remain useful for individual stages.
+
 ## Feature layout
 
 ```text
@@ -19,12 +27,15 @@ backend/
   .venv/                      # Ignored shared Python environment
   common.py                   # Local configuration and PNG/JPEG input helpers
   profiling.py                # Optional command/stage timing and JSON reports
+  sketch_to_model/
+    run.py                    # Primary sketch -> description -> reference -> T2 flow
+    openai_edit.py            # Low-quality OpenAI image edit
   sketch_to_narrative/
     run.py                    # OpenAI: image -> narrative and game item JSON
   image_text_to_3d/
     run.py                    # Meshy: image -> untextured mesh job/status/GLB
   samples/banana.jpg          # Shared development input
-  tests/                      # Offline tests for both features
+  tests/                      # Offline tests for the pipeline and adapters
   output/                     # Ignored job manifests and generated models
   interpret_image.py          # Compatibility shortcut for the original command
 ```
