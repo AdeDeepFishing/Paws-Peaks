@@ -15,6 +15,14 @@ func run():
 	await frames(60)
 	print("Spawn ",level.player.position," camera ",level.camera.position," rotation ",level.camera.rotation," fov ",level.camera.fov)
 	check(level.player.is_on_floor(), "Player stands on imported terrain")
+	var dog := level.get_node_or_null("Wolfdog") as StaticBody3D
+	check(dog != null, "Wolfdog stands in the second-stage path")
+	if dog:
+		var approach: Transform3D = level.player.global_transform
+		approach.origin = Vector3(0, 0.2, 1)
+		var collision := KinematicCollision3D.new()
+		check(level.player.test_move(approach, Vector3(0, 0, -10), collision), "Approaching the dog meets a solid body")
+		check(collision.get_collider() == dog, "The dog blocks movement through its body")
 	check(level.camera == root.get_camera_3d(), "Stage uses its authored camera")
 	var animator: AnimationPlayer = level.get_node("Stage02Art").find_child("AnimationPlayer",true,false)
 	check(animator != null and animator.is_playing(), "Wind and painted shadow animation is playing")

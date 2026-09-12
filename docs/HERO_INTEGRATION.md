@@ -4,13 +4,14 @@ Integrated 2026-09-12 into the shared player scene used by the river and woodlan
 
 ## Delivery
 
-The user supplied three skinned GLBs in
+The user supplied four skinned GLBs in
 `Downloads/Meshy_AI_Moonlit_Wanderer_biped/`. The filename prefix is
 `Meshy_AI_Moonlit_Wanderer_biped_Animation_`; copies in `3d_game/models/hero/` map as follows:
 
 | Delivery suffix | Project file | Animation |
 |---|---|---|
-| `Stand_and_Chat_withSkin.glb` | `idle.glb` | Idle, 5.23 seconds |
+| `Listening_Gesture_withSkin.glb` | `listening.glb` | Standing idle, 9.40 seconds |
+| `Stand_and_Chat_withSkin.glb` | `idle.glb` | Reserved for E04 otter interaction, 5.23 seconds; not loaded at runtime |
 | `Walking_withSkin.glb` | `walk.glb` | Walk, 1.03 seconds |
 | `Running_withSkin.glb` | `run.glb` | Run, 0.70 seconds |
 
@@ -31,11 +32,13 @@ seconds it selects the run animation and increases movement speed from 4.0 to 7.
 world units per second (87.5% faster). Shift can request the same faster speed manually
 but does not bypass the three-second animation delay, including after a stop. Stopping, jumping, focus loss and input locks reset the timer.
 
-Ordinary idle uses a constant clip of the first standing pose. The animation player
+Ordinary idle loops the full Listening Gesture delivery (updated 2026-09-13). Missing
+constant bone tracks are restored from rest so outgoing running poses cannot linger.
+The animation player
 continues advancing so outgoing run blends finish instead of freezing and reappearing
 when movement resumes. The three-hop locator starts only after
 five idle seconds, then rests twelve seconds between bursts. It remains visual-only.
-Drawing entry plays the delivered Stand and Chat clip at 70% speed as a thinking
+Drawing entry plays Listening Gesture at 70% speed as a thinking
 stand-in; this delivery does not contain a dedicated thinking clip. Cancel or submit
 ends that animation. Camera locks do not trigger it. Active clips loop and transitions
 blend over 0.15 seconds.
@@ -48,6 +51,11 @@ then resumes the appropriate grounded animation on landing. Drawing and camera
 locks suppress locomotion animation. Collision shape and level geometry retain their existing values.
 
 ## Verification
+
+September 13 Listening Gesture update: `hero_smoke.gd` and
+`hero_restart_smoke.gd` both passed headlessly. A desktop woodland capture verified
+the imported character's initial pose and materials under the approved lighting.
+The retained `idle.glb` matches the delivered Stand and Chat file byte for byte.
 
 Run `godot --path 3d_game --script res://tests/hero_smoke.gd -- --visual` for animation
 transitions, jump/landing, input locks, skeleton count and horizontal animation drift.
@@ -63,5 +71,6 @@ addition to the original integration checks.
 Restart regression: `res://tests/hero_restart_smoke.gd` compares bone rotations after
 run → long idle → walk against a character starting from fresh idle. Previously,
 freezing AnimationPlayer speed also froze outgoing run blends; the regression failed
-both at rest and on restarting. The constant standing clip keeps blends advancing.
+both at rest and on restarting. The looping listening clip keeps blends advancing; the restart test synchronizes
+listening phases before comparing poses.
 The movement test also covers restarting with Shift held and verifies the full delay.

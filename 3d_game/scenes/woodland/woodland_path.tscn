@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://scripts/woodland/woodland_art.gd" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/river/river_player.tscn" id="4"]
 [ext_resource type="Script" path="res://scripts/woodland/path_exit.gd" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/woodland/wolfdog.tscn" id="6"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -39,3 +40,6 @@ appearance_scale = 1.2
 position = Vector3(0, 0, -28)
 script = ExtResource("5")
 destination = "res://scenes/wind_hill/wind_hill.tscn"
+
+[node name="Wolfdog" parent="." instance=ExtResource("6")]
+position = Vector3(0, 0.09, -8)

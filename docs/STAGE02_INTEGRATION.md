@@ -66,3 +66,34 @@ textures, and has no external URI dependencies. Removing `Downloads/Stag01` does
 break the game. The project does not archive every original generation script, video
 or reference image; retain the delivery ZIP or another source backup if those are needed.
 No Downloads files were deleted during this integration.
+
+## September 13: Bellbound Wolfdog
+
+The designer's two deliveries from `Downloads/Meshy_AI_Bellbound_Wolfdog_quadruped/`
+are preserved byte for byte under `3d_game/models/wolfdog/`:
+
+| Delivery | Project file | Current use |
+|---|---|---|
+| `Meshy_AI_Bellbound_Wolfdog_quadruped_Character_output.glb` | `standing.glb` | Standing dog on the path |
+| `Meshy_AI_Bellbound_Wolfdog_quadruped_model_Animation_Walking_withSkin.glb` | `walk.glb` | Stored for later movement integration; not played at runtime |
+
+`scenes/woodland/wolfdog.tscn` wraps the standing model in a static body with a
+simple box collider. The dog faces the incoming player at `(0, 0.09, -8)`.
+The delivered skinned geometry renders approximately 0.01365 units tall, so the
+visual root uses a scale of 360 for a roughly 4.92-unit dog, about 2.3 times the
+woodland protagonist's height (approximately 2.16 units). This follows the latest
+September 13 direction for issue #28: half the giant-dog trial's linear size. The
+collider dimensions and visual foot offset use the same proportion; the
+physics body itself retains unit scale. Its vertical offset places the paws at
+path height. The source material and textures are preserved.
+There is no authored idle loop in this delivery; the standing pose is held.
+
+This adds the visible dog and body collision only. The player can walk around it;
+attack, pursuit, drawing responses and an encounter-controlled exit remain future
+work. Existing traversal to Stage 3 is preserved. Source authorship/license details
+were not supplied separately. Keep the extracted textures and import metadata with
+the GLBs; runtime does not depend on Downloads.
+
+Verification: `woodland_smoke.gd` passes, including a swept player collision against
+this dog's body. `woodland_exit_smoke.gd` passes for the existing full-width exit.
+Desktop renders verify the dog's visibility, facing and scale in the woodland.
