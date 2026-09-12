@@ -84,7 +84,7 @@ Open `backend/.env` in your editor and fill in only the keys for the features yo
 
 | Setting | Used by |
 |---|---|
-| `OPENAI_API_KEY` | Sketch → narrative and item stats |
+| `OPENAI_API_KEY` | Sketch interpretation and reference-image editing |
 | `MESHY_API_KEY` | Image → untextured 3D model |
 
 Leave the model settings at their template defaults to start. The scripts load
@@ -101,6 +101,20 @@ git check-ignore backend/.env
 ```
 
 The expected output is `backend/.env`.
+
+## Generate a model from a sketch
+
+With Python and both API keys configured, run:
+
+```sh
+backend/.venv/bin/python backend/sketch_to_model/run.py --image path/to/sketch.png
+```
+
+Omit `--image` to use the saved sample sketch; add `--dry-run` to validate inputs
+without API calls. The flow uses OpenAI description → low-quality 816 × 816 OpenAI
+image edit → untextured Meshy T2 (~1,000 faces). Outputs and timings are saved locally.
+See the [test report](docs/SKETCH_TO_MODEL_RUN_2026-09-12.md) for results and limitations.
+The latest run took 19.70 seconds; the generated shape still needs review.
 
 ## Team workflow
 

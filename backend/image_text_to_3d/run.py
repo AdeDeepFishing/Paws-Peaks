@@ -32,11 +32,8 @@ def require_key(config):
     return key
 
 
-def api_request(config, task_id=None, payload=None, endpoint="image-to-3d"):
-    if endpoint not in ("image-to-3d", "image-to-image"):
-        raise AppError("INVALID_INPUT", "Unsupported Meshy endpoint.")
-    base = "https://api.meshy.ai/openapi/v1/" + endpoint
-    url = base if task_id is None else base + "/" + quote(task_id, safe="")
+def api_request(config, task_id=None, payload=None):
+    url = API_URL if task_id is None else API_URL + "/" + quote(task_id, safe="")
     request = Request(url, method="POST" if payload is not None else "GET",
                       data=json.dumps(payload).encode() if payload is not None else None,
                       headers={"Authorization": "Bearer " + require_key(config), "Content-Type": "application/json"})
@@ -239,7 +236,8 @@ def main(argv=None):
             if args.command == "download":
                 job["model_path"] = download_model(job, args.output)
                 save_job(path, job)
-        print(json.dumps({**job, "job_file": str(path.resolve())}, indent=2, allow_nan=False))
+        public_job = {key: value for key, value in job.items() if key != "glb_url"}
+        print(json.dumps({**public_job, "job_file": str(path.resolve())}, indent=2, allow_nan=False))
         outcome = job["status"]
         return 1 if job["status"] in ("FAILED", "CANCELED") else 0
     except AppError as error:
