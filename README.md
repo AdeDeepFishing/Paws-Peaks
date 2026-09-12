@@ -67,7 +67,48 @@ designer replacement points, tests, and current limitations.
 
 See [Stage 01 integration](docs/STAGE01_INTEGRATION.md) for camera settings, asset details, and import fixes.
 
+## API keys for local AI features
+
+The current Godot prototype uses mock AI and runs without API keys. To run the local
+backend scripts, create your private configuration from the repository root:
+
+```sh
+# Create the file only if it does not already exist; preserve existing keys.
+if [ ! -e backend/.env ]; then
+  cp backend/.env.example backend/.env
+fi
+chmod 600 backend/.env
+```
+
+Open `backend/.env` in your editor and fill in only the keys for the features you use:
+
+| Setting | Used by |
+|---|---|
+| `OPENAI_API_KEY` | Sketch → narrative and item stats |
+| `MESHY_API_KEY` | Image → untextured 3D model |
+
+Leave the model settings at their template defaults to start. The scripts load
+`backend/.env` automatically; environment variables with the same names take precedence.
+See [local AI setup](docs/AI_LOCAL_SETUP.md) for Python setup and run commands.
+
+**Keep keys private.** `backend/.env` is ignored by Git; commit only the blank
+`backend/.env.example` template. Never put keys in source code, screenshots, logs,
+or game exports. Each developer should configure their own local file. To verify
+the ignore rule without displaying any credentials, run:
+
+```sh
+git check-ignore backend/.env
+```
+
+The expected output is `backend/.env`.
+
 ## Team workflow
+
+For the separate narrative and 3D API scripts, see [local AI setup](docs/AI_LOCAL_SETUP.md).
+`backend/sketch_to_narrative/` uses OpenAI; `backend/image_text_to_3d/` uses Meshy to
+generate untextured geometry from images. Both share `backend/.venv` and an ignored `backend/.env`.
+These helpers are not yet connected to the game's drawing action.
+See [backend development instructions](docs/BACKEND.md) for conventions, contracts, and credential handling.
 
 Clone the GitHub repository to get your own local copy, then import `3d_game/project.godot` in Godot.
 Pull before working, coordinate who edits each scene, and commit small changes.
