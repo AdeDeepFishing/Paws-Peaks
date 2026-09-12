@@ -33,7 +33,7 @@ mock result. No real image recognition, network call, API credential, or AI cost
 | File | Responsibility |
 |---|---|
 | `scenes/river/river_crossing.tscn` | Editable placeholder world, collision, trigger, coins, bridge, player, request node |
-| `scenes/river/river_player.tscn` | Editable block hiker, capsule collision, and SpringArm3D camera rig |
+| `scenes/river/river_player.tscn` | Editable neutral geometric hiker, capsule collision, and SpringArm3D camera rig |
 | `scripts/river/river_player.gd` | Reuses Brackeys input settings/helpers; camera-relative movement, visual facing, orbit, input locks, and respawn |
 | `scripts/river/drawing_surface.gd` | Logical 512 × 512 strokes, UI drawing, undo/clear, PNG rasterization |
 | `scripts/river/river_level.gd` | First-stage UI, encounter outcome, collection/progression, placeholder sounds |
@@ -135,6 +135,10 @@ may represent numbers as floats. Names/descriptions are displayed as plain text.
 - Walking onto the far bank after building the bridge completes the stage. Play again resets the session.
 
 ## Art and audio replacement
+
+Character direction confirmed with Yanwen: a gender-neutral abstract hiker, with no hair,
+a round mint-colored head rather than a human complexion, simple dot eyes, and rounded
+clothing shapes. Keep the backpack and scarf; final art should preserve this neutral direction.
 
 The graybox scene is authored as ordinary editable Godot nodes. Replace each object's
 `Visual` mesh/material while retaining its parent transform and collision unless changing

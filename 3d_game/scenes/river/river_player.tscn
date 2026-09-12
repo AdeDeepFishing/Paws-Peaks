@@ -7,7 +7,7 @@ albedo_color = Color(0.82, 0.71, 0.49, 1)
 roughness = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2"]
-albedo_color = Color(0.92, 0.79, 0.62, 1)
+albedo_color = Color(0.69, 0.83, 0.77, 1)
 roughness = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3"]
@@ -33,14 +33,13 @@ height = 1.8
 [sub_resource type="SphereShape3D" id="SphereShape3D_8"]
 radius = 0.22
 
-[sub_resource type="BoxMesh" id="BoxMesh_9"]
-size = Vector3(0.62, 0.7, 0.42)
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_Coat"]
+radius = 0.31
+height = 0.72
 
-[sub_resource type="BoxMesh" id="BoxMesh_10"]
-size = Vector3(0.46, 0.4, 0.42)
-
-[sub_resource type="BoxMesh" id="BoxMesh_11"]
-size = Vector3(0.5, 0.16, 0.46)
+[sub_resource type="SphereMesh" id="SphereMesh_Head"]
+radius = 0.27
+height = 0.54
 
 [sub_resource type="BoxMesh" id="BoxMesh_12"]
 size = Vector3(0.65, 0.12, 0.5)
@@ -51,20 +50,24 @@ size = Vector3(0.49, 0.55, 0.26)
 [sub_resource type="BoxMesh" id="BoxMesh_14"]
 size = Vector3(0.23, 0.6, 0.3)
 
-[sub_resource type="BoxMesh" id="BoxMesh_15"]
-size = Vector3(0.18, 0.5, 0.25)
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_15"]
+radius = 0.1
+height = 0.5
 
-[sub_resource type="BoxMesh" id="BoxMesh_16"]
-size = Vector3(0.045, 0.06, 0.025)
+[sub_resource type="SphereMesh" id="SphereMesh_16"]
+radius = 0.025
+height = 0.05
 
 [sub_resource type="BoxMesh" id="BoxMesh_17"]
 size = Vector3(0.23, 0.6, 0.3)
 
-[sub_resource type="BoxMesh" id="BoxMesh_18"]
-size = Vector3(0.18, 0.5, 0.25)
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_18"]
+radius = 0.1
+height = 0.5
 
-[sub_resource type="BoxMesh" id="BoxMesh_19"]
-size = Vector3(0.045, 0.06, 0.025)
+[sub_resource type="SphereMesh" id="SphereMesh_19"]
+radius = 0.025
+height = 0.05
 
 [node name="RiverPlayer" type="CharacterBody3D"]
 script = ExtResource("1_player")
@@ -87,18 +90,13 @@ shape = SubResource("CapsuleShape3D_7")
 
 [node name="Coat" type="MeshInstance3D" parent="Model"]
 position = Vector3(0, 0.98, 0)
-mesh = SubResource("BoxMesh_9")
+mesh = SubResource("CapsuleMesh_Coat")
 material_override = SubResource("StandardMaterial3D_1")
 
 [node name="Head" type="MeshInstance3D" parent="Model"]
-position = Vector3(0, 1.51, -0.01)
-mesh = SubResource("BoxMesh_10")
+position = Vector3(0, 1.54, -0.01)
+mesh = SubResource("SphereMesh_Head")
 material_override = SubResource("StandardMaterial3D_2")
-
-[node name="Hair" type="MeshInstance3D" parent="Model"]
-position = Vector3(0, 1.72, 0.02)
-mesh = SubResource("BoxMesh_11")
-material_override = SubResource("StandardMaterial3D_3")
 
 [node name="Scarf" type="MeshInstance3D" parent="Model"]
 position = Vector3(0, 1.32, -0.04)
@@ -123,12 +121,12 @@ position = Vector3(-0.399, 1.22, 0)
 
 [node name="Sleeve" type="MeshInstance3D" parent="Model/LeftArm"]
 position = Vector3(0, -0.22, 0)
-mesh = SubResource("BoxMesh_15")
+mesh = SubResource("CapsuleMesh_15")
 material_override = SubResource("StandardMaterial3D_1")
 
 [node name="LeftEye" type="MeshInstance3D" parent="Model"]
-position = Vector3(-0.095, 1.55, -0.226)
-mesh = SubResource("BoxMesh_16")
+position = Vector3(-0.095, 1.57, -0.27)
+mesh = SubResource("SphereMesh_16")
 material_override = SubResource("StandardMaterial3D_3")
 
 [node name="RightLeg" type="Node3D" parent="Model"]
@@ -144,12 +142,12 @@ position = Vector3(0.399, 1.22, 0)
 
 [node name="Sleeve" type="MeshInstance3D" parent="Model/RightArm"]
 position = Vector3(0, -0.22, 0)
-mesh = SubResource("BoxMesh_18")
+mesh = SubResource("CapsuleMesh_18")
 material_override = SubResource("StandardMaterial3D_1")
 
 [node name="RightEye" type="MeshInstance3D" parent="Model"]
-position = Vector3(0.095, 1.55, -0.226)
-mesh = SubResource("BoxMesh_19")
+position = Vector3(0.095, 1.57, -0.27)
+mesh = SubResource("SphereMesh_19")
 material_override = SubResource("StandardMaterial3D_3")
 
 [node name="Head" type="Node3D" parent="."]
