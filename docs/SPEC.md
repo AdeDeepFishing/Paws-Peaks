@@ -101,8 +101,8 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Repository: <https://github.com/AdeDeepFishing/Paws-Peaks>
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
-- Existing files include `project.godot`, `scenes/main.tscn`, README, and Git configuration.
-- The starter currently displays a static title scene. Movement, drawing, encounters, AI, audio, and Web deployment have not been implemented.
+- The active Godot project is `3d_game/project.godot`, with `3d_game/main.tscn` as its startup scene. The obsolete root project and title scene have been removed.
+- The user-provided template includes first-person movement, but drawing, the five encounters, AI, collectible tokens, game audio, and Web deployment remain planned work. This unmodified copy still declares Godot 4.3, Forward Plus, and native Jolt; compatibility with our installed engine and Web target needs verification.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 
 ## 3. Release scope
@@ -619,17 +619,21 @@ Minimum delivery: **one BGM track, ten SFX event categories, and the agreed narr
 Suggested folders, to create only when needed:
 
 ```text
-project.godot
 README.md
 AGENTS.md
-scenes/             # World, player, encounters, canvas, and UI
-scripts/            # GDScript implementation
-data/               # Encounter definitions and supported tags
-assets/
-  art/
-  audio/music/
-  audio/sfx/
-  audio/voice/
+3d_game/            # Godot project root; res:// paths resolve here
+  project.godot
+  main.tscn
+  scenes/           # World, player, encounters, canvas, and UI
+  models/           # Existing template models
+  addons/           # Existing template controller
+  scripts/          # Planned GDScript implementation
+  data/             # Planned encounter definitions and supported tags
+  assets/
+    art/
+    audio/music/
+    audio/sfx/
+    audio/voice/
 docs/               # Specifications, research, and planning documents
   SPEC.md
   REUSE_RESEARCH.md
