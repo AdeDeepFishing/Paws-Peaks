@@ -8,9 +8,9 @@
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.78, 0.85, 0.81, 1)
-ambient_light_source = 3
-ambient_light_color = Color(1, 0.95, 0.85, 1)
-ambient_light_energy = 0.8
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.5
 
 [node name="WoodlandPath" type="Node3D"]
 script = ExtResource("1")
@@ -23,8 +23,8 @@ environment = SubResource("Environment")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-50, -30, 0)
-light_color = Color(1, 0.94, 0.82, 1)
-light_energy = 1.0
+light_color = Color(1, 0.98, 0.95, 1)
+light_energy = 0.75
 
 [node name="StageCamera" type="Camera3D" parent="."]
 current = true
