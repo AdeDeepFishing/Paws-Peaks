@@ -1,7 +1,7 @@
 # Stage 02: woodland path integration
 
 Updated: 2026-09-12. This is a playable environment preview. The E02 dog confrontation,
-accepted drawing actions, combat rules and progression to E03 are still unspecified
+accepted drawing actions, combat rules and gameplay progression to E03 are still unspecified
 or unimplemented; this scene does not claim those mechanics are complete.
 
 ## Source and project ownership
@@ -37,6 +37,13 @@ not a fully modeled open world.
   Falling off the walkable terrace returns to spawn.
 - Reuses the vertex-color post-import fix from Stage 1 to preserve painted materials.
 - Plays `Breeze_8s_24fps`, including morph-target wind and the 96-frame baked shadow loop.
+- Walking along the lakeside path into the white birch area automatically enters
+  Stage 3, at the location selected in the user's screenshot. As requested on
+  September 13, `WindHillExit` checks world z<=-28 across the entire X axis, with
+  no lateral or height restriction. Walking beside the path and jumping across
+  the boundary both trigger the transition. There is no next-stage
+  button or completion modal. This environment transition does not implement the
+  E02 dog encounter. See [Stage 03 integration](STAGE03_INTEGRATION.md).
 
 ## Verification
 

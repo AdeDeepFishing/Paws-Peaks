@@ -906,3 +906,18 @@ now transitions into it when the player keeps walking along the far bank,
 without a completion modal. E02 dog confrontation and success rules remain open;
 this asset integration does not resolve those design decisions. See
 [Stage 02 integration](STAGE02_INTEGRATION.md).
+
+## September 12 asset update: Stage 3 Wind Hill
+
+The supplied Wind Hill environment is available as a playable Stage 3 preview,
+reached automatically by walking into the lakeside white birch area in Stage 2,
+at the location selected by the user. It includes restored painted
+textures, the reference camera, shared protagonist, terrain collision and the
+16-second wind animation. The user requested wind slightly below maximum; the
+preview uses 80% of the delivered deformation amplitude. E03 crow interaction,
+solution rules and progression to E04 remain open. See
+[Stage 03 integration](STAGE03_INTEGRATION.md).
+
+September 13 playtest correction: the Stage 2 exit is a full-width boundary at
+world z=-28. Reaching it at any X position, including beside the path or during
+a jump, enters Stage 3. It no longer requires overlap with a narrow path area.

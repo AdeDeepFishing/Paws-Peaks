@@ -1,5 +1,15 @@
 extends Node3D
 
+## Shared environment preview controller; encounter rules remain scene-specific work.
+@export var art_path: NodePath = ^"Stage02Art"
+@export var authored_camera_name := "Reference_composition_camera"
+@export var chapter := "02"
+@export var stage_title := "Woodland Path"
+@export var fallback_spawn := Vector3(0, 2, 5)
+@export var camera_pullback := 6.0
+@export var return_scene := "res://scenes/river/river_crossing.tscn"
+@export var return_label := "Back to river"
+
 @onready var player = $Player
 @onready var camera: Camera3D = $StageCamera
 var spawn := Vector3(0, 2, 5)
@@ -7,18 +17,22 @@ var reference: Transform3D
 var status: Label
 
 func _ready() -> void:
-	var authored: Camera3D = $Stage02Art.find_child("Reference_composition_camera", true, false)
+	var art := get_node(art_path)
+	var authored: Camera3D = art.find_child(authored_camera_name, true, false)
 	if authored:
 		camera.global_transform = authored.global_transform
 		camera.projection = authored.projection
 		camera.fov = authored.fov
 		camera.keep_aspect = authored.keep_aspect
+		camera.near = authored.near
+		camera.far = authored.far
 		authored.current = false
 	camera.make_current()
 	# The art camera frames scenery; pull back to include the playable hiker.
-	camera.position += camera.basis.z * 6.0
+	camera.position += camera.basis.z * camera_pullback
 	reference = camera.transform
-	var marker: Node3D = $Stage02Art.find_child("Player_spawn", true, false)
+	spawn = fallback_spawn
+	var marker: Node3D = art.find_child("Player_spawn", true, false)
 	if marker: spawn = marker.global_position + Vector3.UP * 2
 	player.respawn(spawn)
 	_build_ui()
@@ -26,7 +40,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if player.position.y < -4:
 		player.respawn(spawn)
-		status.text = "Back on the woodland path."
+		status.text = "Back on the path."
 	# Preserve the designer's lens and orientation; track only ground movement.
 	var offset: Vector3 = player.position - spawn
 	offset.y = 0
@@ -52,8 +66,8 @@ func _build_ui() -> void:
 	root.add_child(card)
 	var stack := VBoxContainer.new()
 	card.add_child(stack)
-	_label(stack, "PAWS & PEAKS  /  CHAPTER 02", 14)
-	_label(stack, "Woodland Path", 28)
+	_label(stack, "PAWS & PEAKS  /  CHAPTER " + chapter, 14)
+	_label(stack, stage_title, 28)
 	_label(stack, "Explore the path · Scene preview", 16)
 	status = _label(root, "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint", 16)
 	status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
@@ -61,19 +75,25 @@ func _build_ui() -> void:
 	status.add_theme_color_override("font_color", Color("fff9ed"))
 	status.add_theme_color_override("font_outline_color", Color("273d36"))
 	status.add_theme_constant_override("outline_size", 4)
-	var back := Button.new()
-	back.text = "Back to river"
-	back.add_theme_stylebox_override("normal", paper)
-	back.add_theme_color_override("font_color", Color("273d36"))
-	back.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	back.offset_left = -180
-	back.offset_right = -28
-	back.offset_top = 28
-	back.offset_bottom = 74
-	root.add_child(back)
-	back.pressed.connect(func():
+	var navigation := VBoxContainer.new()
+	navigation.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	navigation.offset_left = -240
+	navigation.offset_right = -28
+	navigation.offset_top = 28
+	navigation.add_theme_constant_override("separation", 10)
+	root.add_child(navigation)
+	_navigation_button(navigation, "BackButton", return_label, return_scene, paper)
+
+func _navigation_button(parent: Node, node_name: String, text: String, scene: String, paper: StyleBoxFlat) -> void:
+	var button := Button.new()
+	button.name = node_name
+	button.text = text
+	button.add_theme_stylebox_override("normal", paper)
+	button.add_theme_color_override("font_color", Color("273d36"))
+	parent.add_child(button)
+	button.pressed.connect(func():
 		get_tree().current_scene = self
-		get_tree().change_scene_to_file("res://scenes/river/river_crossing.tscn")
+		get_tree().change_scene_to_file(scene)
 	)
 
 func _label(parent: Node, text: String, size: int) -> Label:

@@ -158,6 +158,16 @@ provides the imported environment, wind and shadow animation, fixed-angle camera
 and walking/jumping. Dog encounter gameplay is not yet implemented.
 See [Stage 02 integration](docs/STAGE02_INTEGRATION.md) for source ownership and checks.
 
-Both stages use the delivered Moonlit Wanderer protagonist, with idle, walking and
+All three scene previews use the delivered Moonlit Wanderer protagonist, with idle, walking and
 running animations. See [hero integration](docs/HERO_INTEGRATION.md) for assets,
 animation handling and the temporary jump pose.
+
+## Preview Wind Hill
+
+In Stage 2, follow the lakeside path to the white birch trees to enter Wind Hill
+automatically, or run
+`3d_game/scenes/wind_hill/wind_hill.tscn` directly. Stage 3 includes the supplied
+painted environment, restored textures, terrain collision, the shared protagonist
+and a 16-second wind animation at 80% of the delivered maximum strength.
+**Back to woodland** returns to Stage 2. Crow encounter gameplay remains unimplemented.
+See [Stage 03 integration](docs/STAGE03_INTEGRATION.md) for asset repair and checks.
