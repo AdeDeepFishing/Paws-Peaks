@@ -32,3 +32,4 @@ far = 400.0
 
 [node name="Player" parent="." instance=ExtResource("4")]
 position = Vector3(0, 2, 5)
+appearance_scale = 1.2

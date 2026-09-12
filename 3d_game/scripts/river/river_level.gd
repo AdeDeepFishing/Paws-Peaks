@@ -133,6 +133,7 @@ func _show_panel(mode: String) -> void:
 		return
 	if mode != "draw": return
 	panel_mode = mode
+	player.set_drawing_active(true)
 	player.set_input_enabled(false)
 	modal.hide()
 	drawing_overlay.show()
@@ -150,6 +151,7 @@ func _close_panel(_resume: bool) -> void:
 	normal_hud.show()
 	modal.hide()
 	panel_mode = ""
+	player.set_drawing_active(false)
 	player.set_input_enabled(true)
 
 func _submit() -> void:

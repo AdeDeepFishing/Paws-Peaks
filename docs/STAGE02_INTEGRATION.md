@@ -26,7 +26,8 @@ not a fully modeled open world.
   enters Stage 2 automatically; there is no completion modal. The camera settles back to the original
   overview on the far bank so this exit stays near the screen edge. Stage 2 provides
   **Back to river** for comparing scenes; this starts a fresh river stage.
-- Reuses the hiker, WASD/arrows, jump, sprint and idle hop cue.
+- Reuses the animated [Moonlit Wanderer protagonist](HERO_INTEGRATION.md), WASD/arrows,
+  jump, sprint and idle hop cue.
 - Uses the delivered Player_spawn marker, with a short settling drop onto terrain.
 - Preserves the reference camera's perspective, 49-degree vertical FOV and orientation.
   The camera is pulled back six units so the hiker fits completely in frame, and

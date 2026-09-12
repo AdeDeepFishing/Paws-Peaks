@@ -35,7 +35,7 @@ Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 - `3d_game/project.godot`: the active Godot project settings.
 - `3d_game/scenes/river/river_crossing.tscn`: the first-stage prototype and startup scene.
 - `3d_game/scripts/river/`: drawing UI, third-person controls, encounter logic, and the AI handoff boundary.
-- `3d_game/scenes/river/river_player.tscn`: placeholder hiker and capsule collision.
+- `3d_game/scenes/river/river_player.tscn`: shared animated protagonist and capsule collision.
 - `3d_game/main.tscn`: the original Brackeys dungeon demo, retained as a reference.
 - `3d_game/scenes/`, `3d_game/models/`, and `3d_game/addons/`: template scenes, assets, and controller.
 - `docs/`: game specification and research.
@@ -150,3 +150,7 @@ edge to enter the woodland automatically, without a completion dialog. You can a
 provides the imported environment, wind and shadow animation, fixed-angle camera,
 and walking/jumping. Dog encounter gameplay is not yet implemented.
 See [Stage 02 integration](docs/STAGE02_INTEGRATION.md) for source ownership and checks.
+
+Both stages use the delivered Moonlit Wanderer protagonist, with idle, walking and
+running animations. See [hero integration](docs/HERO_INTEGRATION.md) for assets,
+animation handling and the temporary jump pose.

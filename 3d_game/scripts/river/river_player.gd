@@ -6,18 +6,26 @@ extends CharacterBody3D
 @export var sprint_speed := 6.0
 @export var jump_velocity := 4.5
 @export var turn_speed := 12.0
-@export var idle_hop_delay := 0.8
+@export var idle_hop_delay := 5.0
+@export var appearance_scale := 1.0
+@export var auto_run_after := 3.0
 @export var idle_hop_height := 0.55
 
 const HOP_DURATION := 0.38
 const HOP_GAP := 0.14
 const HOP_COUNT := 3
-const HOP_REST := 4.0
+const HOP_REST := 12.0
 
 var input_enabled := true
 var window_focused := true
 var idle_seconds := 0.0
+var moving_seconds := 0.0
+var drawing_active := false
 @onready var visual: Node3D = $Model
+
+func _ready() -> void:
+	visual.scale = Vector3.ONE * appearance_scale
+	_reset_idle_hops()
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
@@ -36,13 +44,23 @@ func _physics_process(delta: float) -> void:
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	move_and_slide()
+	var travel := Vector2(get_real_velocity().x, get_real_velocity().z).length()
+	var moving := travel > 0.1 and direction.length_squared() > 0.001 and input_enabled and window_focused
+	moving_seconds = moving_seconds + delta if moving and is_on_floor() else 0.0
+	visual.set_motion(moving, moving_seconds > auto_run_after, is_on_floor(), drawing_active)
 	_update_idle_hops(delta, direction)
 	if direction.length_squared() > 0.001:
 		var facing := atan2(-direction.x, -direction.z)
 		visual.rotation.y = lerp_angle(visual.rotation.y, facing, 1.0 - exp(-turn_speed * delta))
 
+func set_drawing_active(active: bool) -> void:
+	drawing_active = active
+	moving_seconds = 0.0
+	_reset_idle_hops()
+
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
+	moving_seconds = 0.0
 	velocity.x = 0.0
 	velocity.z = 0.0
 	_reset_idle_hops()
@@ -50,6 +68,7 @@ func set_input_enabled(enabled: bool) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		window_focused = false
+		moving_seconds = 0.0
 		if is_instance_valid(visual):
 			_reset_idle_hops()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
@@ -59,8 +78,9 @@ func respawn(at: Vector3) -> void:
 	global_position = at
 	velocity = Vector3.ZERO
 	visual.rotation = Vector3.ZERO
-	idle_seconds = 0.0
-	visual.position.y = 0.0
+	moving_seconds = 0.0
+	drawing_active = false
+	_reset_idle_hops()
 
 func _reset_idle_hops() -> void:
 	idle_seconds = -idle_hop_delay

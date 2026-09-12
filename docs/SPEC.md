@@ -104,6 +104,12 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
 - The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, collectible coins, a fixed bridge, fall recovery, and completion/restart. See [DAY1_HANDOFF.md](DAY1_HANDOFF.md). Real AI, final art/audio, push/climb, E02–E05, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
+- Character integration update (2026-09-12): both playable scenes now use the supplied
+  Moonlit Wanderer skinned model with idle, walk and run clips. Jumping retains a
+  temporary held pose; see [HERO_INTEGRATION.md](HERO_INTEGRATION.md). This replaces
+  the placeholder hiker referenced in the earlier baseline above. Issue #22 adds a
+  20% larger Stage 2 visual, quieter idle timing, running animation after three seconds
+  of continuous walking (speed unchanged), and a drawing-time thinking stand-in.
 
 ## 3. Release scope
 

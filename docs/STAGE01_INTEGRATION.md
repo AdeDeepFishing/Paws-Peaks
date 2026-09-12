@@ -42,7 +42,8 @@ movement and jumping and hides the regular HUD. See [Scene drawing](SCENE_DRAWIN
   along X. Completion is on the right bank. Coins are repositioned on both sides.
 - Invisible outer boundaries keep this prototype's play area bounded. Falling into
   water returns to spawn while preserving drawings, requests and collected coins.
-- The hiker and generated bridge remain placeholders. No later encounter is implemented.
+- The hiker now uses the delivered animated [Moonlit Wanderer](HERO_INTEGRATION.md).
+  Bridge appearance depends on the selected generation mode. No later encounter is implemented.
 
 ## Verification
 
@@ -68,8 +69,8 @@ this integration has not established production performance targets.
 ## Idle player cue (#13)
 
 The earlier YOU label and arrow have been replaced by three small model hops,
-followed by a four-second rest. Movement, jumping, drawing and focus loss cancel
-the cue immediately. It resumes after 0.8 seconds idle; tune `idle_hop_delay` and
+followed by a twelve-second rest (#22). Movement, jumping, drawing and focus loss cancel
+the cue immediately. It starts after five seconds idle; tune `idle_hop_delay` and
 `idle_hop_height` on the player. Only the visual model moves; the capsule and
 camera remain grounded and stationary. This avoids accidental movement, pickups
 or trigger changes. A local check verified the hop count, rest and cancellation.
