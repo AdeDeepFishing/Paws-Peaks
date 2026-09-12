@@ -14,9 +14,6 @@ roughness = 1.0
 radius = 0.4
 height = 1.8
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_8"]
-radius = 0.22
-
 [sub_resource type="SphereMesh" id="SphereMesh_Head"]
 radius = 0.27
 height = 0.54
@@ -26,15 +23,8 @@ size = Vector3(0.58, 1.2, 0.42)
 
 [node name="RiverPlayer" type="CharacterBody3D"]
 script = ExtResource("1_player")
-can_sprint = true
-can_freefly = false
 base_speed = 4.0
 sprint_speed = 6.0
-input_left = "move_left"
-input_right = "move_right"
-input_forward = "move_up"
-input_back = "move_down"
-input_jump = "jump"
 
 [node name="Collider" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.9, 0)
@@ -51,17 +41,3 @@ material_override = SubResource("StandardMaterial3D_1")
 position = Vector3(0, 1.54, -0.01)
 mesh = SubResource("SphereMesh_Head")
 material_override = SubResource("StandardMaterial3D_2")
-
-[node name="Head" type="Node3D" parent="."]
-position = Vector3(0, 1.25, 0)
-
-[node name="SpringArm3D" type="SpringArm3D" parent="Head"]
-spring_length = 5.0
-margin = 0.15
-collision_mask = 1
-shape = SubResource("SphereShape3D_8")
-
-[node name="Camera3D" type="Camera3D" parent="Head/SpringArm3D"]
-current = true
-fov = 70.0
-near = 0.1

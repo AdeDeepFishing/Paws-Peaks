@@ -1,8 +1,8 @@
 extends Node3D
 
 const DrawingSurface = preload("res://scripts/river/drawing_surface.gd")
-const SPAWN := Vector3(0, 0.1, 17)
-const CROSSING := Vector3(0, 0, 8)
+const SPAWN := Vector3(-6.3, 1.5, -6.3)
+const CROSSING := Vector3(-4.6, 1.3, -6.3)
 
 @onready var player = $Player
 @onready var request = $DrawingRequest
@@ -64,10 +64,10 @@ func _process(delta: float) -> void:
 	for coin in $Coins.get_children():
 		if coin.visible:
 			coin.get_node("Visual").rotate_y(delta * 1.4)
-	if player.position.y < -1.4:
+	if player.position.y < 0.35:
 		player.respawn(SPAWN)
 		status_label.text = "Back on dry land. Your drawing and coins are safe."
-	if bridge_built and not completed and player.position.z < -8.0 and player.is_on_floor():
+	if bridge_built and not completed and player.position.x > 5.8 and player.is_on_floor():
 		_finish()
 	if panel_mode == "result":
 		use_button.disabled = not can_build_bridge()
@@ -90,7 +90,7 @@ func _input(event: InputEvent) -> void:
 			if modal.visible and not completed:
 				_close_panel(false)
 			else:
-				player.release_mouse()
+				player.set_input_enabled(true)
 			get_viewport().set_input_as_handled()
 
 func _on_drawing_area(body: Node3D) -> void:
@@ -170,15 +170,13 @@ func _show_panel(mode: String) -> void:
 	panel_tween.tween_property(panel, "modulate:a", 1.0, 0.16)
 	close_button.grab_focus() if mode != "complete" else restart_button.grab_focus()
 
-func _close_panel(capture: bool) -> void:
+func _close_panel(_resume: bool) -> void:
 	surface.drawing = false
 	book_preview.strokes = surface.strokes.duplicate(true)
 	book_preview.queue_redraw()
 	modal.hide()
 	panel_mode = ""
 	player.set_input_enabled(true)
-	if capture:
-		player.capture_mouse()
 
 func _submit() -> void:
 	var png: PackedByteArray = surface.snapshot_png()
@@ -233,7 +231,7 @@ func _on_request_state(state: String) -> void:
 	_update_hud()
 
 func near_crossing() -> bool:
-	return Vector2(player.position.x - CROSSING.x, player.position.z - CROSSING.z).length() <= 5.0 and player.position.z >= 6.0
+	return Vector2(player.position.x - CROSSING.x, player.position.z - CROSSING.z).length() <= 3.0 and player.position.x < -2.5
 
 func _supports_bridge() -> bool:
 	var tags: Array = current_item.get("tags", [])
@@ -287,7 +285,7 @@ func restart() -> void:
 	for coin in $Coins.get_children():
 		coin.show()
 	player.respawn(SPAWN)
-	status_label.text = "Follow the stepping stones to the river."
+	status_label.text = "Follow the pink path to the river."
 	_close_panel(true)
 	_update_hud()
 
@@ -353,6 +351,10 @@ func _build_ui() -> void:
 	mock_label.offset_top = 70
 	mock_label.offset_bottom = 94
 	mock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	for label in [coins_label, mock_label]:
+		label.add_theme_color_override("font_color", Color("fff9ed"))
+		label.add_theme_color_override("font_outline_color", Color("273d36"))
+		label.add_theme_constant_override("outline_size", 4)
 	var sound_button := _button(root, "Sound: on", func():
 		muted = not muted
 	)
@@ -362,7 +364,7 @@ func _build_ui() -> void:
 	sound_button.offset_right = -28
 	sound_button.offset_top = 102
 	sound_button.offset_bottom = 146
-	status_label = _label(root, "Follow the stepping stones to the river.", 19)
+	status_label = _label(root, "Follow the pink path to the river.", 19)
 	status_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status_label.position += Vector2(28, -132)
 	status_label.size = Vector2(690, 64)
@@ -371,10 +373,12 @@ func _build_ui() -> void:
 	status_label.add_theme_color_override("font_shadow_color", Color("273d36"))
 	status_label.add_theme_constant_override("shadow_offset_x", 1)
 	status_label.add_theme_constant_override("shadow_offset_y", 2)
-	controls = _label(root, "WASD  Move    SPACE  Jump    SHIFT  Sprint\nClick + mouse  Orbit camera    ESC  Release mouse", 14)
+	controls = _label(root, "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint\nFixed overhead view    E  Sketchbook    ESC  Close panel", 14)
 	controls.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	controls.position += Vector2(28, -56)
 	controls.add_theme_color_override("font_color", Color("fff9ed"))
+	controls.add_theme_color_override("font_outline_color", Color("273d36"))
+	controls.add_theme_constant_override("outline_size", 4)
 	book = _button(root, "SKETCHBOOK\nE · Open & draw", _open_book)
 	book.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	book.offset_left = -328

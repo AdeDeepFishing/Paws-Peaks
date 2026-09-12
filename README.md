@@ -35,14 +35,14 @@ Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 - `3d_game/project.godot`: the active Godot project settings.
 - `3d_game/scenes/river/river_crossing.tscn`: the first-stage prototype and startup scene.
 - `3d_game/scripts/river/`: drawing UI, third-person controls, encounter logic, and the AI handoff boundary.
-- `3d_game/scenes/river/river_player.tscn`: placeholder hiker and collision-aware follow camera.
+- `3d_game/scenes/river/river_player.tscn`: placeholder hiker and capsule collision.
 - `3d_game/main.tscn`: the original Brackeys dungeon demo, retained as a reference.
 - `3d_game/scenes/`, `3d_game/models/`, and `3d_game/addons/`: template scenes, assets, and controller.
 - `docs/`: game specification and research.
 - `.gitignore`: keeps generated files, local exports, and common secret files out of Git.
 - `.gitattributes`: normalizes text line endings across team computers.
 
-The first-stage prototype now includes third-person walking/jumping/sprinting, a river graybox,
+The first-stage prototype now includes third-person walking/jumping/sprinting, the stag01 storybook creek and a fixed overhead camera,
 eight collectible coins, a collapsible drawing panel, 512 × 512 PNG output, asynchronous mock
 responses, an item card, a walkable bridge, fall recovery, and an ending/restart loop.
 Simple synthesized feedback sounds are included; final art, music, voiced narration, real AI,
@@ -50,22 +50,22 @@ pushing/climbing, the remaining four stages, and Web deployment are still outsta
 
 ## Try the first stage
 
-1. Click the game to capture the mouse. Move the mouse to orbit the placeholder hiker.
-   **WASD** moves relative to the camera, **Space** jumps, **Shift** sprints.
-   The hiker turns toward travel; orbiting while idle does not turn the hiker.
-   The camera retracts around obstacles and returns when clear.
-2. Approach the river post. Press **E** to expand the sketchbook; drawing pauses movement and camera input.
+1. Use **WASD or arrow keys** to move relative to the fixed overhead camera, **Space** to jump,
+   and **Shift** to sprint. The mouse stays visible and does not rotate the camera.
+2. Follow the pink path to the river. Press **E** to expand the sketchbook; drawing pauses movement.
 3. Draw with the left mouse button. Undo and Clear are available; closing preserves the draft.
 4. Leave **Test: bridge** selected and submit. The **PROTOTYPE · NO AI** indicator is deliberate:
    the selected fixture determines the response, not the content of your sketch.
 5. Explore or collect coins during the three-second simulated wait. Press **E** when the idea is ready.
-6. Near the river post, choose **Use idea · Build bridge**, then walk across to finish.
-7. **Esc** closes the book and releases the mouse. Click the world to resume mouse look.
+6. Near the left riverbank, choose **Use idea · Build bridge**, then walk across to finish.
+7. **Esc** closes the book.
 
 The other test responses cover unsuitable objects, unclear drawings, and service failure.
 The latest submitted drawing is saved to `user://drawings/E01-latest.png` (Godot's user-data directory),
 not the repository. See [Day 1 handoff](docs/DAY1_HANDOFF.md) for Beichun's API boundary,
 designer replacement points, tests, and current limitations.
+
+See [Stage 01 integration](docs/STAGE01_INTEGRATION.md) for camera settings, asset details, and import fixes.
 
 ## Team workflow
 
@@ -75,6 +75,6 @@ Commit source assets and Godot scene files. Do not commit the generated `.godot/
 
 ## Next milestone
 
-Connect the existing drawing request boundary to Beichun's real AI service, then replace graybox visuals.
+Connect the existing drawing request boundary to Beichun's real AI service, then review the imported scene with the designers.
 The target is Web. The template still uses Forward Plus; Compatibility rendering adaptation,
 export templates, an export preset, hosting, and browser verification remain to be done.
