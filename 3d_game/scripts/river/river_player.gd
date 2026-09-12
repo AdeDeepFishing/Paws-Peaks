@@ -3,7 +3,7 @@ extends CharacterBody3D
 ## Movement follows the active level camera's horizontal axes.
 ## Each level owns its camera; the player never rotates or captures it.
 @export var base_speed := 4.0
-@export var sprint_speed := 6.0
+@export var sprint_speed := 7.5
 @export var jump_velocity := 4.5
 @export var turn_speed := 12.0
 @export var idle_hop_delay := 5.0
@@ -40,7 +40,8 @@ func _physics_process(delta: float) -> void:
 			velocity.y = jump_velocity
 	if get_parent().has_method("assist_crossing"):
 		direction = get_parent().assist_crossing(direction)
-	var speed := sprint_speed if Input.is_action_pressed("sprint") else base_speed
+	var auto_running := moving_seconds > auto_run_after and is_on_floor()
+	var speed := sprint_speed if auto_running or Input.is_action_pressed("sprint") else base_speed
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	move_and_slide()

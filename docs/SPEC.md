@@ -109,7 +109,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
   temporary held pose; see [HERO_INTEGRATION.md](HERO_INTEGRATION.md). This replaces
   the placeholder hiker referenced in the earlier baseline above. Issue #22 adds a
   20% larger Stage 2 visual, quieter idle timing, running animation after three seconds
-  of continuous walking (speed unchanged), and a drawing-time thinking stand-in.
+  of continuous walking (speed rises from 4.0 to 7.5 units/second), and a drawing-time thinking stand-in.
 
 ## 3. Release scope
 
@@ -171,7 +171,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 
 | Action | Input | Behavior |
 |---|---|---|
-| Move | WASD or arrow keys | Camera-relative ground movement; character turns toward travel |
+| Move | WASD or arrow keys | Camera-relative ground movement; character turns toward travel. After three continuous grounded seconds, automatically run at 7.5 units/second instead of walking at 4.0; stopping resets this |
 | Jump | Space | One reliable grounded jump; no double jump required |
 | Sprint | Hold Shift while moving | Fixed faster speed; no stamina meter |
 | Camera | No player camera input | Fixed per-level composition; E01 uses an overhead orthographic camera. Other stages may use different designer-approved angles |

@@ -27,9 +27,9 @@ cannot move the model away from the gameplay capsule. Vertical bounce is retaine
 The 1.7-unit source is scaled to 1.8 units and rotated from +Z to controller-forward -Z.
 
 Actual horizontal motion selects walking; after more than three continuous grounded
-seconds it selects the run animation. Shift retains its existing faster movement
-speed but does not bypass the three-second animation delay, including after a stop.
-Automatic animation switching alone does not increase speed. Stopping, jumping, focus loss and input locks reset the timer.
+seconds it selects the run animation and increases movement speed from 4.0 to 7.5
+world units per second (87.5% faster). Shift can request the same faster speed manually
+but does not bypass the three-second animation delay, including after a stop. Stopping, jumping, focus loss and input locks reset the timer.
 
 Ordinary idle uses a constant clip of the first standing pose. The animation player
 continues advancing so outgoing run blends finish instead of freezing and reappearing
@@ -45,8 +45,7 @@ visual. Stage 1 retains 1.0. Feet stay anchored to the existing capsule; collisi
 geometry and the designer camera remain unchanged.
 No jump clip was delivered: airborne movement temporarily holds the first idle pose,
 then resumes the appropriate grounded animation on landing. Drawing and camera
-locks suppress locomotion animation. Collision shape, movement speeds and level
-geometry retain their existing values.
+locks suppress locomotion animation. Collision shape and level geometry retain their existing values.
 
 ## Verification
 

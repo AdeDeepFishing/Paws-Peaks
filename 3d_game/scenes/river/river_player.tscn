@@ -11,7 +11,7 @@ height = 1.8
 [node name="RiverPlayer" type="CharacterBody3D"]
 script = ExtResource("1_player")
 base_speed = 4.0
-sprint_speed = 6.0
+sprint_speed = 7.5
 
 [node name="Collider" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.9, 0)
