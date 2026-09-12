@@ -67,6 +67,41 @@ The latest submitted drawing is saved to `user://drawings/E01-latest.png` (Godot
 not the repository. See [Day 1 handoff](docs/DAY1_HANDOFF.md) for Beichun's API boundary,
 designer replacement points, tests, and current limitations.
 
+## API keys for local AI features
+
+The current Godot prototype uses mock AI and runs without API keys. To run the local
+backend scripts, create your private configuration from the repository root:
+
+```sh
+# Create the file only if it does not already exist; preserve existing keys.
+if [ ! -e backend/.env ]; then
+  cp backend/.env.example backend/.env
+fi
+chmod 600 backend/.env
+```
+
+Open `backend/.env` in your editor and fill in only the keys for the features you use:
+
+| Setting | Used by |
+|---|---|
+| `OPENAI_API_KEY` | Sketch → narrative and item stats |
+| `MESHY_API_KEY` | Image → untextured 3D model |
+
+Leave the model settings at their template defaults to start. The scripts load
+`backend/.env` automatically; environment variables with the same names take precedence.
+See [local AI setup](docs/AI_LOCAL_SETUP.md) for Python setup and run commands.
+
+**Keep keys private.** `backend/.env` is ignored by Git; commit only the blank
+`backend/.env.example` template. Never put keys in source code, screenshots, logs,
+or game exports. Each developer should configure their own local file. To verify
+the ignore rule without displaying any credentials, run:
+
+```sh
+git check-ignore backend/.env
+```
+
+The expected output is `backend/.env`.
+
 ## Team workflow
 
 For the separate narrative and 3D API scripts, see [local AI setup](docs/AI_LOCAL_SETUP.md).
