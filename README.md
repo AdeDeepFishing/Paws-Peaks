@@ -62,6 +62,13 @@ pushing/climbing, the remaining four stages, and Web deployment are still outsta
    release to stop or reverse to walk back. No Use confirmation is required.
 7. **Esc** cancels drawing. Leaving the river hides the drawing entry; use **Stop waiting** to stop waiting without losing your draft.
 
+Controllers: **left stick or D-pad** to move, **A/Cross** to jump, hold **RB/R1** to sprint,
+**X/Square** to toggle drawing, and **B/Circle** to close it. In panels, use the
+**D-pad** to navigate and **A/Cross** to activate buttons. Drawing still requires a mouse
+or trackpad. For **Nintendo Switch Pro**, use **B** to jump/confirm, **R** to sprint,
+**Y** for drawing, and **A** to close. Hints adapt when a Switch controller connects.
+Stick movement is analog with a 0.2 deadzone; the camera remains fixed.
+
 In **Mock bridge · No AI** mode, the other test responses cover unsuitable objects, unclear drawings, and service failure.
 Each submitted drawing is saved to a unique `user://drawings/E01-<timestamp>-<id>.png` (Godot's user-data directory),
 not the repository. See [Day 1 handoff](docs/DAY1_HANDOFF.md) for Beichun's API boundary,
