@@ -2,7 +2,9 @@
 
 Research date: 2026-09-12. Target: Godot 4.7.2 Standard, GDScript, desktop Web browsers, a four-day jam with two beginner developers and two designers.
 
-**Recommendation:** evaluate Kenney's 3D Platformer as the single movement/coin foundation; evaluate Dialogue Manager for authored dialogue; borrow small drawing and texture-capture patterns from the official demos. Keep GDQuest's third-person controller as an alternative, not a second controller to merge into the first.
+**Current decision (September 12):** the user selected the Brackeys 3D demo, which is now imported. See [credits and import notes](CREDITS.md). The research below records earlier alternatives; do not merge a second movement controller into the project by default.
+
+**Earlier recommendation:** evaluate Kenney's 3D Platformer as the single movement/coin foundation; evaluate Dialogue Manager for authored dialogue; borrow small drawing and texture-capture patterns from the official demos. Keep GDQuest's third-person controller as an alternative, not a second controller to merge into the first.
 
 This is source and documentation research. No candidate has been installed in Paws & Peaks, imported in its Godot editor, or tested in its hosted Web build. Upstream features are evidence for a compatibility trial, not delivered game features. Rankings reflect our integration needs, not repository popularity.
 

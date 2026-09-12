@@ -101,8 +101,8 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Repository: <https://github.com/AdeDeepFishing/Paws-Peaks>
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
-- Existing files include `project.godot`, `scenes/main.tscn`, README, and Git configuration.
-- The starter currently displays a static title scene. Movement, drawing, encounters, AI, audio, and Web deployment have not been implemented.
+- The Brackeys 3D demo is imported as the current foundation; `main.tscn` is the startup scene. Our original title scene remains at `scenes/main.tscn`. See [credits and import notes](CREDITS.md).
+- The imported first-person controller supplies walking, jumping, sprinting, and mouse look. This import does not finalize the camera design. Coin collection, pushing/climbing, drawing, the five encounters, AI, narration, game audio, and Web deployment remain unimplemented.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 
 ## 3. Release scope
@@ -837,9 +837,9 @@ Already settled: production has begun on September 12; five-stage order and the 
 
 ## 17. Reuse strategy and researched candidates
 
-See [REUSE_RESEARCH.md](REUSE_RESEARCH.md) for source links, version pins, license distinctions, maintenance evidence, and missing features. These are researched candidates, not dependencies already installed or tested in our game.
+See [REUSE_RESEARCH.md](REUSE_RESEARCH.md) for source links, version pins, license distinctions, maintenance evidence, and missing features. Those candidates remain uninstalled. The user selected the [Brackeys 3D demo](https://github.com/Brackeys/3d-game-in-godot) as the current imported foundation on September 12; see [CREDITS.md](CREDITS.md) for its pinned revision and adaptations. Browser acceptance checks remain required.
 
-- Initial movement/coin candidate: [Kenney 3D Platformer Starter Kit](https://github.com/KenneyNL/Starter-Kit-3D-Platformer). Reuse its narrow movement/collection foundation after the Web spike, not the entire game unchanged.
+- Previously recommended movement/coin candidate: [Kenney 3D Platformer Starter Kit](https://github.com/KenneyNL/Starter-Kit-3D-Platformer). Reuse its narrow movement/collection foundation after the Web spike, not the entire game unchanged.
 - Controller alternative: [GDQuest Godot 4 third-person controller](https://github.com/gdquest-demos/godot-4-3d-third-person-controller). Inspect code separately from assets; asset permissions differ from the code license.
 - Dialogue candidate: [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager). Evaluate for authored conversations; line-based voice playback/subtitles still need integration.
 - Drawing and texture references: [Godot official demos](https://github.com/godotengine/godot-demo-projects). Copy only a relevant example after verifying its engine/API version and license.
