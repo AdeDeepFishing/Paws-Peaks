@@ -113,8 +113,8 @@ may represent numbers as floats. Names/descriptions are displayed as plain text.
   player's own collider, and restores distance when clear. The model hides only when the camera
   is closer than 0.8 units, preventing an inside-the-body view in very tight spaces.
 - The capsule physics body remains upright. Replace the placeholder meshes under `Model` when
-  final character art is ready; keep the rig and collision node paths. The current limb swing
-  is procedural placeholder animation, not a final rigged character animation set.
+  final character art is ready; keep the rig and collision node paths. The current avatar glides
+  without limb animation; walk/sprint speeds remain 4 and 6 units per second.
 
 - The drawing area unlocks the book. E opens it when grounded; drawing stops movement/look.
 - Escape closes UI and releases the cursor. E or the Close button restores captured exploration.
@@ -136,9 +136,9 @@ may represent numbers as floats. Names/descriptions are displayed as plain text.
 
 ## Art and audio replacement
 
-Character direction confirmed with Yanwen: a gender-neutral abstract hiker, with no hair,
-a round mint-colored head rather than a human complexion, simple dot eyes, and rounded
-clothing shapes. Keep the backpack and scarf; final art should preserve this neutral direction.
+Character direction updated with Yanwen: exactly a mint-colored sphere head and a rectangular
+body. No hair, limbs, backpack, scarf, or facial details. This neutral abstract placeholder
+glides without a walking animation; movement speed and collision remain unchanged.
 
 The graybox scene is authored as ordinary editable Godot nodes. Replace each object's
 `Visual` mesh/material while retaining its parent transform and collision unless changing

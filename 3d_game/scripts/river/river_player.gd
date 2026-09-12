@@ -7,7 +7,6 @@ extends "res://addons/proto_controller/proto_controller.gd"
 
 const DEFAULT_PITCH := -0.28
 var input_enabled := true
-var walk_phase := 0.0
 
 @onready var visual: Node3D = $Model
 @onready var arm: SpringArm3D = $Head/SpringArm3D
@@ -53,14 +52,6 @@ func _physics_process(delta: float) -> void:
 	if direction.length_squared() > 0.001:
 		var facing := atan2(-direction.x, -direction.z)
 		visual.rotation.y = lerp_angle(visual.rotation.y, facing, 1.0 - exp(-turn_speed * delta))
-	var moving := direction.length_squared() > 0.001 and is_on_floor()
-	if moving:
-		walk_phase += delta * move_speed * 2.4
-	var swing := sin(walk_phase) * 0.38 if moving else 0.0
-	$Model/LeftLeg.rotation.x = lerpf($Model/LeftLeg.rotation.x, swing, minf(1, delta * 16))
-	$Model/RightLeg.rotation.x = lerpf($Model/RightLeg.rotation.x, -swing, minf(1, delta * 16))
-	$Model/LeftArm.rotation.x = -$Model/LeftLeg.rotation.x * 0.6
-	$Model/RightArm.rotation.x = -$Model/RightLeg.rotation.x * 0.6
 	# Avoid seeing inside the placeholder if the camera is compressed against a wall.
 	visual.visible = arm.get_hit_length() > 0.8
 
@@ -81,5 +72,4 @@ func respawn(at: Vector3) -> void:
 	look_rotation = Vector2(DEFAULT_PITCH, 0.0)
 	rotation = Vector3.ZERO
 	visual.rotation = Vector3.ZERO
-	walk_phase = 0.0
 	_update_camera_rotation()
