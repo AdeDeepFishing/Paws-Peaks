@@ -6,6 +6,10 @@
 [ext_resource type="PackedScene" path="res://models/stage01/storybook_creek.glb" id="4_art"]
 [ext_resource type="Script" path="res://scripts/river/stage01_art.gd" id="5_art_setup"]
 
+[ext_resource type="Script" path="res://scripts/river/desktop_generation.gd" id="6_generation"]
+
+[ext_resource type="Script" path="res://scripts/river/encounter_presentation.gd" id="7_presentation"]
+
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.44, 0.54, 0.28, 1)
@@ -47,10 +51,10 @@ shading_mode = 0
 radius = 0.65
 
 [sub_resource type="BoxShape3D" id="FenceX"]
-size = Vector3(0.5, 8, 20)
+size = Vector3(0.5, 8, 112)
 
 [sub_resource type="BoxShape3D" id="FenceZ"]
-size = Vector3(28, 8, 0.5)
+size = Vector3(83, 8, 0.5)
 
 [node name="RiverCrossing" type="Node3D"]
 script = ExtResource("1_level")
@@ -96,12 +100,13 @@ material_override = SubResource("Wood")
 shape = SubResource("DeckShape")
 disabled = true
 
-[node name="Sketch" type="Sprite3D" parent="Bridge"]
-position = Vector3(0, 0.16, 0)
-rotation_degrees = Vector3(-90, 0, 0)
-pixel_size = 0.003
-
 [node name="Coins" type="Node3D" parent="."]
+
+[node name="EncounterPresentation" type="Node" parent="."]
+script = ExtResource("7_presentation")
+
+[node name="DesktopGeneration" type="Node" parent="."]
+script = ExtResource("6_generation")
 
 [node name="DrawingRequest" type="Node" parent="."]
 script = ExtResource("3_request")
@@ -324,25 +329,25 @@ material_override = SubResource("Gold")
 shape = SubResource("CoinShape")
 
 [node name="Boundary0" type="StaticBody3D" parent="."]
-position = Vector3(-13, 3, -6)
+position = Vector3(-39, 3, -29)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary0"]
 shape = SubResource("FenceX")
 
 [node name="Boundary1" type="StaticBody3D" parent="."]
-position = Vector3(13, 3, -6)
+position = Vector3(40, 3, -29)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary1"]
 shape = SubResource("FenceX")
 
 [node name="Boundary2" type="StaticBody3D" parent="."]
-position = Vector3(0, 3, 2)
+position = Vector3(0, 3, 25)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary2"]
 shape = SubResource("FenceZ")
 
 [node name="Boundary3" type="StaticBody3D" parent="."]
-position = Vector3(0, 3, -14)
+position = Vector3(0, 3, -84)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary3"]
 shape = SubResource("FenceZ")

@@ -43,33 +43,37 @@ Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 - `.gitattributes`: normalizes text line endings across team computers.
 
 The first-stage prototype now includes third-person walking/jumping/sprinting, the stag01 storybook creek and a fixed overhead camera,
-eight collectible coins, a collapsible drawing panel, 512 × 512 PNG output, asynchronous mock
-responses, an item card, a walkable bridge, fall recovery, and an ending/restart loop.
-Simple synthesized feedback sounds are included; final art, music, voiced narration, real AI,
+eight collectible coins, a transparent scene drawing overlay, 512 × 512 PNG output, asynchronous desktop generation,
+automatic placement of returned GLB models, fall recovery, and an ending/restart loop.
+Simple synthesized feedback sounds are included; final art, music, voiced narration, live API playtesting,
 pushing/climbing, the remaining four stages, and Web deployment are still outstanding.
 
 ## Try the first stage
 
 1. Use **WASD or arrow keys** to move relative to the fixed overhead camera, **Space** to jump,
    and **Shift** to sprint. The mouse stays visible and does not rotate the camera.
-2. Follow the pink path to the river. Press **E** to expand the sketchbook; drawing pauses movement.
+2. Follow the pink path to the river. When the pen prompt appears, press **E** or click it to draw over the scene; movement pauses and the regular HUD hides.
 3. Draw with the left mouse button. Undo and Clear are available; closing preserves the draft.
-4. Leave **Test: bridge** selected and submit. The **PROTOTYPE · NO AI** indicator is deliberate:
-   the selected fixture determines the response, not the content of your sketch.
-5. Explore or collect coins during the three-second simulated wait. Press **E** when the idea is ready.
-6. Near the left riverbank, choose **Use idea · Build bridge**, then walk across to finish.
-7. **Esc** closes the book.
+4. Leave **Sample model · No AI** selected to test the Python-to-GLB workflow without keys.
+   Every sketch gets the same sample ladder. Select **Live AI · Uses credits** for actual generation after backend setup.
+5. Watch the short construction closeup. Coins then drop onto the near bank to collect while you wait.
+   A second closeup reveals the completed model.
+6. When the bridge appears, walk across to finish. Near the bridge, input gently follows its axis;
+   release to stop or reverse to walk back. No Use confirmation is required.
+7. **Esc** cancels drawing. Leaving the river hides the drawing entry; use **Stop waiting** to stop waiting without losing your draft.
 
-The other test responses cover unsuitable objects, unclear drawings, and service failure.
-The latest submitted drawing is saved to `user://drawings/E01-latest.png` (Godot's user-data directory),
+In **Mock bridge · No AI** mode, the other test responses cover unsuitable objects, unclear drawings, and service failure.
+Each submitted drawing is saved to a unique `user://drawings/E01-<timestamp>-<id>.png` (Godot's user-data directory),
 not the repository. See [Day 1 handoff](docs/DAY1_HANDOFF.md) for Beichun's API boundary,
 designer replacement points, tests, and current limitations.
+
+See [Scene drawing and PNG handoff](docs/SCENE_DRAWING.md) for issue #12, controls and a sample PNG.
 
 See [Stage 01 integration](docs/STAGE01_INTEGRATION.md) for camera settings, asset details, and import fixes.
 
 ## API keys for local AI features
 
-The current Godot prototype uses mock AI and runs without API keys. To run the local
+The default offline mode runs without API keys. To use live generation or the local
 backend scripts, create your private configuration from the repository root:
 
 ```sh
@@ -121,7 +125,8 @@ The latest run took 19.70 seconds; the generated shape still needs review.
 For the separate narrative and 3D API scripts, see [local AI setup](docs/AI_LOCAL_SETUP.md).
 `backend/sketch_to_narrative/` uses OpenAI; `backend/image_text_to_3d/` uses Meshy to
 generate untextured geometry from images. Both share `backend/.venv` and an ignored `backend/.env`.
-These helpers are not yet connected to the game's drawing action.
+The desktop drawing action connects through `backend/game_bridge/` to the combined pipeline.
+See [desktop generation](docs/DESKTOP_GENERATION.md) for modes, setup, cancellation, and limitations.
 See [backend development instructions](docs/BACKEND.md) for conventions, contracts, and credential handling.
 
 Clone the GitHub repository to get your own local copy, then import `3d_game/project.godot` in Godot.
@@ -133,3 +138,6 @@ Commit source assets and Godot scene files. Do not commit the generated `.godot/
 Connect the existing drawing request boundary to Beichun's real AI service, then review the imported scene with the designers.
 The target is Web. The template still uses Forward Plus; Compatibility rendering adaptation,
 export templates, an export preset, hosting, and browser verification remain to be done.
+
+See [construction flow and movement](docs/ENCOUNTER_FLOW.md) for the latest camera,
+reward timing, and map-boundary changes.

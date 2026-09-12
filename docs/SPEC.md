@@ -1,6 +1,6 @@
 # Paws & Peaks — Game Jam Specification
 
-> Version: 0.6 | Updated: 2026-09-12 | Status: Working draft
+> Version: 0.7 | Updated: 2026-09-12 | Status: Working draft
 >
 > Team: Four Otters — two designers and two developers, all new to Godot.
 > Production: September 12–15, 2026 (Asia/Tokyo, JST, UTC+09:00). September 12 is Day 1; production and asset generation may begin now, as confirmed by the team.
@@ -79,7 +79,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 | Exploration | Confirmed | The player can freely walk and explore within the playable area |
 | World presentation | Original direction; implementation proposal below | Small 3D storybook environment, potentially using flat illustrated characters and props |
 | Movement abilities | Requested | Walking, jumping, sprinting, physics pushing, and climbing; bounded implementations in Section 4 |
-| Camera and input details | First-stage prototype confirmed | Fixed camera per stage; E01 uses an overhead orthographic view. WASD or arrow keys follow camera yaw; Space, Shift; E opens the sketchbook; drawing locks movement. Later camera compositions follow designer deliveries. Push/climb remain later work |
+| Camera and input details | First-stage prototype confirmed | Fixed camera per stage; E01 uses an overhead orthographic view. WASD or arrow keys follow camera yaw; Space, Shift; E/click opens transparent scene drawing at designated locations; drawing locks movement and hides the normal HUD. Later camera compositions follow designer deliveries. Push/climb remain later work |
 | Coins and AI waiting | Requested | Collect along routes and in nearby activity areas while AI runs in the background |
 | Coin spending | Open | Default proposal: collection count and an ending reward; essential drawings stay free |
 | Language | Confirmed | English throughout the game and repository |
@@ -102,7 +102,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
 - The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
-- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, modal drawing with PNG export, a background request boundary with explicit mock responses, item inspection, collectible coins, a fixed bridge, fall recovery, and completion/restart. See [DAY1_HANDOFF.md](DAY1_HANDOFF.md). Real AI, final art/audio, push/climb, E02–E05, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
+- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, collectible coins, a fixed bridge, fall recovery, and completion/restart. See [DAY1_HANDOFF.md](DAY1_HANDOFF.md). Real AI, final art/audio, push/climb, E02–E05, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 
 ## 3. Release scope
@@ -169,7 +169,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 | Jump | Space | One reliable grounded jump; no double jump required |
 | Sprint | Hold Shift while moving | Fixed faster speed; no stamina meter |
 | Camera | No player camera input | Fixed per-level composition; E01 uses an overhead orthographic camera. Other stages may use different designer-approved angles |
-| Interact | E or click the lower-right sketchbook with the visible cursor | Near the river, unlock the sketchbook. E opens/closes it when grounded; later interactions remain to be designed |
+| Interact | E or click the pen prompt with the visible cursor | Inside a designated area, show the drawing prompt. E/click enters drawing while grounded; leaving hides entry. Generation continues while exploring; supported results appear automatically |
 | Push crate | Walk into a marked small crate | Apply bounded force; do not push every scenery object |
 | Climb | E at a marked ladder/vine, then W/S | Follow the authored climb route; E exits at a safe location |
 | Draw and UI | Left mouse button | Buttons and canvas strokes; UI consumes clicks before world interactions |
@@ -356,19 +356,21 @@ The type/stat JSON contract remains required. Effect tags below are a working vo
 
 ### Canvas requirements
 
-- One dark pen on a light background, initially one brush size. Color selection and an eraser are optional later work.
+- One black pen with a thin light display outline on a transparent full-viewport canvas. Hide the regular HUD during drawing; only the bottom toolbar blocks strokes. The player and camera stay still while water continues animating. Color selection and an eraser are optional later work.
+- Each stage configures a drawing trigger area. Entering shows a pen prompt; E/click starts drawing. The trigger gates entry only, not the drawable scene area. Cancel preserves the encounter draft; returning restores it.
 - A press, movement, and release form one stroke. A click can form a dot.
 - Undo removes the latest stroke. Clear affects only the draft, not encounter progress.
 - Releasing outside the canvas must finish the stroke; returning must not accidentally continue it.
 - Reject empty submissions before making a network request.
 - Snapshot the submitted drawing so later changes cannot alter an in-flight request's image.
-- Proposed upload: 512 × 512 PNG, at most 1 MiB decoded. Calibrate against recognition quality and actual endpoint limits on Day 1.
+- Confirmed export (updated September 12): 512 × 512 transparent-background RGBA PNG containing opaque black ink only. Crop to ink bounds with padding and scale uniformly; omit scenery, HUD, cursor, toolbar and display outline. Draft proportions and export remain unchanged on resize. Keep the existing 1 MiB image limit.
+- E01 submission now leads directly to automatic scene-object presentation, with non-modal processing/error feedback. Do not reopen a preview canvas or require Use confirmation, and do not put the PNG on the bridge as a paper texture. The current mock bridge does not establish real GLB generation or delivery.
 - Use a simple waiting message such as “Finding the idea in your drawing...” without inventing progress percentages.
 
 ### Object presentation
 
 - Show the original sketch, a short English name, a one-sentence interpretation, Type, Attack power, Range, Speed, Durability, Use, and Draw again. Mark combat-only fields as informational where no matching action exists; do not imply every item can attack.
-- Display the drawing as a paper cutout or flat prop at a predefined location during use.
+- E01 now presents the resulting object directly at its encounter location; original drawings remain saved as input data, not attached paper props. Other stages’ item/stat presentation remains to be designed.
 - Background removal, mesh generation, and drawing-shaped collision are not required.
 - Generated names and descriptions never control game rules.
 - A missing or failed response leaves the previous usable item intact.
@@ -873,9 +875,19 @@ This file is the shared scope reference and may be updated by teammates as decis
 
 | Version | Date | Change |
 |---|---|---|
+| 0.7 | 2026-09-12 | Confirmed issue #12: location-gated full-viewport transparent drawing, hidden normal HUD, and cropped white-background black-ink PNG handoff |
 | 0.6 | 2026-09-12 | Fixed per-stage camera supersedes mouse orbit; E01 uses stag01 creek art and overhead orthographic framing; temporary otter trial removed |
 | 0.5 | 2026-09-12 | Team decision supersedes first-person with third-person: captured mouse orbit, camera-relative movement, independent visual facing, placeholder hiker, camera collision, and retained drawing input locks (issue #1) |
 | 0.4 | 2026-09-12 | Confirmed first-person + E sketchbook + bridge-first prototype; recorded implemented graybox and mock limitations; assigned Yanwen canvas/client work and Beichun AI/backend work |
 | 0.3 | 2026-09-12 | Recorded confirmed production/submission dates and yanwen fallback; replaced old three-stage proposal with river/dog/crows/otter/boss; first three premises confirmed, E04/E05 design open; synchronized schedule, tasks, voice and acceptance |
 | 0.2 | 2026-09-12 | Added voiced narration/dialogue, background AI with playable coin collection, jump/sprint/bounded push/climb and mouse controls, five required item fields, reuse research, and corresponding milestones/tests |
 | 0.1 | 2026-09-12 | Initial English specification; confirmed free walking, English-only project content, and warm/playful audio; encounter stories and camera details remain proposals |
+
+## September 12 playtest update: construction and traversal
+
+Approved: show a construction cloth at the drawing location, briefly zoom in,
+return to exploration and drop near-bank coins; zoom in again to reveal the ready
+object. Collection and provider completion are independent. Keep fixed camera angles,
+allow edge-follow panning, and gently assist bridge traversal while preserving stop
+and reverse input. Remove obsolete interior map boundaries while preserving real
+terrain/prop collision. See [implementation and verification](ENCOUNTER_FLOW.md).

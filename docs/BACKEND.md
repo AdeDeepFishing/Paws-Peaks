@@ -5,9 +5,9 @@
 **Sketch → OpenAI description → OpenAI image edit → Meshy T2 → untextured GLB.**
 
 The backend consists of local Python 3.9+ command-line scripts using only the standard
-library. Use the shared `backend/.venv` and ignored `backend/.env`. The scripts are
-not connected to the Godot drawing action yet. A future desktop integration must run
-blocking work away from the game main thread; a Web export cannot launch Python.
+library. Use the shared `backend/.venv` and ignored `backend/.env`. The desktop drawing action runs the pipeline asynchronously through
+`backend/game_bridge/run.py`; see [desktop integration](DESKTOP_GENERATION.md).
+A Web export cannot launch Python.
 
 ## Setup and run
 

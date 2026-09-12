@@ -55,7 +55,10 @@ def wait_for_task(fetch):
     raise AppError("POLL_TIMEOUT", "Task may still be running; check the saved task ID instead of resubmitting.")
 
 
-def main(argv=None):
+def main(argv=None, *, output_folder=None, on_event=None):
+    def emit(event):
+        if on_event is not None:
+            on_event(event)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", type=Path, default=DEFAULT_IMAGE)
     parser.add_argument("--style-prompt", default=STYLE_PROMPT)
@@ -66,7 +69,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not 100 <= args.target_faces <= 15000:
         parser.error("T2 target faces must be between 100 and 15000.")
-    folder = ROOT / "output/sketch_to_model" / uuid4().hex
+    folder = Path(output_folder) if output_folder is not None else ROOT / "output/sketch_to_model" / uuid4().hex
     profile = Profiler(True, "sketch_to_model", "pipeline")
     outcome = "ERROR"
     try:
@@ -82,12 +85,14 @@ def main(argv=None):
             return 0
         folder.mkdir(parents=True)
         print("Output folder: " + str(folder), file=sys.stderr, flush=True)
+        emit({"stage": "description", "status": "PENDING"})
         with measure("description_stage"):
             description = interpret(image, config, prompt=SKETCH_PROMPT)
         save_job(folder / "description.json", description)
         if description["status"] != "recognized":
             raise AppError("UNCERTAIN_SKETCH", "Sketch was ambiguous; no Meshy jobs submitted.")
         print(json.dumps({"stage": "description", "result": description}), flush=True)
+        emit({"stage": "reference_image", "status": "PENDING", "item": description["item"]})
         prompt = reference_prompt(description["item"], args.style_prompt)
         (folder / "reference_prompt.txt").write_text(prompt)
         with measure("reference_image_stage"):
@@ -95,6 +100,7 @@ def main(argv=None):
                                             args.openai_image_model, args.openai_image_size)
             mesh_input = {"image_url": image_input(reference)}
         print(json.dumps({"stage": "reference_image", "path": str(reference)}), flush=True)
+        emit({"stage": "model", "status": "PENDING"})
         with measure("model_stage"):
             mesh_payload = {**mesh_input, "ai_model": "meshy-t2",
                             "model_type": "smart-topology", "target_polycount": args.target_faces,
@@ -104,13 +110,16 @@ def main(argv=None):
             job = wait_for_task(lambda: refresh_job(job_path, config))
             model_path = download_model(job, folder / "model.glb")
         print(json.dumps({"stage": "model", "status": "SUCCEEDED", "path": model_path}), flush=True)
+        emit({"stage": "complete", "status": "SUCCEEDED", "item": description["item"], "model_path": str(model_path)})
         outcome = "SUCCEEDED"
         return 0
     except AppError as error:
+        emit({"stage": "error", "status": "FAILED", "error": error.code})
         print(json.dumps({"error": error.code, "output_folder": str(folder)}))
         print(str(error), file=sys.stderr)
         return 1
     except (OSError, ValueError, KeyError, TypeError):
+        emit({"stage": "error", "status": "FAILED", "error": "LOCAL_OR_RESPONSE_ERROR"})
         print(json.dumps({"error": "LOCAL_OR_RESPONSE_ERROR", "output_folder": str(folder)}))
         return 1
     finally:

@@ -30,7 +30,8 @@ class PipelineTests(unittest.TestCase):
             stack.enter_context(patch.object(run, "download_model", return_value="model.glb"))
             stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
             stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
-            code = run.main([])
+            self.events = []
+            code = run.main([], on_event=self.events.append)
             return code, reference, create
 
     def test_uncertain_stops_before_image_generation(self):
@@ -55,6 +56,8 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(reference.call_args.args[-1], "816x816")
         self.assertEqual(reference.call_args.args[-2], "gpt-image-2.5-flare")
         payload = create.call_args.args[0]
+        self.assertEqual([event["stage"] for event in self.events], ["description", "reference_image", "model", "complete"])
+        self.assertEqual(self.events[-1]["model_path"], "model.glb")
         self.assertEqual(payload["image_url"], "edited-image")
         self.assertNotIn("input_task_id", payload)
         self.assertEqual(payload["ai_model"], "meshy-t2")

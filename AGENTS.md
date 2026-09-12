@@ -16,3 +16,9 @@
 - Run `backend/.venv/bin/python -m unittest discover -s backend/tests -v` after backend changes.
 - Use offline tests and `--dry-run` by default. Make paid live calls only within the user's authorized testing scope.
 - Before committing or pushing backend work, verify ignored files and scan the staged content for credentials without displaying their values.
+
+## Issue tracking
+
+- When creating a ticket, also add it to the Four Otters project Kanban: https://github.com/users/AdeDeepFishing/projects/1 .
+- Set its Status to match the work: To Do before starting, In progress while implementing, and In review when ready for user review. Do not mark unreviewed work Done.
+- If the user requests a title-only ticket, leave its body empty.

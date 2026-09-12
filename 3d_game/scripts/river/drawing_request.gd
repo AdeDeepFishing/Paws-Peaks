@@ -16,6 +16,7 @@ var active_id := ""
 var encounter_id := ""
 var snapshot := PackedByteArray()
 var result: Dictionary = {}
+var model_path := ""
 var message := ""
 var generation := 0
 var deadline_ms := 0
@@ -34,6 +35,7 @@ func submit(png: PackedByteArray, encounter: String, mock_outcome: int = 0) -> b
 	active_id = "E01-%d-%d" % [Time.get_ticks_usec(), generation]
 	encounter_id = encounter
 	snapshot = png.duplicate()
+	model_path = ""
 	result = {}
 	message = ""
 	deadline_ms = Time.get_ticks_msec() + int(timeout_seconds * 1000.0)
@@ -83,6 +85,10 @@ func accept_response(response: Dictionary) -> bool:
 	if response.get("status") != "recognized" or not valid_item(response.get("item")):
 		_fail("The response format was not valid. Try again.")
 		return false
+	if not response.get("model_path", "") is String:
+		_fail("The model response was not valid.")
+		return false
+	model_path = response.get("model_path", "")
 	result = response["item"].duplicate(true)
 	_set_state("READY")
 	return true
@@ -120,8 +126,13 @@ func cancel() -> void:
 func reset() -> void:
 	cancel()
 	snapshot = PackedByteArray()
+	model_path = ""
 	result = {}
 	message = ""
+
+func fail_current(reason: String) -> void:
+	if state in ["PENDING", "READY"]:
+		_fail(reason)
 
 func _fail(reason: String) -> void:
 	message = reason

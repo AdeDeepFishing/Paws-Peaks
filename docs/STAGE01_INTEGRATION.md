@@ -23,8 +23,9 @@ supply their own Camera3D and composition without modifying the player controlle
 The current camera stays in place while walking, jumping, drawing and restarting.
 
 WASD or arrow keys follow the active camera's horizontal axes. Space jumps; Shift sprints.
-The pointer stays visible and never controls the camera. E opens the sketchbook
-near the left bank; Escape closes the panel. Drawing blocks movement and jumping.
+The pointer stays visible and never controls the camera. E or the pen prompt starts transparent scene drawing
+inside the left-bank trigger; Escape cancels while retaining the draft. Drawing blocks
+movement and jumping and hides the regular HUD. See [Scene drawing](SCENE_DRAWING.md).
 
 ## Art and gameplay wiring
 
@@ -63,3 +64,12 @@ remain unverified. The bundled transparent paint geometry is relatively dense;
 this integration has not established production performance targets.
 
 ![First-stage gameplay](assets/stage01/gameplay.png)
+
+## Idle player cue (#13)
+
+The earlier YOU label and arrow have been replaced by three small model hops,
+followed by a four-second rest. Movement, jumping, drawing and focus loss cancel
+the cue immediately. It resumes after 0.8 seconds idle; tune `idle_hop_delay` and
+`idle_hop_height` on the player. Only the visual model moves; the capsule and
+camera remain grounded and stationary. This avoids accidental movement, pickups
+or trigger changes. A local check verified the hop count, rest and cancellation.

@@ -1,3 +1,5 @@
+> Issue #12 update: [Scene drawing and PNG handoff](SCENE_DRAWING.md) supersedes the old sketchbook panel layout. Drawing now uses the transparent viewport and a location-gated pen prompt.
+
 > Camera/art update: mouse orbit and the graybox were superseded by the fixed overhead stag01 integration. See [Stage 01 integration](STAGE01_INTEGRATION.md) for current scene and camera settings.
 
 # Day 1 — River Prototype Handoff
