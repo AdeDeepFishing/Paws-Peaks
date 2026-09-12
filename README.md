@@ -69,6 +69,12 @@ designer replacement points, tests, and current limitations.
 
 ## Team workflow
 
+For the separate narrative and 3D API scripts, see [local AI setup](docs/AI_LOCAL_SETUP.md).
+`backend/sketch_to_narrative/` uses OpenAI; `backend/image_text_to_3d/` uses Meshy to
+generate untextured geometry from images. Both share `backend/.venv` and an ignored `backend/.env`.
+These helpers are not yet connected to the game's drawing action.
+See [backend development instructions](docs/BACKEND.md) for conventions, contracts, and credential handling.
+
 Clone the GitHub repository to get your own local copy, then import `3d_game/project.godot` in Godot.
 Pull before working, coordinate who edits each scene, and commit small changes.
 Commit source assets and Godot scene files. Do not commit the generated `.godot/` folder or API keys.
