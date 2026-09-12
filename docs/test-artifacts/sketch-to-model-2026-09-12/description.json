@@ -1,0 +1,16 @@
+{
+  "status": "recognized",
+  "item": {
+    "name": "Ladder",
+    "description": "A hand-drawn ladder with rungs and side rails, perfect for climbing up or down in Paws & Peaks.",
+    "type": "TOOL",
+    "attack_power": 0,
+    "range": 3,
+    "speed": 1.2,
+    "durability": 7,
+    "tags": [
+      "LONG_REACH",
+      "STURDY"
+    ]
+  }
+}

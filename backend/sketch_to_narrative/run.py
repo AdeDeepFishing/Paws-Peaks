@@ -106,7 +106,7 @@ def parse_response(response):
         raise invalid from None
 
 
-def interpret(image, config):
+def interpret(image, config, prompt=PROMPT):
     """Make one synchronous provider call. Run off the game main thread later."""
     key = config["OPENAI_API_KEY"]
     if not key or key.lower().startswith(("your_", "paste_")):
@@ -118,7 +118,7 @@ def interpret(image, config):
     payload = {
         "model": config["OPENAI_MODEL"], "store": False, "max_output_tokens": 800,
         "input": [
-            {"role": "system", "content": PROMPT},
+            {"role": "system", "content": prompt},
             {"role": "user", "content": [{"type": "input_image", "image_url": image, "detail": "auto"}]},
         ],
         "text": {"format": {"type": "json_schema", "name": "drawing_interpretation", "strict": True, "schema": SCHEMA}},
