@@ -12,8 +12,9 @@
 
 ## Current scope
 
-Confirmed with Yanwen on September 12: retain first-person movement, use a lower-right
-sketchbook with an E shortcut, and implement a bridge before considering a raft.
+Updated with the team on September 12 for issue #1: use third-person movement, a lower-right
+sketchbook with an E shortcut, and a bridge before considering a raft. This supersedes the
+earlier first-person prototype decision.
 The first encounter is the river; the otter remains Stage 4.
 
 The startup scene is `3d_game/scenes/river/river_crossing.tscn`. The original dungeon
@@ -32,7 +33,8 @@ mock result. No real image recognition, network call, API credential, or AI cost
 | File | Responsibility |
 |---|---|
 | `scenes/river/river_crossing.tscn` | Editable placeholder world, collision, trigger, coins, bridge, player, request node |
-| `scripts/river/river_player.gd` | Extends Brackeys movement; modal/focus input handling and safe respawn |
+| `scenes/river/river_player.tscn` | Editable block hiker, capsule collision, and SpringArm3D camera rig |
+| `scripts/river/river_player.gd` | Reuses Brackeys input settings/helpers; camera-relative movement, visual facing, orbit, input locks, and respawn |
 | `scripts/river/drawing_surface.gd` | Logical 512 × 512 strokes, UI drawing, undo/clear, PNG rasterization |
 | `scripts/river/river_level.gd` | First-stage UI, encounter outcome, collection/progression, placeholder sounds |
 | `scripts/river/drawing_request.gd` | Beichun's integration boundary; mock transport, request identity, deadline, result validation |
@@ -102,6 +104,18 @@ may represent numbers as floats. Names/descriptions are displayed as plain text.
 
 ## Rules and lifecycle
 
+- Camera input is confirmed: click to capture, move the mouse to orbit, and release for UI.
+- WASD movement follows camera yaw, without pitch affecting ground speed. The visual character
+  turns toward travel; idle camera orbit leaves character facing unchanged.
+- Camera pivot height is 1.25 units, normal distance 5 units, initial pitch about -16 degrees,
+  with pitch clamped from -55 to +15 degrees. These feel parameters can be tuned during playtesting.
+- A sphere-cast SpringArm3D shortens the camera distance around collidable geometry, excludes the
+  player's own collider, and restores distance when clear. The model hides only when the camera
+  is closer than 0.8 units, preventing an inside-the-body view in very tight spaces.
+- The capsule physics body remains upright. Replace the placeholder meshes under `Model` when
+  final character art is ready; keep the rig and collision node paths. The current limb swing
+  is procedural placeholder animation, not a final rigged character animation set.
+
 - The drawing area unlocks the book. E opens it when grounded; drawing stops movement/look.
 - Escape closes UI and releases the cursor. E or the Close button restores captured exploration.
 - Submitting closes the panel, takes an independent PNG snapshot, and returns movement immediately.
@@ -149,7 +163,9 @@ godot --headless --path 3d_game --script res://tests/river_smoke.gd
 The checks instantiate the actual level, produce a PNG through drawing input, verify UI
 movement locking and immutable request payloads, collect during a pending request, fall/respawn,
 reject stale/malformed results, build the bridge, and walk across its collision to completion.
-They also check restart, unsuitable ideas, timeouts, and all four mock outcomes.
+They also check idle orbit, camera-relative movement and facing, pitch clamps, normalized
+diagonal sprint, camera retraction/recovery against a physical wall, modal camera locking,
+restart, unsuitable ideas, timeouts, and all four mock outcomes.
 
 For local render inspection on macOS:
 

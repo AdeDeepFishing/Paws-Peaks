@@ -345,7 +345,7 @@ func _build_ui() -> void:
 	status_label.add_theme_color_override("font_shadow_color", Color("273d36"))
 	status_label.add_theme_constant_override("shadow_offset_x", 1)
 	status_label.add_theme_constant_override("shadow_offset_y", 2)
-	controls = _label(root, "WASD  Move    SPACE  Jump    SHIFT  Sprint\nClick to look around    ESC  Release mouse", 14)
+	controls = _label(root, "WASD  Move    SPACE  Jump    SHIFT  Sprint\nClick + mouse  Orbit camera    ESC  Release mouse", 14)
 	controls.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	controls.position += Vector2(28, -56)
 	controls.add_theme_color_override("font_color", Color("fff9ed"))
@@ -363,14 +363,6 @@ func _build_ui() -> void:
 	book_preview.modulate = Color("e4e7d5")
 	book.add_child(book_preview)
 	book_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var crosshair := _label(root, "+", 22)
-	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	crosshair.offset_left = -8
-	crosshair.offset_right = 8
-	crosshair.offset_top = -16
-	crosshair.offset_bottom = 16
-	crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	crosshair.add_theme_color_override("font_color", Color("fff9ed"))
 	modal = Control.new()
 	modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(modal)

@@ -1,6 +1,6 @@
 # Paws & Peaks — Game Jam Specification
 
-> Version: 0.4 | Updated: 2026-09-12 | Status: Working draft
+> Version: 0.5 | Updated: 2026-09-12 | Status: Working draft
 >
 > Team: Four Otters — two designers and two developers, all new to Godot.
 > Production: September 12–15, 2026 (Asia/Tokyo, JST, UTC+09:00). September 12 is Day 1; production and asset generation may begin now, as confirmed by the team.
@@ -79,7 +79,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 | Exploration | Confirmed | The player can freely walk and explore within the playable area |
 | World presentation | Original direction; implementation proposal below | Small 3D storybook environment, potentially using flat illustrated characters and props |
 | Movement abilities | Requested | Walking, jumping, sprinting, physics pushing, and climbing; bounded implementations in Section 4 |
-| Camera and input details | First-stage prototype confirmed | First-person, WASD, Space, Shift; E opens the lower-right sketchbook; drawing locks movement/look, submission restores exploration. Push/climb remain later work |
+| Camera and input details | First-stage prototype confirmed | Third-person; WASD follows camera yaw and the character faces travel; Space, Shift; E opens the lower-right sketchbook; drawing locks movement/look, submission restores exploration. Push/climb remain later work |
 | Coins and AI waiting | Requested | Collect along routes and in nearby activity areas while AI runs in the background |
 | Coin spending | Open | Default proposal: collection count and an ending reward; essential drawings stay free |
 | Language | Confirmed | English throughout the game and repository |
@@ -102,7 +102,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
 - The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
-- The first-stage graybox implements walking/jumping/sprinting, modal drawing with PNG export, a background request boundary with explicit mock responses, item inspection, collectible coins, a fixed bridge, fall recovery, and completion/restart. See [DAY1_HANDOFF.md](DAY1_HANDOFF.md). Real AI, final art/audio, push/climb, E02–E05, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
+- The first-stage graybox implements a third-person placeholder hiker, camera-relative movement, collision-aware orbit camera, walking/jumping/sprinting, modal drawing with PNG export, a background request boundary with explicit mock responses, item inspection, collectible coins, a fixed bridge, fall recovery, and completion/restart. See [DAY1_HANDOFF.md](DAY1_HANDOFF.md). Real AI, final art/audio, push/climb, E02–E05, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 
 ## 3. Release scope
@@ -165,10 +165,10 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 
 | Action | Input | Behavior |
 |---|---|---|
-| Move | WASD | First-person ground movement; arrow-key aliases remain optional |
+| Move | WASD | Camera-relative ground movement; character turns toward travel; arrow-key aliases remain optional |
 | Jump | Space | One reliable grounded jump; no double jump required |
 | Sprint | Hold Shift while moving | Fixed faster speed; no stamina meter |
-| Camera | Click the world, then move the mouse | First-person mouse look with clamped pitch; Escape releases the cursor |
+| Camera | Click the world, then move the mouse | Third-person orbit with clamped pitch; idle orbit does not turn the character; collision-aware follow distance; Escape releases the cursor |
 | Interact | E or click the lower-right sketchbook after releasing the cursor | Near the river, unlock the sketchbook. E opens/closes it when grounded; later interactions remain to be designed |
 | Push crate | Walk into a marked small crate | Apply bounded force; do not push every scenery object |
 | Climb | E at a marked ladder/vine, then W/S | Follow the authored climb route; E exits at a safe location |
@@ -183,7 +183,7 @@ WASD moves the character; mouse input controls the camera, interactions, and dra
 
 - Use named input actions. Normalize diagonal input and release movement/camera input when focus is lost or a modal opens.
 - Jump and sprint should be forgiving; optional short input buffering/coyote time may be reused from a controller but must be verified.
-- Drawing cannot rotate the camera. The confirmed prototype captures the cursor for first-person exploration and releases it for drawing/UI; Escape also releases it. Verify this transition separately in the browser.
+- Drawing cannot rotate the camera. The confirmed prototype captures the cursor for third-person exploration and releases it for drawing/UI; Escape also releases it. Verify this transition separately in the browser.
 - Pushable crates have limited mass/force, simple collision, and a bounded area. Reset displaced crates to an authored position when needed; prevent launches, gate bypasses, and permanent blockage.
 - Climbing means designated ladders/vines with safe entry and exit. Arbitrary mountain-wall climbing is not assumed and remains a question for the user.
 - Falling or becoming stuck returns the player to a safe checkpoint, preserving collected coins, solved encounters, and the active AI request. Do not reload the entire scene or restart the network call.
@@ -873,6 +873,7 @@ This file is the shared scope reference and may be updated by teammates as decis
 
 | Version | Date | Change |
 |---|---|---|
+| 0.5 | 2026-09-12 | Team decision supersedes first-person with third-person: captured mouse orbit, camera-relative movement, independent visual facing, placeholder hiker, camera collision, and retained drawing input locks (issue #1) |
 | 0.4 | 2026-09-12 | Confirmed first-person + E sketchbook + bridge-first prototype; recorded implemented graybox and mock limitations; assigned Yanwen canvas/client work and Beichun AI/backend work |
 | 0.3 | 2026-09-12 | Recorded confirmed production/submission dates and yanwen fallback; replaced old three-stage proposal with river/dog/crows/otter/boss; first three premises confirmed, E04/E05 design open; synchronized schedule, tasks, voice and acceptance |
 | 0.2 | 2026-09-12 | Added voiced narration/dialogue, background AI with playable coin collection, jump/sprint/bounded push/climb and mouse controls, five required item fields, reuse research, and corresponding milestones/tests |

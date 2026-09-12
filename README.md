@@ -34,14 +34,15 @@ Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 
 - `3d_game/project.godot`: the active Godot project settings.
 - `3d_game/scenes/river/river_crossing.tscn`: the first-stage prototype and startup scene.
-- `3d_game/scripts/river/`: drawing UI, player input modes, encounter logic, and the AI handoff boundary.
+- `3d_game/scripts/river/`: drawing UI, third-person controls, encounter logic, and the AI handoff boundary.
+- `3d_game/scenes/river/river_player.tscn`: placeholder hiker and collision-aware follow camera.
 - `3d_game/main.tscn`: the original Brackeys dungeon demo, retained as a reference.
 - `3d_game/scenes/`, `3d_game/models/`, and `3d_game/addons/`: template scenes, assets, and controller.
 - `docs/`: game specification and research.
 - `.gitignore`: keeps generated files, local exports, and common secret files out of Git.
 - `.gitattributes`: normalizes text line endings across team computers.
 
-The first-stage prototype now includes first-person walking/jumping/sprinting, a river graybox,
+The first-stage prototype now includes third-person walking/jumping/sprinting, a river graybox,
 eight collectible coins, a collapsible drawing panel, 512 × 512 PNG output, asynchronous mock
 responses, an item card, a walkable bridge, fall recovery, and an ending/restart loop.
 Simple synthesized feedback sounds are included; final art, music, voiced narration, real AI,
@@ -49,7 +50,10 @@ pushing/climbing, the remaining four stages, and Web deployment are still outsta
 
 ## Try the first stage
 
-1. Click the game to capture the mouse. **WASD** moves, **Space** jumps, **Shift** sprints.
+1. Click the game to capture the mouse. Move the mouse to orbit the placeholder hiker.
+   **WASD** moves relative to the camera, **Space** jumps, **Shift** sprints.
+   The hiker turns toward travel; orbiting while idle does not turn the hiker.
+   The camera retracts around obstacles and returns when clear.
 2. Approach the river post. Press **E** to expand the sketchbook; drawing pauses movement and camera input.
 3. Draw with the left mouse button. Undo and Clear are available; closing preserves the draft.
 4. Leave **Test: bridge** selected and submit. The **PROTOTYPE · NO AI** indicator is deliberate:
