@@ -125,6 +125,15 @@ class ModelTests(unittest.TestCase):
             self.assertNotIn(CONFIG["MESHY_API_KEY"], str(caught.exception))
             self.assertNotIn("secret provider body", str(caught.exception))
 
+    def test_status_output_omits_signed_url(self):
+        output = io.StringIO()
+        job = {"status": "SUCCEEDED", "task_id": "test-task", "glb_url": "https://assets.meshy.ai/model.glb?private-token"}
+        with patch.object(app, "load_config", return_value=CONFIG), \
+                patch.object(app, "refresh_job", return_value=job), redirect_stdout(output):
+            self.assertEqual(app.main(["status", "--job", "unused.json"]), 0)
+        self.assertNotIn("private-token", output.getvalue())
+        self.assertEqual(json.loads(output.getvalue())["task_id"], "test-task")
+
 
 if __name__ == "__main__":
     unittest.main()
