@@ -213,9 +213,9 @@ No resolution parameter was sent. Background removal was omitted in this run; th
 }
 ```
 
-[Generated reference PNG](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/reference.png)
+[Generated reference PNG](test-artifacts/sketch-to-model-2026-09-12/reference.png)
 
-![Generated reference image](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/reference.png)
+![Generated reference image](test-artifacts/sketch-to-model-2026-09-12/reference.png)
 
 Visual inspection: the image retains the triangular bracing and diagonal silhouette, with shaded rounded rails and a pencil-like appearance on a plain light background. It is a reference-image interpretation, not proof that the object functions as a ladder. The returned signed image URL was used for a local download and is excluded from this report.
 
@@ -255,7 +255,7 @@ No texture prompt, remeshing or topology parameter was sent. T2 Smart Topology g
 }
 ```
 
-[Download/open local GLB](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/model.glb)
+[Download/open generated GLB](test-artifacts/sketch-to-model-2026-09-12/model.glb)
 
 GLB magic, version and declared size were validated; triangle counts were read from primitive accessors. No visual 3D inspection, Godot import, collision validation or gameplay integration was performed. The signed model URL remains in the ignored local manifest and is excluded here.
 
@@ -335,18 +335,15 @@ API activity: one OpenAI request, two Meshy task-creation requests, 41 Meshy sta
 
 ## 6. Artifact inventory
 
-Paths are local links relative to this report. Generated artifacts are ignored by Git, so these links work in this checkout but will not automatically be available to teammates from a clone. No credentials or signed URLs are copied into this report.
+The test artifacts below are committed under `docs/test-artifacts/sketch-to-model-2026-09-12/` and available to teammates after cloning or pulling. Image and GLB bytes are unchanged from the live run. Task identities and timing results are recorded above. Separate task manifests and profile files remain local in ignored `backend/output/`; signed asset URLs are omitted from the report.
 
 | Artifact | Bytes | Details |
 |---|---:|---|
 | [E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png](../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png) | 5,762 | 512 × 512 PNG |
-| [description.json](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/description.json) | 339 |  |
-| [reference_prompt.txt](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/reference_prompt.txt) | 382 |  |
-| [image_job.json](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/image_job.json) | 113 | Local task manifest; do not publish its contents |
-| [reference.png](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/reference.png) | 1,043,672 | 1024 × 1024 PNG |
-| [model_job.json](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/model_job.json) | 769 | Local task manifest; do not publish its contents |
-| [model.glb](../backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/model.glb) | 18,580 |  |
-| [66bd051e5de64dec9874e50fe837a27d.json](../backend/output/profiles/66bd051e5de64dec9874e50fe837a27d.json) | 1,182 |  |
+| [description.json](test-artifacts/sketch-to-model-2026-09-12/description.json) | 339 |  |
+| [reference_prompt.txt](test-artifacts/sketch-to-model-2026-09-12/reference_prompt.txt) | 382 |  |
+| [reference.png](test-artifacts/sketch-to-model-2026-09-12/reference.png) | 1,043,672 | 1024 × 1024 PNG |
+| [model.glb](test-artifacts/sketch-to-model-2026-09-12/model.glb) | 18,580 |  |
 
 
 ### Binary artifact fingerprints
@@ -355,9 +352,9 @@ Paths are local links relative to this report. Generated artifacts are ignored b
 
 b9f685d77167b49b6715e94146b0e03073bda5a89c9f7148640273904f2d19d8  tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png
 
-078cc48b054723a0338627834c9f709d63f2ff2eedcb48be65b6ba8f80ab6a4a  backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/reference.png
+078cc48b054723a0338627834c9f709d63f2ff2eedcb48be65b6ba8f80ab6a4a  docs/test-artifacts/sketch-to-model-2026-09-12/reference.png
 
-4a1350cb99d0b1634a4dc0bd5bc5f6213b1fe986bce8357d14bb666ddd0ccf3f  backend/output/sketch_to_model/54e17e2fce574b37a59c8894d4c7a306/model.glb
+4a1350cb99d0b1634a4dc0bd5bc5f6213b1fe986bce8357d14bb666ddd0ccf3f  docs/test-artifacts/sketch-to-model-2026-09-12/model.glb
 
 ```
 
