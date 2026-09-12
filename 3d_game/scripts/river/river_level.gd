@@ -8,6 +8,8 @@ const CROSSING := Vector3(0, 0, 8)
 @onready var request = $DrawingRequest
 @onready var bridge: Node3D = $Bridge
 
+var drawing_export_directory := "user://drawings"
+
 var unlocked := false
 var bridge_built := false
 var completed := false
@@ -183,12 +185,36 @@ func _submit() -> void:
 	if not request.submit(png, "E01", choices.selected):
 		info.text = "Draw something first, and finish or cancel any pending request."
 		return
-	DirAccess.make_dir_recursive_absolute("user://drawings")
-	var file := FileAccess.open("user://drawings/E01-latest.png", FileAccess.WRITE)
-	if file:
-		file.store_buffer(png)
+	var saved_path := _save_drawing(png)
 	_close_panel(true)
+	if saved_path.is_empty():
+		status_label.text = "Drawing submitted, but the local PNG could not be saved."
 	_play("submit")
+
+func _save_drawing(png: PackedByteArray) -> String:
+	if DirAccess.make_dir_recursive_absolute(drawing_export_directory) != OK:
+		push_warning("Could not create the drawing export directory.")
+		return ""
+	var timestamp := Time.get_datetime_string_from_system().replace(":", "-")
+	var stem := "E01-%s-%s" % [timestamp, Crypto.new().generate_random_bytes(8).hex_encode()]
+	var path := drawing_export_directory.path_join(stem + ".png")
+	var suffix := 1
+	while FileAccess.file_exists(path):
+		path = drawing_export_directory.path_join("%s-%d.png" % [stem, suffix])
+		suffix += 1
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_warning("Could not open the drawing export file: " + path)
+		return ""
+	file.store_buffer(png)
+	file.flush()
+	var error := file.get_error()
+	file.close()
+	if error != OK:
+		push_warning("Could not finish saving the drawing: " + path)
+		return ""
+	print("Drawing saved: " + ProjectSettings.globalize_path(path))
+	return path
 
 func _on_request_state(state: String) -> void:
 	match state:

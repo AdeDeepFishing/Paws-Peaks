@@ -34,6 +34,7 @@ func screenshot(name: String) -> void:
 func run() -> void:
 	root.size = Vector2i(1152, 720)
 	level = Level.instantiate()
+	level.drawing_export_directory = "user://test-drawings/river-smoke"
 	root.add_child(level)
 	await frames(8)
 	check(level.player.is_on_floor(), "Player spawns on the near bank")
@@ -61,6 +62,16 @@ func run() -> void:
 	Input.action_release("jump")
 	check(level.player.position.distance_to(before) < 0.1, "Movement and jumping are blocked while drawing")
 	var canvas = level.surface
+	var sample := Image.create(512, 512, false, Image.FORMAT_RGB8)
+	sample.fill(Color.WHITE)
+	var first_png := sample.save_png_to_buffer()
+	var first_path: String = level._save_drawing(first_png)
+	sample.fill(Color.BLACK)
+	var second_png := sample.save_png_to_buffer()
+	var second_path: String = level._save_drawing(second_png)
+	check(not first_path.is_empty() and first_path != second_path, "Repeated exports have distinct filenames")
+	check(FileAccess.get_file_as_bytes(first_path) == first_png, "Earlier drawing stays unchanged after another export")
+	check(FileAccess.get_file_as_bytes(second_path) == second_png, "New drawing is saved with its own content")
 	check(canvas.snapshot_png().is_empty(), "Empty canvas cannot be exported")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT

@@ -69,9 +69,16 @@ Request:
 
 The image is 512 × 512, dark ink on a light background, with a 1 MiB maximum.
 `DrawingSurface.snapshot_png()` also exposes the raw `PackedByteArray` for local tests.
-The latest submitted PNG is written to `user://drawings/E01-latest.png`; use Godot's
-Open User Data Folder command to retrieve it. This local copy is overwritten on submission
-and is not committed. The signal payload is the primary integration interface.
+Each accepted submission saves an independent PNG under `user://drawings/`, named
+`E01-<local-date-and-time>-<random-id>.png`. Earlier files, including any legacy
+`E01-latest.png`, are preserved across submissions and game restarts. Use Godot's
+Open User Data Folder command to retrieve them. These files are local and are not
+automatically copied to the repository or uploaded to GitHub. Automated smoke tests
+use `user://test-drawings/river-smoke/` to keep synthetic drawings out of player samples.
+Restart an already-running game to load this export behavior. The signal payload
+remains the primary integration interface.
+
+See [Sketch samples](SKETCH_SAMPLES.md) for real player drawings committed for AI testing.
 
 Recognized response:
 
