@@ -6,9 +6,12 @@ A four-day game jam project about drawing objects to solve animal encounters.
 
 ## Documentation
 
+See [Sketch-to-model stage classes](docs/backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#current-multi-stage-request-contract) for the **River, Dog, Crows and Otter
+classification sets**, request format, and result logs.
+
 Read [SPEC.md](docs/SPEC.md) for the draft gameplay scope, traversal and coins, background AI and item stats,
 narration/dialogue, music and sound, team responsibilities, milestones, and acceptance checks.
-See [reuse research](docs/REUSE_RESEARCH.md) for candidate Godot foundations, version pins, and license notes.
+See [reuse research](docs/3d_game/REUSE_RESEARCH.md) for candidate Godot foundations, version pins, and license notes.
 Open decisions are marked explicitly; this specification describes planned work, not implemented features.
 
 Keep specifications, research, planning, and credits in `docs/`. This README stays at the repository
@@ -71,12 +74,12 @@ Stick movement is analog with a 0.2 deadzone; the camera remains fixed.
 
 In **Mock bridge · No AI** mode, the other test responses cover unsuitable objects, unclear drawings, and service failure.
 Each submitted drawing is saved to a unique `user://drawings/E01-<timestamp>-<id>.png` (Godot's user-data directory),
-not the repository. See [Day 1 handoff](docs/DAY1_HANDOFF.md) for Beichun's API boundary,
-designer replacement points, tests, and current limitations.
+not the repository. See [desktop integration](docs/3d_game/DESKTOP_GENERATION.md) for the request boundary,
+generation modes, tests, and current limitations.
 
-See [Scene drawing and PNG handoff](docs/SCENE_DRAWING.md) for issue #12, controls and a sample PNG.
+See [Scene drawing and PNG handoff](docs/3d_game/SCENE_DRAWING.md) for issue #12, controls and a sample PNG.
 
-See [Stage 01 integration](docs/STAGE01_INTEGRATION.md) for camera settings, asset details, and import fixes.
+See [Stage 01 integration](docs/3d_game/STAGE01_INTEGRATION.md) for camera settings, asset details, and import fixes.
 
 ## API keys for local AI features
 
@@ -100,7 +103,7 @@ Open `backend/.env` in your editor and fill in only the keys for the features yo
 
 Leave the model settings at their template defaults to start. The scripts load
 `backend/.env` automatically; environment variables with the same names take precedence.
-See [local AI setup](docs/AI_LOCAL_SETUP.md) for Python setup and run commands.
+See [local AI setup](docs/backend/AI_LOCAL_SETUP.md) for Python setup and run commands.
 
 **Keep keys private.** `backend/.env` is ignored by Git; commit only the blank
 `backend/.env.example` template. Never put keys in source code, screenshots, logs,
@@ -122,19 +125,19 @@ backend/.venv/bin/python backend/sketch_to_model/run.py --image path/to/sketch.p
 ```
 
 Omit `--image` to use the saved sample sketch; add `--dry-run` to validate inputs
-without API calls. The flow uses OpenAI description → low-quality 816 × 816 OpenAI
-image edit → untextured Meshy T2 (~1,000 faces). Outputs and timings are saved locally.
-See the [test report](docs/SKETCH_TO_MODEL_RUN_2026-09-12.md) for results and limitations.
+without API calls. The flow uses separate OpenAI interpretation and low-quality 816 × 816 image-edit
+requests, then untextured Meshy T2 (~1,000 faces) and a local PNG preview. Outputs and timings are saved locally.
+See the [test report](docs/backend/SKETCH_TO_MODEL_RUN_2026-09-12.md) for results and limitations.
 The latest run took 19.70 seconds; the generated shape still needs review.
 
 ## Team workflow
 
-For the separate narrative and 3D API scripts, see [local AI setup](docs/AI_LOCAL_SETUP.md).
+For the separate narrative and 3D API scripts, see [local AI setup](docs/backend/AI_LOCAL_SETUP.md).
 `backend/sketch_to_narrative/` uses OpenAI; `backend/image_text_to_3d/` uses Meshy to
 generate untextured geometry from images. Both share `backend/.venv` and an ignored `backend/.env`.
-The desktop drawing action connects through `backend/game_bridge/` to the combined pipeline.
-See [desktop generation](docs/DESKTOP_GENERATION.md) for modes, setup, cancellation, and limitations.
-See [backend development instructions](docs/BACKEND.md) for conventions, contracts, and credential handling.
+The desktop drawing action connects through `backend/game_bridge/` to the sketch-to-model pipeline.
+See [desktop generation](docs/3d_game/DESKTOP_GENERATION.md) for modes, setup, cancellation, and limitations.
+See [backend development instructions](docs/backend/BACKEND.md) for conventions, contracts, and credential handling.
 
 Clone the GitHub repository to get your own local copy, then import `3d_game/project.godot` in Godot.
 Pull before working, coordinate who edits each scene, and commit small changes.
@@ -146,7 +149,7 @@ Connect the existing drawing request boundary to Beichun's real AI service, then
 The target is Web. The template still uses Forward Plus; Compatibility rendering adaptation,
 export templates, an export preset, hosting, and browser verification remain to be done.
 
-See [construction flow and movement](docs/ENCOUNTER_FLOW.md) for the latest camera,
+See [construction flow and movement](docs/3d_game/ENCOUNTER_FLOW.md) for the latest camera,
 reward timing, and map-boundary changes.
 
 ## Preview the woodland scene
@@ -156,10 +159,10 @@ edge to enter the woodland automatically, without a completion dialog. You can a
 `3d_game/scenes/woodland/woodland_path.tscn` directly in Godot. Stage 2 currently
 provides the imported environment, wind and shadow animation, fixed-angle camera,
 and walking/jumping. Dog encounter gameplay is not yet implemented.
-See [Stage 02 integration](docs/STAGE02_INTEGRATION.md) for source ownership and checks.
+See [Stage 02 integration](docs/3d_game/STAGE02_INTEGRATION.md) for source ownership and checks.
 
 All three scene previews use the delivered Moonlit Wanderer protagonist, with idle, walking and
-running animations. See [hero integration](docs/HERO_INTEGRATION.md) for assets,
+running animations. See [hero integration](docs/3d_game/HERO_INTEGRATION.md) for assets,
 animation handling and the temporary jump pose.
 
 ## Preview Wind Hill
@@ -170,4 +173,4 @@ automatically, or run
 painted environment, restored textures, terrain collision, the shared protagonist
 and a 16-second wind animation at 80% of the delivered maximum strength.
 **Back to woodland** returns to Stage 2. Crow encounter gameplay remains unimplemented.
-See [Stage 03 integration](docs/STAGE03_INTEGRATION.md) for asset repair and checks.
+See [Stage 03 integration](docs/3d_game/STAGE03_INTEGRATION.md) for asset repair and checks.

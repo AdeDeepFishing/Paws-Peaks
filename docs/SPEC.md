@@ -102,11 +102,11 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
 - The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
-- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, collectible coins, a fixed bridge, fall recovery, and completion/restart. See [DAY1_HANDOFF.md](DAY1_HANDOFF.md). Real AI, final art/audio, push/climb, E02–E05, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
+- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, collectible coins, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E02–E05 gameplay, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 - Character integration update (2026-09-12): both playable scenes now use the supplied
   Moonlit Wanderer skinned model with idle, walk and run clips. Jumping retains a
-  temporary held pose; see [HERO_INTEGRATION.md](HERO_INTEGRATION.md). This replaces
+  temporary held pose; see [HERO_INTEGRATION.md](3d_game/HERO_INTEGRATION.md). This replaces
   the placeholder hiker referenced in the earlier baseline above. Issue #22 adds a
   20% larger Stage 2 visual, quieter idle timing, running animation after three seconds
   of continuous walking (speed rises from 4.0 to 7.5 units/second), and a drawing-time thinking stand-in.
@@ -288,6 +288,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 
 ### E01 — Across the River
 
+- **Confirmed classification (September 13):** backend classes are BRIDGE, BOAT, UNKNOWN. This changes recognition categories; it does not implement the deferred boat/raft traversal route.
+
 - **Confirmed premise:** the player wants to reach the other bank, but the river is too wide to cross unaided.
 - **Reference example:** the concept shows a raft-like drawing. Preserve the experience of drawing an aid and then using it to cross.
 - **Implementation proposal:** use E01 for the first drawing tutorial, guided by the narrator and short English UI prompts. The otter does not appear as the tutorial guide.
@@ -298,6 +300,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - **Acceptance:** the player learns draw -> submit -> explore while waiting -> inspect -> use; approved crossing routes work; failures permit retry without losing coins.
 
 ### E02 — The Large Dog
+
+- **Confirmed classification (September 13):** backend classes are FOOD, TOY, WEAPON, UNKNOWN. These are recognition categories; their gameplay effects and success rules remain to be defined.
 
 - **Confirmed premise:** a large growling dog stands in the player's way.
 - **Reference example:** the image shows the player with a drawn sword. A drawn weapon confronting the dog is the reference direction; exact attack and victory rules have not been specified in the meeting.
@@ -310,6 +314,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 
 ### E03 — The Crows
 
+- **Confirmed classification (September 13):** backend classes are BOW, MAGIC, UNKNOWN. These supersede shield/umbrella as classification choices; gameplay effects and success rules remain to be defined.
+
 - **Confirmed premise:** multiple crows descend, flap around the player, and obstruct the way.
 - **Reference examples:** the player holds a shield-like object; the drawing card shows an umbrella. Protection or repelling the flock is the reference direction, not restoring a stolen road sign.
 - **Candidate implementation:** a pre-authored protective effect for a shield or umbrella, represented by a proposed PROTECTS tag. The team must decide how this causes the flock to disperse or lets the player pass.
@@ -319,6 +325,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - **Acceptance:** the original sketch is visible during protection/repelling; flock feedback makes the outcome clear; waiting and retry remain safe.
 
 ### E04 — Meeting the Otter — DETAILS OPEN
+
+- **Confirmed classification (September 13):** backend classes are GIFT, TOOL, UNKNOWN. The otter task, gameplay effects and success rules remain open.
 
 - **Confirmed:** the fourth stage features meeting the otter. It follows the crow encounter.
 - **Reference tone:** a small otter appears lonely or interested in company. The illustration suggests gifts or play, including fish, flowers, or friendship motifs.
@@ -463,11 +471,11 @@ Error response:
 
 ### Required item fields and units
 
-Use lowercase snake_case JSON keys; the UI uses the human-readable labels requested by the team. All five fields are mandatory for every recognized item, including FOOD, ANIMAL, and UNKNOWN types.
+Use lowercase snake_case JSON keys; the UI uses the human-readable labels requested by the team. All five fields are mandatory for every recognized item, including UNKNOWN types. Class choices depend on the game stage; see [Sketch-to-model stage classes](backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#approved-classes).
 
 | UI label | JSON key | Proposed domain | Meaning |
 |---|---|---|---|
-| Type | `type` | SWORD, HAMMER, SPEAR, SHIELD, BOW, MAGIC, TOOL, FOOD, ANIMAL, UNKNOWN | Closest primary object category; mixed capabilities belong in tags |
+| Type | `type` | Stage-specific set from `backend/stage_config.py`; see [approved classes](backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#approved-classes) | Only classes allowed for the current stage; capabilities belong in tags |
 | Attack power | `attack_power` | Integer 0–100 | Potential strength for an implemented attack/break action; zero is valid for a non-attacking item |
 | Range | `range` | Finite number 0–8 | Maximum effective reach in world units; world scale convention is one unit approximately one meter |
 | Speed | `speed` | Finite number 0.5–2.0 | Item-action speed multiplier relative to a base action of 1.0; not the player's walking/sprint speed |
@@ -477,7 +485,7 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - Require correct data types; reject missing fields, invalid enum values, NaN/infinite values, and malformed output. Normalize finite numeric proposals to approved global and per-type bounds before sending the accepted response to Godot.
 - Godot checks the same contract and displays only the accepted numbers. No raw model output directly changes the game.
 - UNKNOWN is an item type; OTHER is an exclusive effect tag. They are different fields. Uncertain recognition still returns `item: null` rather than inventing an item.
-- Type is not a winning-answer lookup. Keep effect tags because FOOD versus ANIMAL, or MAGIC versus SWORD, can overlap semantically.
+- Type is not a winning-answer lookup. Keep effect tags because category alone does not determine whether an object solves the encounter.
 - P0 includes all stats in real AI output, validation, and the item card. Finalize their concrete use in the E02 dog confrontation and E05 boss rule sheets; any E01 span/reach threshold remains a candidate rather than the former bag-retrieval rule. `speed` can scale an approved use sequence; `durability` decrements only after a successful use commits once.
 - Failed attempts, inspection, drawing, network errors, and canceled actions never spend durability. An exhausted item can always be replaced with a free basic drawing; no progression soft-lock.
 - Define whether and how `attack_power` affects the approved dog/boss actions before implementing those stages. It remains informational for unrelated actions. Do not apply arbitrary model numbers directly to health or invent a full combat engine merely to consume the field.
@@ -644,7 +652,9 @@ AGENTS.md
     audio/voice/
 docs/               # Specifications, research, and planning documents
   SPEC.md
-  REUSE_RESEARCH.md
+  backend/          # Backend setup, pipeline contracts, and historical measurements
+  3d_game/          # Game integration, drawing, stages, and reuse research
+    REUSE_RESEARCH.md
   CREDITS.md        # Planned asset attribution and team credits
 ```
 
@@ -849,7 +859,7 @@ Already settled: production has begun on September 12; five-stage order and the 
 
 ## 17. Reuse strategy and researched candidates
 
-See [REUSE_RESEARCH.md](REUSE_RESEARCH.md) for source links, version pins, license distinctions, maintenance evidence, and missing features. These are researched candidates, not dependencies already installed or tested in our game.
+See [REUSE_RESEARCH.md](3d_game/REUSE_RESEARCH.md) for source links, version pins, license distinctions, maintenance evidence, and missing features. These are researched candidates, not dependencies already installed or tested in our game.
 
 - Initial movement/coin candidate: [Kenney 3D Platformer Starter Kit](https://github.com/KenneyNL/Starter-Kit-3D-Platformer). Reuse its narrow movement/collection foundation after the Web spike, not the entire game unchanged.
 - Controller alternative: [GDQuest Godot 4 third-person controller](https://github.com/gdquest-demos/godot-4-3d-third-person-controller). Inspect code separately from assets; asset permissions differ from the code license.
@@ -873,7 +883,7 @@ See [REUSE_RESEARCH.md](REUSE_RESEARCH.md) for source links, version pins, licen
 - [Godot InputMap](https://docs.godotengine.org/en/stable/classes/class_inputmap.html): named input actions.
 - [ElevenLabs Text to Speech](https://elevenlabs.io/docs/overview/capabilities/text-to-speech): voice-generation capability; exact account access remains unverified.
 - [ElevenLabs audio downloads](https://help.elevenlabs.io/hc/en-us/articles/14129286847505-How-do-I-download-generated-files-from-Text-to-Speech): exporting generated clips for an asset workflow.
-- [Reuse research](REUSE_RESEARCH.md): verified candidate evidence and adaptation limits.
+- [Reuse research](3d_game/REUSE_RESEARCH.md): verified candidate evidence and adaptation limits.
 - [Repository](https://github.com/AdeDeepFishing/Paws-Peaks)
 - [Four Otters - Dev Board](https://github.com/users/AdeDeepFishing/projects/1/views/1)
 
@@ -896,7 +906,7 @@ return to exploration and drop near-bank coins; zoom in again to reveal the read
 object. Collection and provider completion are independent. Keep fixed camera angles,
 allow edge-follow panning, and gently assist bridge traversal while preserving stop
 and reverse input. Remove obsolete interior map boundaries while preserving real
-terrain/prop collision. See [implementation and verification](ENCOUNTER_FLOW.md).
+terrain/prop collision. See [implementation and verification](3d_game/ENCOUNTER_FLOW.md).
 
 ## September 12 asset update: Stage 2 woodland
 
@@ -905,7 +915,7 @@ with its reference camera, wind/shadow animation and player movement. Stage 1
 now transitions into it when the player keeps walking along the far bank,
 without a completion modal. E02 dog confrontation and success rules remain open;
 this asset integration does not resolve those design decisions. See
-[Stage 02 integration](STAGE02_INTEGRATION.md).
+[Stage 02 integration](3d_game/STAGE02_INTEGRATION.md).
 
 ## September 12 asset update: Stage 3 Wind Hill
 
@@ -916,7 +926,7 @@ textures, the reference camera, shared protagonist, terrain collision and the
 16-second wind animation. The user requested wind slightly below maximum; the
 preview uses 80% of the delivered deformation amplitude. E03 crow interaction,
 solution rules and progression to E04 remain open. See
-[Stage 03 integration](STAGE03_INTEGRATION.md).
+[Stage 03 integration](3d_game/STAGE03_INTEGRATION.md).
 
 September 13 playtest correction: the Stage 2 exit is a full-width boundary at
 world z=-28. Reaching it at any X position, including beside the path or during

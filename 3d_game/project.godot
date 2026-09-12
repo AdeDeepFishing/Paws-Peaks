@@ -19,6 +19,10 @@ run/main_scene="res://scenes/river/river_crossing.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GenerationWorker="*res://scripts/river/generation_worker.gd"
+
 [display]
 
 window/size/viewport_width=1152

@@ -1,16 +1,141 @@
-# Sketch-to-model live-run report
+# Sketch-to-model pipeline and live-run report
 
 Current retained setup: OpenAI description → OpenAI image edit (Flare, low-quality
 816 × 816 JPEG) → untextured Meshy T2. Run `backend/.venv/bin/python backend/sketch_to_model/run.py`.
 Sections below preserve historical settings and commands; removed provider switches
 are no longer needed. Section 10 records the accepted setup and its limitations.
 
+## Current multi-stage request contract
+
+**The backend selects the classification classes from the game stage. All four stages
+share the same generation pipeline. The game never supplies a class list.**
+
+### Approved classes
+
+These sets were confirmed on September 13, 2026. Class labels are case-sensitive.
+The executable source of truth is [`backend/stage_config.py`](../../backend/stage_config.py).
+
+| Stage number | `game_stage` | `encounter_id` | Allowed `item.type` values |
+|---|---|---|---|
+| 1 — River | `river` | `E01` | **`BRIDGE`, `BOAT`, `UNKNOWN`** |
+| 2 — Large Dog | `dog` | `E02` | **`FOOD`, `TOY`, `WEAPON`, `UNKNOWN`** |
+| 3 — Crows | `crows` | `E03` | **`BOW`, `MAGIC`, `UNKNOWN`** |
+| 4 — Otter | `otter` | `E04` | **`GIFT`, `TOOL`, `UNKNOWN`** |
+
+These are separate allowed sets, not one combined enum. For example, `FOOD` is valid
+for Dog but invalid for Crows; `BOW` is valid for Crows but invalid for Dog. The AI
+must classify within the selected stage's categories. It must not borrow a category
+from another stage. The fifth-stage boss in the broader game specification has no
+backend classification configuration yet.
+
+`UNKNOWN` means an identifiable object outside the stage's named categories. It is
+a recognized item with the usual fields. If the drawing cannot be identified, the
+response is `{"status":"uncertain","item":null}` and generation stops before the
+image-edit and Meshy calls. A recognized `UNKNOWN` continues through generation.
+
+### Request and routing
+
+Godot writes the original drawing as `input.png`, then atomically publishes
+`request.json` in a unique backend job directory. Example request:
+
+```json
+{
+  "request_id": "E03-example",
+  "encounter_id": "E03",
+  "game_stage": "crows",
+  "mode": "live"
+}
+```
+
+- `game_stage` identifies the game challenge. It must match `encounter_id`.
+- `request_id` identifies this particular drawing submission.
+- `mode` is `live` or `fixture`. Only River currently has an offline fixture.
+- `stage` in a response means **pipeline progress**, such as `description`,
+  `reference_image`, `model`, `preview`, or `complete`. It is not the game stage.
+
+The persistent Python listener validates the request and queues its job. The selected
+class set is passed through to OpenAI interpretation and checked in three places:
+
+1. The prompt lists the classes allowed for this game stage.
+2. The strict JSON schema sets `item.type.enum` to exactly that class set.
+3. Backend response validation rejects any type outside the selected set.
+
+Godot validates request/stage identity, field types, numeric bounds and file paths.
+It does not maintain a second classification enum. Changing backend class sets does
+not require adding the same class names to Godot.
+
+### Shared generation and results
+
+Every stage follows the same steps:
+
+1. OpenAI Responses interprets the original drawing using the selected class set.
+2. OpenAI Image Edits makes a reference from the original drawing and interpretation.
+3. Meshy creates an untextured GLB from the reference image.
+4. Local rendering saves `model.png` beside `model.glb`.
+
+The interpretation result keeps the same fields across stages: `name`, `description`,
+`type`, `attack_power`, `range`, `speed`, `durability`, and `tags`. Tags remain
+`LONG_REACH`, `FLOATS`, `STURDY`, `PROTECTS`, `FOOD`, `SOUND`, or `OTHER`; they describe
+capabilities separately from the stage-specific class. `OTHER` is a tag, not a class.
+
+As each result becomes available, the worker appends a cumulative record to
+`results.jsonl` and atomically updates `status.json`. Results include local paths:
+
+| Field | File |
+|---|---|
+| `input_path` | Original sketch |
+| `reference_path` | Generated reference image |
+| `model_path` | Downloaded GLB |
+| `preview_path` | Locally rendered PNG |
+
+Every update retains request identity, `game_stage`, progress `stage`, status and an
+`updated_at` timestamp. The listener checks finished thread-pool jobs against the
+status file and records `pool_checked` and `pool_return_code`. Provider credentials,
+signed download URLs and raw provider errors are excluded from these game-facing logs.
+
+Godot polls every 0.2 seconds. Item and reference-image signals can arrive before
+completion. `SUCCEEDED` is published after the GLB and preview step; preview failure
+still delivers the GLB with `preview_error`. See [desktop integration](../3d_game/DESKTOP_GENERATION.md)
+for worker lifetime, cancellation and scene integration.
+
+### Classification is not challenge completion
+
+Being a valid class does not guarantee that an object solves the challenge. Gameplay
+rules are evaluated separately in Godot. River currently requires `LONG_REACH` plus
+`STURDY` and remaining durability for its fixed crossing. Recognizing `BOAT` does not
+implement boat movement. Later-stage gameplay effects and success rules remain design work.
+
+### Changing a class set
+
+Edit only the stage's `classes` tuple in `backend/stage_config.py`, update this table
+and the relevant specification section, then run:
+
+```sh
+backend/.venv/bin/python -m unittest discover -s backend/tests -v
+```
+
+Restart the game to reload the persistent worker's configuration. Test generation
+without providers using River fixture mode. For a local configuration/input check:
+
+```sh
+backend/.venv/bin/python backend/sketch_to_model/run.py --game-stage crows --dry-run
+```
+
+A missing class set fails with `STAGE_NOT_CONFIGURED` before provider calls. An invalid
+stage/encounter pair fails with `INVALID_REQUEST`; an unavailable offline fixture
+fails with `FIXTURE_NOT_AVAILABLE`. No paid generation is automatically retried.
+
+## Historical live runs
+
+The prompts, class enums and commands below record earlier runs; use the current
+contract above for stage classification.
+
 Run date: **2026-09-12**. Outcome: **SUCCEEDED**. One live pipeline run; no generation calls were made to prepare this report.
 
 - Pipeline run ID: `54e17e2fce574b37a59c8894d4c7a306`
 - Profile ID: `66bd051e5de64dec9874e50fe837a27d`
 - Branch: `beichun/api-response-profiling` (implementation was uncommitted).
-- Entry point: [backend/sketch_to_model/run.py](../backend/sketch_to_model/run.py)
+- Entry point: [backend/sketch_to_model/run.py](../../backend/sketch_to_model/run.py)
 
 ## Flow and command
 
@@ -24,9 +149,9 @@ The command used the default sketch, default style prompt and 1,000-face target.
 
 ## 1. Original input sketch
 
-[Original PNG](../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png)
+[Original PNG](../../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png)
 
-![Original hand-drawn sketch](../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png)
+![Original hand-drawn sketch](../../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png)
 
 The sketch consists of two long rails with triangular internal braces on a light background. No human-provided object label was sent. OpenAI was asked to interpret it as hand-drawn equipment.
 
@@ -218,9 +343,9 @@ No resolution parameter was sent. Background removal was omitted in this run; th
 }
 ```
 
-[Generated reference PNG](test-artifacts/sketch-to-model-2026-09-12/reference.png)
+[Generated reference PNG](../test-artifacts/sketch-to-model-2026-09-12/reference.png)
 
-![Generated reference image](test-artifacts/sketch-to-model-2026-09-12/reference.png)
+![Generated reference image](../test-artifacts/sketch-to-model-2026-09-12/reference.png)
 
 Visual inspection: the image retains the triangular bracing and diagonal silhouette, with shaded rounded rails and a pencil-like appearance on a plain light background. It is a reference-image interpretation, not proof that the object functions as a ladder. The returned signed image URL was used for a local download and is excluded from this report.
 
@@ -260,7 +385,7 @@ No texture prompt, remeshing or topology parameter was sent. T2 Smart Topology g
 }
 ```
 
-[Download/open generated GLB](test-artifacts/sketch-to-model-2026-09-12/model.glb)
+[Download/open generated GLB](../test-artifacts/sketch-to-model-2026-09-12/model.glb)
 
 GLB magic, version and declared size were validated; triangle counts were read from primitive accessors. No visual 3D inspection, Godot import, collision validation or gameplay integration was performed. The signed model URL remains in the ignored local manifest and is excluded here.
 
@@ -344,11 +469,11 @@ The test artifacts below are committed under `docs/test-artifacts/sketch-to-mode
 
 | Artifact | Bytes | Details |
 |---|---:|---|
-| [E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png](../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png) | 5,762 | 512 × 512 PNG |
-| [description.json](test-artifacts/sketch-to-model-2026-09-12/description.json) | 339 |  |
-| [reference_prompt.txt](test-artifacts/sketch-to-model-2026-09-12/reference_prompt.txt) | 382 |  |
-| [reference.png](test-artifacts/sketch-to-model-2026-09-12/reference.png) | 1,043,672 | 1024 × 1024 PNG |
-| [model.glb](test-artifacts/sketch-to-model-2026-09-12/model.glb) | 18,580 |  |
+| [E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png](../../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png) | 5,762 | 512 × 512 PNG |
+| [description.json](../test-artifacts/sketch-to-model-2026-09-12/description.json) | 339 |  |
+| [reference_prompt.txt](../test-artifacts/sketch-to-model-2026-09-12/reference_prompt.txt) | 382 |  |
+| [reference.png](../test-artifacts/sketch-to-model-2026-09-12/reference.png) | 1,043,672 | 1024 × 1024 PNG |
+| [model.glb](../test-artifacts/sketch-to-model-2026-09-12/model.glb) | 18,580 |  |
 
 
 ### Binary artifact fingerprints
@@ -435,10 +560,10 @@ of single runs with independently generated descriptions, not a controlled laten
 The following artifacts remain in ignored local output storage; unlike the baseline
 assets in Section 6, they are not yet committed:
 
-- [Reference JPEG](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/reference.jpg)
-- [Generated GLB](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/model.glb)
-- [Description JSON](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/description.json)
-- [Image-edit settings and prompt](../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/image_edit_settings.json)
+- [Reference JPEG](../../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/reference.jpg)
+- [Generated GLB](../../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/model.glb)
+- [Description JSON](../../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/description.json)
+- [Image-edit settings and prompt](../../backend/output/sketch_to_model/e1c68de85dd74c56bb8b0157adb50d23/image_edit_settings.json)
 
 ### Cropping defect and pending fix
 
@@ -476,7 +601,7 @@ edge, describe its likely complete form without inventing unrelated parts. Inclu
 "whole object, all parts visible" in the description to guide the next image stage.
 ```
 
-The original source remains the same [512 × 512 sketch](../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png).
+The original source remains the same [512 × 512 sketch](../../tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png).
 The image-edit request used these settings and exact prompt (original image supplied as multipart input):
 
 ```json
@@ -538,7 +663,7 @@ the slowdown; provider variability and the generated description also differ.
 
 ### Outputs and visual finding
 
-![Whole-object reference](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference.jpg)
+![Whole-object reference](../test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference.jpg)
 
 The reference was visually inspected: all visible rails, braces and endpoints are
 inside the image boundaries. The requested 10% empty margin is **not fully met**,
@@ -555,10 +680,10 @@ URLs remain in ignored local storage.
 
 | Artifact | Link |
 |---|---|
-| Generated reference JPEG, 1024 × 1024, 60,149 bytes | [reference.jpg](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference.jpg) |
-| Untextured model | [model.glb](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/model.glb) |
-| OpenAI description | [description.json](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/description.json) |
-| Exact reference prompt | [reference_prompt.txt](test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference_prompt.txt) |
+| Generated reference JPEG, 1024 × 1024, 60,149 bytes | [reference.jpg](../test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference.jpg) |
+| Untextured model | [model.glb](../test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/model.glb) |
+| OpenAI description | [description.json](../test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/description.json) |
+| Exact reference prompt | [reference_prompt.txt](../test-artifacts/sketch-to-model-openai-whole-object-2026-09-12/reference_prompt.txt) |
 
 Both binary copies were checked against the originals. Offline test suite: **44 tests passed**.
 
@@ -632,7 +757,7 @@ zero textures and zero embedded images. All stages succeeded; **45 offline tests
 
 ### Visual inspection and artifacts
 
-![816-pixel reference](test-artifacts/sketch-to-model-openai-816-2026-09-12/reference.jpg)
+![816-pixel reference](../test-artifacts/sketch-to-model-openai-816-2026-09-12/reference.jpg)
 
 The whole object fits inside the frame, although the requested 10% margins are not
 fully achieved on both sides. The generated object has conventional ladder rungs:
@@ -643,10 +768,10 @@ The GLB was structurally checked but not visually inspected or imported into God
 
 Shareable output copies are included alongside this report, included in this change:
 
-- [Reference JPEG](test-artifacts/sketch-to-model-openai-816-2026-09-12/reference.jpg)
-- [Untextured GLB](test-artifacts/sketch-to-model-openai-816-2026-09-12/model.glb)
-- [Description JSON](test-artifacts/sketch-to-model-openai-816-2026-09-12/description.json)
-- [Exact reference prompt](test-artifacts/sketch-to-model-openai-816-2026-09-12/reference_prompt.txt)
+- [Reference JPEG](../test-artifacts/sketch-to-model-openai-816-2026-09-12/reference.jpg)
+- [Untextured GLB](../test-artifacts/sketch-to-model-openai-816-2026-09-12/model.glb)
+- [Description JSON](../test-artifacts/sketch-to-model-openai-816-2026-09-12/description.json)
+- [Exact reference prompt](../test-artifacts/sketch-to-model-openai-816-2026-09-12/reference_prompt.txt)
 
 Task manifests, profile files, credentials and signed URLs remain local and ignored.
 After this test, 816 × 816 was selected as the default. The 1024 × 1024 comparison remains available through `--openai-image-size 1024x1024`.

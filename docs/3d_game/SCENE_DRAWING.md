@@ -1,7 +1,8 @@
 # Scene drawing and PNG handoff
 
 Issue: [#12](https://github.com/AdeDeepFishing/Paws-Peaks/issues/12).
-User decisions confirmed September 12, 2026. Implemented locally; real AI remains disconnected.
+User decisions confirmed September 12, 2026. Implemented locally with offline and live desktop generation; see
+[desktop integration](DESKTOP_GENERATION.md).
 
 ## Player flow
 
@@ -15,8 +16,9 @@ Submit freezes and exports the ink, hides the overlay, restores the HUD and resu
 movement. Processing uses a status message and Cancel generation button. A valid result
 automatically places the encounter object even if the player has walked away; no preview
 canvas, item card, or Use confirmation appears. Failures retain the draft for retry at
-the riverbank. The bridge does not display the PNG as a paper texture. The selector remains explicitly labeled
-NO AI because it controls the mock response. Reset clears the draft and request generation.
+the riverbank. The bridge does not display the PNG as a paper texture. The generation selector offers Mock bridge, Offline model and Live AI modes. Only
+Mock bridge uses the mock-response selector. Reset clears the draft and active request;
+the persistent Python listener stays alive.
 
 ## Integration points
 
@@ -28,8 +30,8 @@ NO AI because it controls the mock response. Reset clears the draft and request 
   switching, automatic encounter result placement and the existing request boundary.
 - The PNG uses RGBA: opaque black ink and fully transparent background. It is 512 × 512, cropped around
   ink with padding and scaled uniformly. No scene, UI or stroke outline is captured.
-- Each submission writes a unique file under `user://drawings/`. The unchanged
-  `DrawingRequest.request_prepared` signal carries `request_id`, `encounter_id`, and
+- Each submission writes a unique file under `user://drawings/`. The
+  `DrawingRequest.request_prepared` signal carries `request_id`, `encounter_id`, `game_stage`, and
   the immutable image in `image_base64`. Receiving it is separate from calling a provider.
 - Stroke positions are screen-space drafts, not world coordinates or object placement.
   Window resizing uniformly fits the original draft and leaves export bytes unchanged.
@@ -55,21 +57,21 @@ The backend dry run reported `image_ready: true`. This verifies local PNG ingest
 it does not verify paid recognition quality, live game-to-backend transport, or a
 manual handoff on Beichun's device. No paid API call was made. Browser testing remains open.
 
-The [sample PNG](assets/scene-drawing/bridge-input.png) was exported by the game renderer
+The [sample PNG](../assets/scene-drawing/bridge-input.png) was exported by the game renderer
 from scripted test strokes; it is not a player research sample.
 
-![Transparent scene drawing](assets/scene-drawing/overlay.png)
+![Transparent scene drawing](../assets/scene-drawing/overlay.png)
 
-![Exported black-ink input](assets/scene-drawing/bridge-input.png)
+![Exported black-ink input](../assets/scene-drawing/bridge-input.png)
 
 ## Direct-result clarification — 2026-09-12
 
-The desktop flow now implements PNG → Beichun's combined pipeline → returned GLB → scene.
+The desktop flow now implements PNG → OpenAI interpretation → OpenAI image edit → Meshy GLB → local preview → scene.
 See [desktop generation](DESKTOP_GENERATION.md) for issue #15, offline/live modes,
 verification, and placement limits. The original bridge remains only in explicit mock
 mode. No paid provider call was made during integration testing.
 
-![Automatic scene result without a paper preview](assets/scene-drawing/direct-result.png)
+![Automatic scene result without a paper preview](../assets/scene-drawing/direct-result.png)
 
 ## Export update — 2026-09-12
 
