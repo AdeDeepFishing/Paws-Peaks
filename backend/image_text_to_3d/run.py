@@ -32,8 +32,11 @@ def require_key(config):
     return key
 
 
-def api_request(config, task_id=None, payload=None):
-    url = API_URL if task_id is None else API_URL + "/" + quote(task_id, safe="")
+def api_request(config, task_id=None, payload=None, endpoint="image-to-3d"):
+    if endpoint not in ("image-to-3d", "image-to-image"):
+        raise AppError("INVALID_INPUT", "Unsupported Meshy endpoint.")
+    base = "https://api.meshy.ai/openapi/v1/" + endpoint
+    url = base if task_id is None else base + "/" + quote(task_id, safe="")
     request = Request(url, method="POST" if payload is not None else "GET",
                       data=json.dumps(payload).encode() if payload is not None else None,
                       headers={"Authorization": "Bearer " + require_key(config), "Content-Type": "application/json"})
