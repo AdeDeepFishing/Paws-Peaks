@@ -64,7 +64,7 @@ Web export, browser performance, final prop collision simplification and LOD bud
 remain unverified. The bundled transparent paint geometry is relatively dense;
 this integration has not established production performance targets.
 
-![First-stage gameplay](assets/stage01/gameplay.png)
+![First-stage gameplay](../assets/stage01/gameplay.png)
 
 ## Idle player cue (#13)
 

@@ -1,14 +1,13 @@
 # Local AI features
 
-This is a desktop development helper: one Python process sends an image to OpenAI,
-prints a validated item response, and exits. No HTTP server, package installation,
-or GPU is required. Python 3.9 or later is required; all imports use the standard library.
+The desktop game starts one persistent Python worker and submits drawings on demand.
+The worker publishes interpretation, reference-image and model results as they become
+available. Mock, offline fixture and live AI modes are available; see
+[desktop integration](../3d_game/DESKTOP_GENERATION.md) for setup and result handling.
 
-Implemented: local PNG/JPEG or public HTTPS image input, local credentials, an OpenAI
-Responses API call with Structured Outputs, and the game's version-2 output contract.
-The separate Meshy adapter supports image -> an untextured 3D generation job and GLB
-download; see [3D setup](AI_IMAGE_TEXT_TO_3D.md). Godot still uses its mock responses.
-Player-action invocation, application packaging, and hosted browser integration are not implemented.
+Python 3.9 or later is required; the backend uses only the standard library. Standalone
+commands below also support testing individual pipeline steps. Desktop packaging and
+hosted browser integration remain open; a Godot Web export cannot launch Python.
 
 ## Primary sketch-to-3D flow
 
@@ -25,6 +24,9 @@ backend/
   .env                        # Ignored local credentials shared by features
   .env.example                # Tracked blank configuration template
   .venv/                      # Ignored shared Python environment
+  stage_config.py             # Backend-owned class sets for all four game stages
+  game_bridge/run.py          # Persistent request listener and result logs
+  model_preview/render.py     # Local GLB-to-PNG renderer
   common.py                   # Local configuration and PNG/JPEG input helpers
   profiling.py                # Optional command/stage timing and JSON reports
   sketch_to_model/
@@ -37,11 +39,10 @@ backend/
   samples/banana.jpg          # Shared development input
   tests/                      # Offline tests for the pipeline and adapters
   output/                     # Ignored job manifests and generated models
-  interpret_image.py          # Compatibility shortcut for the original command
 ```
 
-The old `python backend/interpret_image.py` command still works. Prefer the feature
-entry points below for new integrations. Use a separate folder for each future feature;
+Use the feature entry points below. The obsolete compatibility launcher has been
+removed. See [Sketch-to-model stage classes](SKETCH_TO_MODEL_RUN_2026-09-12.md#current-multi-stage-request-contract) for the current class sets. Use a separate folder for each future feature;
 share only common input/configuration helpers, not feature-specific prompts or responses.
 
 ## Setup and first run
@@ -113,26 +114,31 @@ not a claim of lowest latency. A live request successfully recognized the sample
 with the configured account before the folder reorganization; subsequent refactoring is
 verified with offline tests rather than additional paid calls.
 
-## Later: invoke from a player action
+## Game requests and standalone interpretation
 
-The script can be called as a subprocess with a submitted image path and the game's
-existing request identity:
+`GenerationWorker` starts `backend/game_bridge/run.py --serve` once at game startup.
+`DesktopGeneration` saves the sketch and publishes a `request.json` containing
+`request_id`, `encounter_id`, `game_stage`, and `mode`. The listener runs queued jobs
+sequentially and remains alive between requests. Startup makes no provider calls.
+
+Godot polls `status.json` every 0.2 seconds and receives item and reference-image
+signals before final completion. The worker also appends cumulative results and local
+asset paths to `results.jsonl` and checks completed thread-pool results. See
+[desktop integration](../3d_game/DESKTOP_GENERATION.md) for cancellation and completion behavior.
+
+For a standalone interpretation check using an existing request identity:
 
 ```sh
 backend/.venv/bin/python backend/sketch_to_narrative/run.py \
   --image /absolute/path/to/submitted.png \
-  --request-id E01-original-request-id
+  --request-id E01-original-request-id --game-stage river --dry-run
 ```
 
-Use the actual `DrawingRequest.active_id`; the CLI generates a new ID only for standalone
-testing. It prints the same `schema_version: 2`, `request_id`, `status`, and `item` shape
-accepted by `DrawingRequest.accept_response()`. Error responses preserve that identity too.
-
-When integrating, run the subprocess asynchronously, collect its stdout JSON, and deliver
-the result on Godot's main thread. Keep the current deadline and stale-result checks;
-do not block the game loop while Python waits for OpenAI. Preserve the submitted image
-until the process has read it. A desktop release would need an available or bundled
-Python runtime and local configuration; a Godot Web export cannot launch this process.
+Omitting `--dry-run` makes one paid interpretation call. This CLI returns the version-2
+item envelope and exits; the game uses the persistent worker for the full pipeline.
+Both interpretation and sketch-to-model commands accept `--game-stage`
+(`river`, `dog`, `crows`, `otter`), defaulting to `river`. The backend owns the
+[allowed class sets](SKETCH_TO_MODEL_RUN_2026-09-12.md#approved-classes).
 
 ## Performance profiling
 

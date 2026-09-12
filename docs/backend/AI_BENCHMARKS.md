@@ -1,25 +1,15 @@
-# Meshy performance benchmarks
+# Historical Meshy performance benchmarks — September 12, 2026
 
-Historical single-run comparisons; these are not latency guarantees.
+These retained single-run measurements explain the choice of untextured T2. They
+are not current instructions or latency guarantees. The experimental benchmark
+runner has been removed. See [backend setup](BACKEND.md) for supported commands.
 
-## Compare Meshy polygon targets
+## Meshy-6 polygon sweep
 
-```sh
-backend/.venv/bin/python backend/benchmark_meshy_polygons.py --dry-run
-backend/.venv/bin/python backend/benchmark_meshy_polygons.py
-```
-
-The live benchmark creates four paid jobs sequentially with the same image and model,
-requesting 100, 200, 500, and 1,000 triangular faces. It polls every three seconds for
-up to ten minutes per job, then downloads completed GLBs and counts their triangles.
-Use `--image path/to/image.png` to replace the banana sample. Results, job manifests,
-and models stay in ignored `backend/output/polygon_benchmarks/<run-id>/`.
-
-Compare provider processing time separately from queue time, submission latency, and
-the locally observed wait (which includes polling delay). The `server_timings_s`
-summary values are seconds; their metric names match the original millisecond profiles.
-One job per target is a quick comparison, not a statistical benchmark. Re-running
-creates four new jobs; saved manifests can be checked using the existing status command.
+The experiment submitted four jobs sequentially with the same banana image,
+requesting 100, 200, 500, and 1,000 triangular faces. It polled every three seconds,
+downloaded the GLBs and counted their triangles. Observed ready time includes polling
+delay; provider processing excludes local submission and download time.
 
 Quick live comparison on 2026-09-12: banana sample, `meshy-6`, standard model,
 remeshing enabled, no textures, triangle topology, GLB output. All four jobs succeeded.
@@ -41,17 +31,6 @@ standard-model target as a remeshing/decimation target, which is consistent with
 generation taking substantial time even at low output counts.
 
 ### Faster model comparison
-
-Run a single 1,000-face Smart Topology job with:
-
-```sh
-backend/.venv/bin/python backend/benchmark_meshy_polygons.py --model meshy-t2 --targets 1000
-```
-
-The benchmark accepts `--model meshy-6`, `meshy-6-lite`, or `meshy-t2` and a unique
-list of `--targets`. Each target creates one paid job. T2 uses `smart-topology`
-and omits the ignored remeshing/topology options. This override affects only the
-benchmark; the saved configuration and feature script defaults remain unchanged.
 
 One T2 run on the same banana sample on 2026-09-12 succeeded in **2.030 seconds of
 provider processing**, compared with **44.526 seconds** for the earlier Meshy-6
@@ -82,16 +61,9 @@ These are single-run observations; visual quality and Godot import were not test
 
 ### T2 with a shared texture style
 
-```sh
-backend/.venv/bin/python backend/benchmark_meshy_polygons.py --model meshy-t2 --texture-prompt 'hand-drawing style'
-```
-
-`--texture-prompt` enables textures and accepts the art-style text to use for every
-target in the run. Replace the quoted prompt to test a future shared game style.
-Textures use 2K resolution with PBR maps disabled. Omit the option for geometry-only
-benchmarks. The same four polygon targets are used by default; each creates one paid
-textured generation. Reported provider processing includes both geometry and texture
-work; it does not isolate the duration of the texture phase.
+This experiment enabled 2K textures with PBR maps disabled for the same four polygon
+targets. Reported provider processing includes both geometry and texture work; it
+does not isolate the texture phase. The current pipeline disables texturing.
 
 Live results on 2026-09-12, same banana image and exact prompt `hand-drawing style`:
 

@@ -18,7 +18,7 @@ from sketch_to_narrative import run as app
 
 ITEM = {
     "name": "A little bridge", "description": "A sturdy little bridge with a long adventure ahead.",
-    "type": "TOOL", "attack_power": 0, "range": 8.0, "speed": 1.0,
+    "type": "BRIDGE", "attack_power": 0, "range": 8.0, "speed": 1.0,
     "durability": 3, "tags": ["LONG_REACH", "STURDY"],
 }
 CONFIG = {"OPENAI_API_KEY": "fake-key-for-offline-test", "OPENAI_MODEL": "gpt-4.1-mini"}
@@ -65,7 +65,7 @@ class InterpretTests(unittest.TestCase):
         mutations = [
             ("attack_power", True), ("attack_power", 101), ("durability", 1.5),
             ("range", float("nan")), ("speed", float("inf")), ("range", "8"),
-            ("type", "BRIDGE"), ("name", " "), ("name", "x" * 41),
+            ("type", "SWORD"), ("name", " "), ("name", "x" * 41),
             ("description", "x" * 161), ("tags", []), ("tags", ["EXECUTE"]),
             ("tags", ["OTHER", "STURDY"]), ("tags", ["STURDY", "STURDY"]),
             ("tags", [{}]),

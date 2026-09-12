@@ -1,13 +1,16 @@
 extends Node
 
 signal progress_changed(message: String)
+signal interpretation_ready(request_id: String, item: Dictionary)
+signal reference_image_ready(request_id: String, path: String)
+
+var partial_item: Dictionary = {}
+var reference_path := ""
 
 @export_enum("Mock bridge", "Offline model", "Live AI") var mode := 1
-@export var backend_directory := ""
-@export var python_executable := ""
 
 var request: Node
-var process_id := -1
+@onready var worker: Node = get_node("/root/GenerationWorker")
 var job_dir := ""
 var request_id := ""
 var poll_elapsed := 0.0
@@ -30,26 +33,17 @@ func configure(next_mode: int) -> void:
 func _start(payload: Dictionary) -> void:
 	if mode == 0:
 		return
-	_stop_process()
 	finished = false
+	partial_item = {}
+	reference_path = ""
 	last_stage = ""
+	job_dir = ""
+	poll_elapsed = 0.0
 	request_id = payload.request_id
-	if OS.has_feature("web"):
-		fail("Desktop generation is unavailable in a browser build.")
+	if not worker.is_running():
+		fail(worker.startup_error if not worker.startup_error.is_empty() else "The generation worker stopped. Restart the game.")
 		return
-	var backend := backend_directory
-	if backend.is_empty():
-		backend = ProjectSettings.globalize_path("res://").path_join("../backend").simplify_path()
-	var runner := backend.path_join("game_bridge/run.py")
-	if not FileAccess.file_exists(runner):
-		fail("The local generation backend was not found. Check the desktop setup.")
-		return
-	var python := python_executable
-	if python.is_empty():
-		python = backend.path_join(".venv/Scripts/python.exe" if OS.has_feature("windows") else ".venv/bin/python")
-		if not FileAccess.file_exists(python):
-			python = "python3"
-	job_dir = backend.path_join("output/game_bridge").path_join(request_id + "-" + Crypto.new().generate_random_bytes(4).hex_encode())
+	job_dir = worker.worker_dir.path_join(request_id)
 	if DirAccess.make_dir_recursive_absolute(job_dir) != OK:
 		fail("Could not create a generation folder. Your drawing is safe.")
 		return
@@ -59,56 +53,71 @@ func _start(payload: Dictionary) -> void:
 		return
 	file.store_buffer(request.snapshot)
 	file.close()
-	process_id = OS.create_process(python, PackedStringArray([
-		runner, "--job-dir", job_dir, "--request-id", request_id,
-		"--encounter-id", payload.encounter_id, "--mode", "live" if mode == 2 else "fixture"
-	]))
-	if process_id <= 0:
-		fail("Could not start Python. Check the desktop generation setup.")
+	var mailbox := FileAccess.open(job_dir.path_join("request.tmp"), FileAccess.WRITE)
+	if mailbox == null:
+		fail("Could not submit the generation request.")
+		return
+	mailbox.store_string(JSON.stringify({"request_id": request_id, "encounter_id": payload.encounter_id, "game_stage": payload.game_stage, "mode": "live" if mode == 2 else "fixture"}))
+	mailbox.close()
+	if DirAccess.rename_absolute(job_dir.path_join("request.tmp"), job_dir.path_join("request.json")) != OK:
+		fail("Could not submit the generation request.")
 		return
 	progress_changed.emit("Starting generation..." if mode == 2 else "Loading the offline sample model...")
 
+func _active(id: String) -> bool:
+	return not finished and request.state == "PENDING" and request.active_id == id and request_id == id
+
+func _read_status() -> void:
+	var file := FileAccess.open(job_dir.path_join("status.json"), FileAccess.READ)
+	if file != null and file.get_length() < 65536:
+		var status = JSON.parse_string(file.get_as_text())
+		if status is Dictionary:
+			consume_status(status)
+
 func _process(delta: float) -> void:
-	if process_id <= 0:
-		return
-	if finished:
-		if not OS.is_process_running(process_id):
-			process_id = -1
-		return
-	if request.state != "PENDING" or request.active_id != request_id:
-		_stop_process()
+	if mode == 0 or not _active(request_id):
 		return
 	poll_elapsed += delta
 	if poll_elapsed < 0.2:
 		return
 	poll_elapsed = 0.0
-	var path := job_dir.path_join("status.json")
-	if FileAccess.file_exists(path):
-		var file := FileAccess.open(path, FileAccess.READ)
-		if file != null and file.get_length() < 65536:
-			var status = JSON.parse_string(file.get_as_text())
-			if status is Dictionary:
-				consume_status(status)
-	# The final file may have appeared while checking process liveness. Recheck
-	# next frame before reporting exit without a result.
-	if not finished and not OS.is_process_running(process_id):
-		if FileAccess.file_exists(path):
-			var value = JSON.parse_string(FileAccess.get_file_as_string(path))
-			if value is Dictionary:
-				consume_status(value)
-		if not finished and request.state == "PENDING":
+	_read_status()
+	if _active(request_id) and not worker.is_running():
+		# Read once more in case the final status arrived just before worker exit.
+		_read_status()
+		if _active(request_id):
 			fail("Generation stopped before a model was ready. Your drawing is saved.")
 
 func consume_status(status: Dictionary) -> void:
-	if finished or request.state != "PENDING" or status.get("request_id") != request.active_id or status.get("request_id") != request_id or status.get("encounter_id") != request.encounter_id or status.get("schema_version") != 1:
+	if status.get("game_stage") != request.game_stage or status.get("schema_version") != 1 or status.get("encounter_id") != request.encounter_id or not _active(str(status.get("request_id", ""))):
 		return
 	var stage: String = str(status.get("stage", ""))
 	if stage != last_stage:
 		last_stage = stage
-		var messages := {"starting": "Starting generation...", "description": "Understanding your drawing...", "reference_image": "Creating the reference image...", "model": "Building the 3D model...", "complete": "Placing your model..."}
+		var messages := {"starting": "Starting generation...", "description": "Understanding your drawing...", "reference_image": "Creating the reference image...", "model": "Building the 3D model...", "preview": "Rendering your model preview...", "complete": "Placing your model..."}
 		progress_changed.emit(messages.get(stage, "Generating your object..."))
+	if not _active(str(status.get("request_id", ""))):
+		return
+	# Cumulative snapshots retain early results even if polling skips a stage.
+	if partial_item.is_empty() and status.has("item"):
+		if not request.valid_item(status.item):
+			fail("The interpretation response was not valid.")
+			return
+		partial_item = status.item.duplicate(true)
+		interpretation_ready.emit(request_id, partial_item.duplicate(true))
+	if not _active(str(status.get("request_id", ""))):
+		return
+	if reference_path.is_empty() and status.has("reference_path"):
+		var path: String = str(status.reference_path).simplify_path()
+		if not path.begins_with(job_dir + "/") or path.get_extension().to_lower() not in ["png", "jpg", "jpeg"] or not FileAccess.file_exists(path):
+			fail("The reference image response was not valid.")
+			return
+		reference_path = path
+		reference_image_ready.emit(request_id, reference_path)
+	if not _active(str(status.get("request_id", ""))):
+		return
 	if status.get("status") == "FAILED":
-		var messages := {"UNCERTAIN_SKETCH": "We could not recognize the drawing. Add detail and try again.", "CONFIG_ERROR": "Generation is not configured. Check the local backend setup.", "POLL_TIMEOUT": "Generation timed out; its provider job may still be running. Check it before submitting again."}
+		var messages := {"STAGE_NOT_CONFIGURED": "Classification for this stage is not configured yet.", "FIXTURE_NOT_AVAILABLE": "This stage has no offline sample yet.", "INVALID_REQUEST": "The stage request was not valid.", "UNCERTAIN_SKETCH": "We could not recognize the drawing. Add detail and try again.", "CONFIG_ERROR": "Generation is not configured. Check the local backend setup.", "POLL_TIMEOUT": "Generation timed out; its provider job may still be running. Check it before submitting again."}
 		fail(messages.get(str(status.get("error", "")), "Generation failed. Your drawing and any submitted job IDs are saved."))
 	elif status.get("status") == "SUCCEEDED":
 		var model_path: String = str(status.get("model_path", "")).simplify_path()
@@ -119,17 +128,21 @@ func consume_status(status: Dictionary) -> void:
 		request.accept_response({"schema_version": 2, "request_id": request_id, "status": "recognized", "item": status.get("item"), "model_path": model_path})
 
 func fail(message: String) -> void:
-	_stop_process()
+	_cancel_job()
 	request.fail_current(message)
 
 func _on_state(state: String) -> void:
 	if state in ["IDLE", "FAILED"]:
-		_stop_process()
+		_cancel_job()
+		partial_item = {}
+		reference_path = ""
 
-func _stop_process() -> void:
-	if process_id > 0 and OS.is_process_running(process_id):
-		OS.kill(process_id)
-	process_id = -1
+func _cancel_job() -> void:
+	if not finished and not job_dir.is_empty():
+		var marker := FileAccess.open(job_dir.path_join("cancel"), FileAccess.WRITE)
+		if marker != null:
+			marker.close()
+	finished = true
 
 func _exit_tree() -> void:
-	_stop_process()
+	_cancel_job()

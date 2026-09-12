@@ -9,11 +9,12 @@ signal state_changed(state: String)
 @export var mock_delay := 3.0
 @export var timeout_seconds := 20.0
 
-const TYPES := ["SWORD", "HAMMER", "SPEAR", "SHIELD", "BOW", "MAGIC", "TOOL", "FOOD", "ANIMAL", "UNKNOWN"]
+const GAME_STAGES := {"E01": "river", "E02": "dog", "E03": "crows", "E04": "otter"}
 const TAGS := ["LONG_REACH", "FLOATS", "STURDY", "PROTECTS", "FOOD", "SOUND", "OTHER"]
 var state := "IDLE"
 var active_id := ""
 var encounter_id := ""
+var game_stage := ""
 var snapshot := PackedByteArray()
 var result: Dictionary = {}
 var model_path := ""
@@ -26,14 +27,15 @@ func _process(_delta: float) -> void:
 		_fail("That took too long. Your drawing is safe. Try again.")
 
 func submit(png: PackedByteArray, encounter: String, mock_outcome: int = 0) -> bool:
-	if state == "PENDING" or png.is_empty() or png.size() > 1048576 or encounter != "E01":
+	if state == "PENDING" or png.is_empty() or png.size() > 1048576 or not GAME_STAGES.has(encounter):
 		return false
 	var image := Image.new()
 	if image.load_png_from_buffer(png) != OK or image.get_size() != Vector2i(512, 512):
 		return false
 	generation += 1
-	active_id = "E01-%d-%d" % [Time.get_ticks_usec(), generation]
+	active_id = "%s-%d-%d" % [encounter, Time.get_ticks_usec(), generation]
 	encounter_id = encounter
+	game_stage = GAME_STAGES[encounter]
 	snapshot = png.duplicate()
 	model_path = ""
 	result = {}
@@ -42,13 +44,16 @@ func submit(png: PackedByteArray, encounter: String, mock_outcome: int = 0) -> b
 	_set_state("PENDING")
 	request_prepared.emit({
 		"schema_version": 2, "request_id": active_id, "encounter_id": encounter_id,
-		"locale": "en", "image_base64": Marshalls.raw_to_base64(snapshot)
+		"game_stage": game_stage, "locale": "en", "image_base64": Marshalls.raw_to_base64(snapshot)
 	})
 	if mock_mode:
 		_deliver_mock(active_id, mock_outcome)
 	return true
 
 func _deliver_mock(request_id: String, outcome: int) -> void:
+	if game_stage != "river":
+		_fail("This stage does not have a mock response yet.")
+		return
 	await get_tree().create_timer(mock_delay).timeout
 	var response := {"schema_version": 2, "request_id": request_id, "status": "recognized"}
 	match outcome:
@@ -61,7 +66,7 @@ func _deliver_mock(request_id: String, outcome: int) -> void:
 			response["item"] = {
 				"name": "Paper bridge" if outcome == 0 else "A little flower",
 				"description": "A long, sturdy idea to carry you across." if outcome == 0 else "Lovely, but it cannot support a crossing.",
-				"type": "TOOL", "attack_power": 0, "range": 8.0,
+				"type": "BRIDGE" if outcome == 0 else "UNKNOWN", "attack_power": 0, "range": 8.0,
 				"speed": 1.0, "durability": 3,
 				"tags": ["LONG_REACH", "STURDY"] if outcome == 0 else ["OTHER"]
 			}
@@ -93,13 +98,14 @@ func accept_response(response: Dictionary) -> bool:
 	_set_state("READY")
 	return true
 
+## Classification membership is validated by the backend stage configuration.
 static func valid_item(value: Variant) -> bool:
 	if not value is Dictionary:
 		return false
 	for key in ["name", "description", "type"]:
 		if not value.get(key) is String:
 			return false
-	if value["name"].is_empty() or value["name"].length() > 40 or value["description"].length() > 160 or value["type"] not in TYPES:
+	if value["name"].is_empty() or value["name"].length() > 40 or value["description"].length() > 160 or value["type"].strip_edges().is_empty() or value["type"].length() > 40:
 		return false
 	var bounds := {"attack_power": Vector2(0, 100), "range": Vector2(0, 8), "speed": Vector2(0.5, 2), "durability": Vector2(1, 10)}
 	for key in bounds:
