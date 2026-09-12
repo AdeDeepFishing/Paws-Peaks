@@ -80,9 +80,9 @@ are preserved byte for byte under `3d_game/models/wolfdog/`:
 `scenes/woodland/wolfdog.tscn` wraps the standing model in a static body with a
 simple box collider. The dog faces the incoming player at `(0, 0.09, -8)`.
 The delivered skinned geometry renders approximately 0.01365 units tall, so the
-visual root uses a scale of 180 for a roughly 2.46-unit dog, slightly taller than
-the woodland protagonist (approximately 2.16 units). This follows the revised
-September 13 team direction for issue #28, replacing the giant-dog trial. The
+visual root uses a scale of 360 for a roughly 4.92-unit dog, about 2.3 times the
+woodland protagonist's height (approximately 2.16 units). This follows the latest
+September 13 direction for issue #28: half the giant-dog trial's linear size. The
 collider dimensions and visual foot offset use the same proportion; the
 physics body itself retains unit scale. Its vertical offset places the paws at
 path height. The source material and textures are preserved.

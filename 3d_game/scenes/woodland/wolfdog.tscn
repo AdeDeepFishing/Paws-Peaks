@@ -3,14 +3,14 @@
 [ext_resource type="PackedScene" path="res://models/wolfdog/standing.glb" id="1"]
 
 [sub_resource type="BoxShape3D" id="BodyShape"]
-size = Vector3(1.06875, 1.9125, 2.3625)
+size = Vector3(2.1375, 3.825, 4.725)
 
 [node name="Wolfdog" type="StaticBody3D"]
 
 [node name="BodyCollision" type="CollisionShape3D" parent="."]
-position = Vector3(0, 1.0125, 0)
+position = Vector3(0, 2.025, 0)
 shape = SubResource("BodyShape")
 
 [node name="Character" parent="." instance=ExtResource("1")]
-position = Vector3(0, -0.0495, 0)
-scale = Vector3(180, 180, 180)
+position = Vector3(0, -0.099, 0)
+scale = Vector3(360, 360, 360)
