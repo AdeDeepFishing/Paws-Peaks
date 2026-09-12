@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cw2e4masr57dm"]
+
+[ext_resource type="PackedScene" uid="uid://pn6gbl6eidae" path="res://models/building/floor_stone.glb" id="1_tnumc"]
+
+[node name="FloorStone" type="Node3D"]
+
+[node name="floor_stone" parent="." instance=ExtResource("1_tnumc")]

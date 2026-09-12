@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://bc1fo16qo5tia"]
+
+[ext_resource type="PackedScene" uid="uid://bwytp6ij00kid" path="res://models/props/plate_food.glb" id="1_v1tai"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_ncfax"]
+height = 0.8
+
+[node name="PlateFood" type="StaticBody3D"]
+
+[node name="plate_food" parent="." instance=ExtResource("1_v1tai")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("CylinderShape3D_ncfax")

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://do3lptk4ayybx"]
+
+[ext_resource type="PackedScene" uid="uid://vqbe62543h4w" path="res://models/props/banner_mounted.glb" id="1_ceaw6"]
+
+[node name="BannerMounted" type="Node3D"]
+
+[node name="banner_mounted" parent="." instance=ExtResource("1_ceaw6")]

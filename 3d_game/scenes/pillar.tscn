@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://c5j6mwtdk6kkj"]
+
+[ext_resource type="PackedScene" uid="uid://cb4q03ps3vcrv" path="res://models/building/pillar.glb" id="1_3gbwn"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_56wwf"]
+height = 4.0
+radius = 0.7
+
+[node name="Pillar" type="StaticBody3D"]
+
+[node name="pillar2" parent="." instance=ExtResource("1_3gbwn")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("CylinderShape3D_56wwf")

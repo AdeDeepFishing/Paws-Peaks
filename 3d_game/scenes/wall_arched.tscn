@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://dqmaxb374tmji"]
+
+[ext_resource type="PackedScene" uid="uid://bttdfpk845bmt" path="res://models/building/wall_arched.glb" id="1_clpn8"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bdwx4"]
+size = Vector3(4, 4, 1)
+
+[node name="WallArched" type="StaticBody3D"]
+
+[node name="wall_arched2" parent="." instance=ExtResource("1_clpn8")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("BoxShape3D_bdwx4")
