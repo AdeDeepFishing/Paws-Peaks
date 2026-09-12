@@ -102,7 +102,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
 - The active Godot project is `3d_game/project.godot`, with `3d_game/main.tscn` as its startup scene. The obsolete root project and title scene have been removed.
-- The user-provided template includes first-person movement, but drawing, the five encounters, AI, collectible tokens, game audio, and Web deployment remain planned work. This unmodified copy still declares Godot 4.3, Forward Plus, and native Jolt; compatibility with our installed engine and Web target needs verification.
+- The user-provided template includes first-person movement, but drawing, the five encounters, AI, collectible tokens, game audio, and Web deployment remain planned work. The project now targets Godot 4.7 and uses built-in GodotPhysics3D; the incompatible Godot 4.3-only native Jolt extension is disabled with `.gdignore`. Headless import/startup passed on Godot 4.7.2, and a desktop launch reported no Jolt errors. Forward Plus is still enabled; Web adaptation and browser verification remain outstanding.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 
 ## 3. Release scope

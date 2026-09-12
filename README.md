@@ -20,9 +20,13 @@ root as the project entry point; [AGENTS.md](AGENTS.md) stays here for coding-as
 2. Open the project and press **F5** (or click Run Project) to launch its sample scene.
 3. The repository root is for documentation and Git; the Godot project lives in `3d_game/`.
 
-The supplied template declares Godot 4.3, Forward Plus, and the native Jolt plugin.
-The team's installed engine is Godot 4.7.2 Standard; compatibility of this unmodified
-copy still needs verification. Removing the old root project does not migrate the template.
+Use **Godot 4.7.2 Standard**. The project uses built-in **GodotPhysics3D**; the bundled
+Godot 4.3-only Jolt extension is disabled by `3d_game/godot-jolt/.gdignore`.
+Headless import and startup checks passed, and a desktop game launch reported no Jolt errors.
+
+After pulling this fix, close and reopen the Godot project and let the asset scan finish.
+If the old extension error persists, close Godot, remove only the generated
+`3d_game/.godot/` cache, then reopen `3d_game/project.godot` to rebuild it.
 
 Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 
@@ -47,5 +51,5 @@ Commit source assets and Godot scene files. Do not commit the generated `.godot/
 ## Next milestone
 
 Add one drawing canvas, then connect one drawing to one simple encounter.
-The target is Web. The supplied template still uses Forward Plus and native Jolt; renderer/physics
-adaptation, export templates, an export preset, hosting, and browser verification remain to be done.
+The target is Web. The template still uses Forward Plus; Compatibility rendering adaptation,
+export templates, an export preset, hosting, and browser verification remain to be done.
