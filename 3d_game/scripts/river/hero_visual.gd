@@ -1,7 +1,7 @@
 extends Node3D
 
 const SOURCES := {
-	"idle": preload("res://models/hero/idle.glb"),
+	"idle": preload("res://models/hero/listening.glb"),
 	"walk": preload("res://models/hero/walk.glb"),
 	"run": preload("res://models/hero/run.glb")
 }
@@ -41,8 +41,7 @@ func _ready() -> void:
 					animation.track_set_key_value(track, frame, position)
 		library.add_animation(key, animation)
 		source.free()
-	# A constant-pose clip lets outgoing blends finish. Pausing the player
-	# would preserve a running blend across a long idle.
+	# Keep a constant listening pose for the airborne fallback.
 	var stand: Animation = library.get_animation("idle").duplicate(true)
 	stand.length = 1.0
 	for track in stand.get_track_count():
@@ -61,6 +60,11 @@ func _ready() -> void:
 			Animation.TYPE_SCALE_3D: bone_rest.basis.get_scale()
 		}
 		for type in defaults:
+			var idle: Animation = library.get_animation("idle")
+			if idle.find_track(path, type) == -1:
+				var idle_track := idle.add_track(type)
+				idle.track_set_path(idle_track, path)
+				idle.track_insert_key(idle_track, 0.0, defaults[type])
 			if stand.find_track(path, type) == -1:
 				var track := stand.add_track(type)
 				stand.track_set_path(track, path)
@@ -77,8 +81,8 @@ func set_motion(moving: bool, sprinting: bool, grounded: bool, thinking: bool = 
 	if next != state:
 		state = next
 		animator.speed_scale = 1.0
-		var clip := "stand" if next in ["air", "idle"] else ("idle" if next == "think" else next)
+		var clip := "stand" if next == "air" else ("idle" if next == "think" else next)
 		animator.play("gameplay/" + clip, 0.15)
 		if next == "think":
-			# The delivered Stand and Chat clip is the current thinking stand-in.
+			# Listening is a temporary drawing pose; Stand and Chat is reserved for E04.
 			animator.speed_scale = 0.7

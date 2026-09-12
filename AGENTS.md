@@ -19,6 +19,8 @@
 
 ## Issue tracking
 
+- Deliver work through a feature branch and pull request linked to the relevant ticket(s), rather than direct commits to main. One PR may cover multiple related tickets.
+- Use closing keywords for tickets fully resolved by the PR. After review approval, merge the PR and close the resolved tickets through that merge; do not close partially implemented tickets.
 - When creating a ticket, also add it to the Four Otters project Kanban: https://github.com/users/AdeDeepFishing/projects/1 .
 - Set its Status to match the work: To Do before starting, In progress while implementing, and In review when ready for user review. Do not mark unreviewed work Done.
 - If the user requests a title-only ticket, leave its body empty.

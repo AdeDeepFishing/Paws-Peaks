@@ -74,6 +74,11 @@ func run():
 	check(hero.scale.is_equal_approx(Vector3.ONE * 1.2), "Woodland character is twenty percent larger")
 	check(hero.character.find_children("*","Skeleton3D",true,false).size() == 1, "One shared skinned character")
 	check(hero.state == "idle", "Standing uses delivered idle clip")
+	check(hero.animator.current_animation == "gameplay/idle", "Standing plays the full listening gesture")
+	check(is_equal_approx(hero.animator.get_animation("gameplay/idle").length, 9.4), "Idle uses the full Listening Gesture delivery")
+	var idle_time: float = hero.animator.current_animation_position
+	await frames(10)
+	check(hero.animator.current_animation_position > idle_time, "Listening gesture advances while standing")
 	for name in ["idle","walk","run"]:
 		var clip: Animation = hero.animator.get_animation("gameplay/" + name)
 		check(clip.length > 0.5 and clip.loop_mode == Animation.LOOP_LINEAR, "Full looping " + name + " clip")

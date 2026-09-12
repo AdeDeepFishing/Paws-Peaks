@@ -35,6 +35,8 @@ func run():
 	await frames(40)
 	hero.set_motion(false, false, true)
 	await frames(120)
+	# Compare the same phase of the looping listening gesture.
+	reference.animator.seek(hero.animator.current_animation_position, true)
 	check_pose(poses(hero), poses(reference), "Stopping must fully discard the prior running pose")
 	hero.set_motion(true, false, true)
 	reference.set_motion(true, false, true)
