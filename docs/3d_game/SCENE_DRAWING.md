@@ -1,5 +1,9 @@
 # Scene drawing and PNG handoff
 
+Current global presentation: construction tents have been replaced by sketch-local
+particles and soft blur. See [Generation presentation](GENERATION_PRESENTATION.md).
+Existing camera timing and encounter reactions remain in place.
+
 Issue: [#12](https://github.com/AdeDeepFishing/Paws-Peaks/issues/12).
 User decisions confirmed September 12, 2026. Implemented locally with offline and live desktop generation; see
 [desktop integration](DESKTOP_GENERATION.md).

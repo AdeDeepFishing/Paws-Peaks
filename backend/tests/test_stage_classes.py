@@ -28,3 +28,20 @@ class StageClassTests(unittest.TestCase):
             with self.assertRaises(AppError):
                 run.validate_interpretation({'item': ITEM}, 'dog')
             self.assertNotIn('DOG_DISTRACTION', run.schema_for('river')['properties']['item']['properties']['type']['enum'])
+
+    def test_crows_explains_defence_after_object_identification(self):
+        value = {'item': {**ITEM, 'name': 'Umbrella', 'type': 'DEFENCE', 'movable': True}}
+        with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response(value)).encode())) as http:
+            self.assertEqual(run.interpret('image', CONFIG, game_stage='crows'), value)
+        prompt = json.loads(http.call_args.args[0].data)['input'][0]['content']
+        context = prompt.split('Classification context for step 2 only:', 1)[1]
+        self.assertIn('ordinary umbrella', context)
+        self.assertIn('shield', context)
+        self.assertIn('DEFENCE', context)
+        self.assertIn("Do not change its", prompt)
+        self.assertIn(run.PALETTE_PROMPT, prompt)
+        http.assert_called_once()
+        # This meaning is stage-specific; it must not steer river identification.
+        with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response({'item': ITEM})).encode())) as river_http:
+            run.interpret('image', CONFIG, game_stage='river')
+        self.assertNotIn('ordinary umbrella', json.loads(river_http.call_args.args[0].data)['input'][0]['content'])

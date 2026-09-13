@@ -4,7 +4,17 @@ from utils.common import AppError
 STAGES = {
     'river': {'stage_number': 1, 'encounter_id': 'E01', 'classes': ('BRIDGE', 'BOAT', 'UNKNOWN')},
     'dog': {'stage_number': 2, 'encounter_id': 'E02', 'classes': ('FOOD', 'TOY', 'WEAPON', 'UNKNOWN')},
-    'crows': {'stage_number': 3, 'encounter_id': 'E03', 'classes': ('BOW', 'MAGIC', 'DEFENCE', 'UNKNOWN')},
+    'crows': {
+        'stage_number': 3, 'encounter_id': 'E03', 'classes': ('BOW', 'MAGIC', 'DEFENCE', 'UNKNOWN'),
+        'classification_guidance': (
+            'DEFENCE includes an identified ordinary umbrella, parasol, shield, helmet, or other protective cover; '
+            'protection from weather or animals counts, not only combat armor. '
+            'Classify an ordinary umbrella or shield as DEFENCE, not UNKNOWN merely because it is not a weapon. '
+            'BOW means a bow or crossbow. MAGIC requires an identified magical object, such as a wand; '
+            'do not invent magical properties for an ordinary object. '
+            'These class meanings apply only after identifying the actual object from the sketch.'
+        ),
+    },
     'otter': {'stage_number': 4, 'encounter_id': 'E04', 'classes': ('GIFT', 'TOOL', 'UNKNOWN')},
 }
 

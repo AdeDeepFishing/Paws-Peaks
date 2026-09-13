@@ -111,7 +111,7 @@ AI-generated durability.
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
 - The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
-- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E03–E05 gameplay, and Web deployment remain incomplete. E02 now implements the food/toy distraction encounter described below. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
+- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E04–E05 gameplay, and Web deployment remain incomplete. E02 implements the food/toy distraction encounter and E03 implements the giant bird protection encounter described below. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 - Character integration update (2026-09-12): both playable scenes now use the supplied
   Moonlit Wanderer skinned model with idle, walk and run clips. Jumping retains a
@@ -327,8 +327,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
   TOY (for example a toy bone) are the supported solutions.
   WEAPON and UNKNOWN give a contextual retry; they never open the route.
-- Submission places a small cloth cover on clear road surface, away from the plants.
-  The camera slowly focuses on it and holds until generation finishes. Reveal only
+- Submission surrounds the sketch with shared pearl-white particles and local blur.
+  The camera slowly focuses on the generation location and holds until generation finishes. Reveal only
   the 3D object, hold for two seconds, then restore the normal camera. The original
   sketch stays in the canvas, not as an overlay beside the finished model.
   Only after zoom-out does the dog show a heart, jump once, run toward it, slow to a
@@ -350,17 +350,28 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
   [the implementation note](3d_game/DOG_ENCOUNTER.md). This does not assert paid live
   recognition accuracy or Web backend availability.
 
-### E03 — The Crows
+### E03 — The Giant Bird (#34)
 
-- **Confirmed classification (September 13):** backend classes are BOW, MAGIC, DEFENCE, UNKNOWN. DEFENCE covers protective objects such as shields and umbrellas; gameplay effects and success rules remain to be defined.
-
-- **Confirmed premise:** multiple crows descend, flap around the player, and obstruct the way.
-- **Reference examples:** the player holds a shield-like object; the drawing card shows an umbrella. Protection or repelling the flock is the reference direction, not restoring a stolen road sign.
-- **Candidate implementation:** a pre-authored protective effect for a shield or umbrella, represented by a proposed PROTECTS tag. The team must decide how this causes the flock to disperse or lets the player pass.
-- Other deterrents, such as sound, may be accepted if agreed; they are not automatically finalized alternatives.
-- Specify how long the effect must last and whether any interaction/timing is required. Do not assume that all shields, food, or sound objects always succeed.
-- **Completion:** the approved action resolves the flock obstruction and opens the route to E04.
-- **Acceptance:** the original sketch is visible during protection/repelling; flock feedback makes the outcome clear; waiting and retry remain safe.
+- **Confirmed September 13:** one very large bird guards Wind Hill. This supersedes
+  the earlier multiple-crow premise. The supplied Moonwing flies in from the distant
+  upper-right sky over 5.5 seconds. Keep its giant world scale fixed; the depth of
+  its approach makes it appear small far away and large near the protagonist.
+- The bird flies near the protagonist, who automatically ducks and leans away.
+  No damage or timing challenge is introduced by this encounter.
+- Draw a protective object such as an umbrella or shield. DEFENCE is the supported
+  route for this implementation; BOW, MAGIC and UNKNOWN produce a contextual retry.
+  The backend identity remains E03 / crows, with its existing class vocabulary.
+- Surround the sketch with particles and local blur, focus the generation location,
+  reveal the 3D model, hold two seconds,
+  then restore the normal camera. The original sketch overlay disappears when the
+  model is presented. Raise the protection, show the bird retreat and fly away,
+  then unlock the path to Sunset Cove. Protection stays with the protagonist and
+  grows to a ten-unit width when raised, matching the giant bird's scale.
+- Block the rightward route at every depth and jump height until departure completes.
+  Drawing pauses the encounter; cancellation/errors preserve the latest draft and
+  restore controls. Late or duplicate replies never unlock the route.
+- See [Bird encounter](3d_game/BIRD_ENCOUNTER.md) for implementation, supplied assets,
+  offline test coverage and live/Web verification limits.
 
 ### E04 — Meeting the Otter — DETAILS OPEN
 
@@ -530,7 +541,7 @@ the same six-field item with clear manual provenance.
 
 ### Visual direction
 
-- A warm storybook route with a broad river, a large dog, a flock of crows, an otter area, and a final boss space. Mountain/ruin scenery is a visual direction; the final setting and ending view remain open.
+- A warm storybook route with a broad river, a large dog, one giant bird, an otter area, and a final boss space. Mountain/ruin scenery is a visual direction; the final setting and ending view remain open.
 - Gentle, playful stakes; no realistic violence required.
 - Use simple 3D scenery with illustrated characters or props where helpful. Keep the camera and asset pipeline achievable for beginners.
 - Paper framing or soft shadows can integrate rough player artwork into the scene.
@@ -801,7 +812,7 @@ These are proposed tasks, not issues already created on GitHub.
 | Approved solution routes | Every finalized route is tested; two per stage remains the design target, not evidence of implemented routes |
 | E01 river crossing | Approved drawing enables safe bank-to-bank traversal and opens E02 |
 | E02 large dog | FOOD/TOY visibly distracts the dog; collection opens E03; bypasses and unrelated drawings remain blocked |
-| E03 crows | Approved protection/repelling effect resolves the flock and opens E04; no stolen-sign objective |
+| E03 giant bird | Enlarged DEFENCE protection blocks one giant bird; its departure opens E04; failed or unrelated drawings preserve the gate |
 | E04 otter | Matches the task/outcome the team eventually records; a placeholder does not pass |
 | E05 boss | Approved strategy, retry and victory rules work; not marked done while design remains open |
 | Unrelated recognized item | Contextual retry message, no resource penalty |
@@ -857,7 +868,7 @@ Already settled: production has begun on September 12; five-stage order and the 
 |---|---|---|
 | E04 otter task and outcome | Meeting the otter is confirmed; what to do, accepted drawings, reward and later help are open | Proposed target: end of Day 1, before dependent implementation/assets |
 | E05 boss and winning strategy | Final boss is confirmed; identity/twist, actions, phases, stat use, retry and ending are open | Proposed target: end of Day 1, before dependent implementation/assets |
-| Remaining E01/E03 solution rules | E02 food/toy distraction is confirmed in #38; E01 alternatives and E03 action rules still need definition | Design/integration |
+| Remaining E01 alternatives | E02 food/toy distraction is confirmed in #38; E03 protection is implemented in #34; E01 alternatives remain open | Design/integration |
 | Submission portal and video details | URL and gameplay video required; video duration, format/hosting and portal fields not supplied | Before recording/final submission |
 | Judge browser/network and remaining asset/code rules | Web delivery planned; exact constraints and reuse/disclosure details still to verify | Early Day 1 |
 | Camera feel and player appearance | Fixed views per stage; E01 overhead orthographic. Later framing follows designers; illustrated or low-detail character | During controller spike |
@@ -1004,3 +1015,43 @@ This supersedes earlier open-setting references for the visual ending only.
 The final boss loop, victory call site, ending narration/dialogue, full asset
 credits screen and Web validation remain unfinished. See
 [Ending integration](3d_game/ENDING_INTEGRATION.md).
+
+## September 13: shared sketch generation particles
+
+The global playtest revision replaces all construction tent geometry with pearl-white
+particles and soft local blur around the submitted sketch. River, Dog and Bird use
+the shared generation preview. Keep their focus, completed-model hold, zoom-out and
+reaction sequence; clear the atmosphere when the model appears or a request ends
+unsuccessfully. See [Generation presentation](3d_game/GENERATION_PRESENTATION.md).
+
+## September 13 playtest follow-up: group framing (#58, #59)
+
+Stage 2 and Stage 3 generation shots must include the protagonist, animal and
+drawn/generated object together. Use a gentle group close-up with space for the
+sketch mist. Stage 2 offerings settle on terrain and cannot be knocked away by
+the dog or protagonist. Stage 3's single bird is reduced 30% from its previous
+fourfold scale, continues flying while the canvas is open, and pitches downward
+toward the protagonist during its swoop. Successful generated models must appear
+even when unsuitable for protection; show why a different drawing is needed,
+retain the latest draft, and keep the route locked until DEFENCE succeeds.
+
+For Stage 3 classification, ordinary umbrellas and shields count as DEFENCE after
+the model identifies the object. This clarification must not steer the identity
+toward a solution. The successful-model display and the level's solve check remain
+separate, so an unsuitable classification never silently discards a generated GLB.
+
+## September 13 late playtest revision: fixed generation close-up (#59)
+
+Increase the shared sketch cover opacity across all implemented drawing stages.
+For Stage 3, zoom closer to the sketch and protagonist, then hold the camera fixed
+through processing and the completed-model pause; bird movement must not move the
+camera. This supersedes the earlier Stage 3 group-tracking requirement above.
+Retain Stage 2 group framing. When the bird departs, detach the protection from the
+protagonist and animate it tilting, drifting away, shrinking and fading out. Remove
+it after departure; the protagonist must remain grounded. This supersedes the
+earlier persistent equipped-protection behavior.
+
+The subsequent marked screenshot defines the Stage 3 composition more precisely:
+frame the central sketch/cover area as the close-up, moving the shot center upward
+from the ground. Include the sketch bounds when choosing both center and distance;
+small and large drawings should remain prominent without clipping the cover.

@@ -1,8 +1,8 @@
 # Stage 03: Wind Hill integration
 
-Updated: 2026-09-12. This is a playable environment preview. The E03 crow
-encounter, drawing rules and success condition remain open. The environment
-transition to Stage 4 is now available through issue #31.
+Updated: 2026-09-13. Wind Hill now includes the single giant bird encounter in
+[#34](BIRD_ENCOUNTER.md). Its defence drawing and bird departure gate the existing
+transition to Stage 4. The environment details below remain applicable.
 
 ## Entry and controls
 
@@ -11,11 +11,10 @@ transition to Stage 4 is now available through issue #31.
   at z=-28 across the entire X axis, including both sides of the path and jumps.
   The temporary preview button has been removed.
 - Alternatively, run `3d_game/scenes/wind_hill/wind_hill.tscn` directly in Godot.
-- **Back to woodland** returns to a fresh Stage 2 preview. Environment transitions
-  do not represent completing the dog or crow encounters.
+- **Back to woodland** returns to a fresh Stage 2 preview. Returning resets that encounter. Forward progression requires resolving each encounter.
 - Continue horizontally right to the large rock beside the tree to enter Sunset
   Cove at x>=9.5. This vertical screen boundary covers all Z positions and heights;
-  jumping onto the rock is unnecessary. See [Stage 04 integration](STAGE04_INTEGRATION.md).
+  jumping onto the rock is unnecessary. The giant bird must first be sent away with protection. See [Stage 04 integration](STAGE04_INTEGRATION.md).
 - Uses the shared Moonlit Wanderer, walking, jumping, sprinting and controller input.
 - September 13 visual adjustment: the Stage 3 protagonist uses scale 1.8216,
   a further 10% increase from 1.656. Movement and capsule collision retain
@@ -24,7 +23,7 @@ transition to Stage 4 is now available through issue #31.
   camera retains its initial position and orientation, then follows ground movement.
 - Terrain, rocks and the base-pose tree trunks have mesh collision. The path is a
   visual overlay on the terrain; foliage, shadows and distant scenery have no collision.
-- Falling below y=-4 returns to spawn. There is no encounter progress to preserve yet.
+- Falling below y=-4 returns to spawn. Solved bird progress is preserved.
 
 Stage 2 and Stage 3 share the configurable preview controller in
 `3d_game/scripts/woodland/woodland_level.gd`; each scene owns its art integration.
@@ -131,4 +130,5 @@ stopping before the boundary does not transition. This regression initially
 failed at all four positions outside the old narrow path trigger.
 Headless sandbox runs emit macOS certificate and user-log/editor-settings permission
 messages; the desktop Stage 3 check completed without engine errors.
-Web rendering, performance budgets and the crow encounter are not verified.
+Web rendering and performance budgets are not verified. Bird encounter checks
+are recorded separately in [Bird encounter](BIRD_ENCOUNTER.md).

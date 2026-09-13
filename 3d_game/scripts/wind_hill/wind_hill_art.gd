@@ -12,6 +12,9 @@ func _ready() -> void:
 		# Wind-deformed branches keep their base-pose collision for this preview.
 		if label == "Terrain_Ground" or label == "Branching_Tree_Trunks" or label.begins_with("Gouache_Rock"):
 			node.create_trimesh_collision()
+			if label == "Terrain_Ground":
+				for body in node.find_children("*", "StaticBody3D", true, false):
+					body.set_collision_layer_value(2, true)
 			for collider in node.find_children("*", "CollisionShape3D", true, false):
 				if collider.shape is ConcavePolygonShape3D:
 					collider.shape.backface_collision = true

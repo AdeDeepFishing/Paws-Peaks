@@ -2,6 +2,7 @@ extends "res://scripts/woodland/woodland_level.gd"
 
 const DrawingSurface = preload("res://scripts/river/drawing_surface.gd")
 const GeneratedModel = preload("res://scripts/river/generated_model.gd")
+const Framing = preload("res://scripts/woodland/encounter_framing.gd")
 const Presentation = preload("res://scripts/woodland/dog_presentation.gd")
 const GUARD_Z := -4.8
 const DRAW_RADIUS := 16.0
@@ -172,6 +173,22 @@ func _clear_presentation() -> void:
 func _offering_position() -> Vector3:
 	return to_local(sketch_anchor)
 
+func presentation_camera_transform(anchor: Vector3) -> Transform3D:
+	var basis: Basis = global_basis * presentation.home.basis
+	var points: Array[Vector3] = []
+	Framing.add_visual(points, player.visual)
+	Framing.add_visual(points, dog)
+	Framing.add_box(points, AABB(to_global(anchor), Vector3(0, 2, 0)))
+	if is_instance_valid(offered): Framing.add_visual(points, offered)
+	var centers: Array[Vector3] = points.duplicate()
+	Framing.add_sketch(points, generation_preview, basis)
+	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview)
+
+func _settle_offering(_ground: Node, body: RigidBody3D) -> void:
+	if not is_instance_valid(body) or body != offered: return
+	body.set_deferred("freeze", true)
+	body.set_deferred("linear_velocity", Vector3.ZERO)
+
 func _offer_item() -> void:
 	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY", "UNKNOWN"]:
 		return
@@ -196,6 +213,15 @@ func _offer_item() -> void:
 	offered.name = "OfferedDrawing"
 	if offered is RigidBody3D:
 		offered.freeze = true
+		# The reveal can drop onto terrain, but actors cannot kick the gift away.
+		offered.collision_layer = 0
+		offered.collision_mask = dog.GROUND_MASK
+		offered.axis_lock_linear_x = true
+		offered.axis_lock_linear_z = true
+		offered.lock_rotation = true
+		offered.contact_monitor = true
+		offered.max_contacts_reported = 1
+		offered.body_entered.connect(_settle_offering.bind(offered), CONNECT_ONE_SHOT)
 	offered.hide()
 	add_child(offered)
 	offered.global_position = sketch_anchor + (Vector3.UP * 2.0 if item.movable else Vector3.ZERO)

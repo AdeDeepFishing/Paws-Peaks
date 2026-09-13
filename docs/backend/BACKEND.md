@@ -443,6 +443,14 @@ implement boat movement. Stage 2 renders FOOD, TOY and UNKNOWN, but only FOOD an
 TOY distract the dog and unlock the path. UNKNOWN permits another sketch; submitting
 replaces the previous object. Later-stage success rules remain design work.
 
+Stage 3 adds backend-owned meanings for its classification step: an identified
+ordinary umbrella, parasol, shield, helmet or protective cover belongs to DEFENCE,
+including protection from weather or animals. The model still identifies the
+actual sketch first; stage context must not change that identity to solve the level.
+This addresses the September 13 #59 playtest, where generated umbrellas were
+classified UNKNOWN. Offline request tests verify the guidance is sent only for
+Stage 3; new live classification accuracy has not been measured.
+
 ### Changing a class set
 
 Edit only the stage's `classes` tuple in `backend/stage_config.py`, update this table

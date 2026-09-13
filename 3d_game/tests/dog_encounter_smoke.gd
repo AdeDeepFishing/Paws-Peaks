@@ -23,7 +23,8 @@ func capture(label: String):
 		root.get_texture().get_image().save_png("/private/tmp/paws38-" + label + ".png")
 
 func sketch_in_front(level) -> void:
-	var front: Vector3 = level.player.global_position + Vector3(0, 0, -3)
+	# Avoid the exact x=0 terrain triangle seam in the synthetic ray round-trip.
+	var front: Vector3 = level.player.global_position + Vector3(0.25, 0, -3)
 	var query := PhysicsRayQueryParameters3D.create(front + Vector3.UP * 10, front + Vector3.DOWN * 10, level.dog.GROUND_MASK, [level.player.get_rid(), level.dog.get_rid()])
 	var hit: Dictionary = level.get_world_3d().direct_space_state.intersect_ray(query)
 	check(not hit.is_empty(), "Mock sketch has ground in front of the player")
@@ -47,7 +48,7 @@ func draw(level, outcome: int):
 	check(not level.submit_button.disabled, "Adding ink enables the offer button")
 	level.choices.selected = outcome
 	level._submit()
-	check(not level.drawing, "Submit closes the drawing canvas")
+	check(not level.drawing, "Submit closes the drawing canvas: " + level.hint.text)
 	await frames(12)
 
 func run():
@@ -240,6 +241,9 @@ func run():
 	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "model_path": model_path,
 		"item": {"name": "Fixed toy", "description": "A toy fixed to the ground.", "type": "TOY", "movable": false, "texture_key": "plain", "color": "#D9C6A0"}})
 	check(level.offered is StaticBody3D, "Fixed interpretation creates an anchored body")
+	if level.offered == null:
+		quit(1)
+		return
 	var fixed_anchor: Vector3 = level.sketch_anchor
 	await frames(30)
 	check(level.offered.global_position.is_equal_approx(fixed_anchor), "Fixed model remains at the sketch location")

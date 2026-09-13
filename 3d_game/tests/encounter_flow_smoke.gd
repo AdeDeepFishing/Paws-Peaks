@@ -45,7 +45,7 @@ func run():
 	check(level.presentation.busy and not level.player.input_enabled, "Submission starts locked construction closeup")
 	await create_timer(0.65).timeout
 	check(level.get_node("StageCamera").size < 18.6 and level.get_node("StageCamera").size > 12.1, "Camera slowly zooms in rather than snapping")
-	check(is_instance_valid(level.presentation.cover), "Construction tarp exists")
+	check(level.generation_preview.mist.active, "Sketch mist is active")
 	await capture("construction-closeup")
 	await create_timer(1.6).timeout
 	check(not level.presentation.busy and level.presentation.holding, "Camera remains focused while waiting for generation")
@@ -58,7 +58,7 @@ func run():
 	await capture("construction-waiting")
 	level.request.accept_response(ready_response())
 	await create_timer(0.6).timeout
-	check(level.bridge.visible and not is_instance_valid(level.presentation.cover), "Result replaces the construction cloth")
+	check(level.bridge.visible and not level.generation_preview.mist.active, "Result replaces sketch mist")
 	await create_timer(1.0).timeout
 	check(level.presentation.busy and is_equal_approx(level.get_node("StageCamera").size, 12.0), "Finished result stays visible for at least two seconds before zooming out")
 	while level.presentation.busy: await level.presentation.settled
@@ -98,7 +98,7 @@ func run():
 	await frames(5)
 	level.request.cancel()
 	await create_timer(2.0).timeout
-	check(not level.presentation.busy and level.player.input_enabled and not is_instance_valid(level.presentation.cover), "Cancel during intro restores camera and input")
+	check(not level.presentation.busy and level.player.input_enabled and not level.generation_preview.mist.active, "Cancel during intro restores camera and input")
 	check(not level.presentation.holding, "Canceled intro cannot re-enter the held camera")
 	await prepare_draw()
 	level._submit()

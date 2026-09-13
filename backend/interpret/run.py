@@ -117,6 +117,9 @@ def interpret(image, config, prompt=PROMPT, game_stage="river"):
     prompt += ("\nClassification context for step 2 only: game stage " + game_stage
                + ". Allowed item classes: " + ", ".join(allowed_types)
                + ". Use UNKNOWN if no named class fits the object identified in step 1.")
+    guidance = STAGES[game_stage].get("classification_guidance", "")
+    if guidance:
+        prompt += "\n" + guidance
     prompt += "\n" + PALETTE_PROMPT
     key = config["OPENAI_API_KEY"]
     if not key or key.lower().startswith(("your_", "paste_")):
