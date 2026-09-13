@@ -171,6 +171,27 @@ func _clear_presentation() -> void:
 func _offering_position() -> Vector3:
 	return to_local(sketch_anchor)
 
+func presentation_camera_transform(anchor: Vector3) -> Transform3D:
+	# Preserve the submitted sketch's scale, with room for its surrounding mist.
+	var preview = generation_preview
+	var viewport := get_viewport().get_visible_rect().size
+	var sketch_size: Vector2 = preview.submitted_rect.size
+	var pixels_per_unit: float = preview.submitted_pixels_per_unit
+	var available := viewport * Vector2(0.68, 0.64) - Vector2.ONE * 60.0
+	var magnification := minf(1.3, minf(available.x / (sketch_size.x * 1.44), available.y / (sketch_size.y * 1.44)))
+	var target_pixels := maxf(0.001, pixels_per_unit * magnification)
+	var lens_span := viewport.y if camera.keep_aspect == Camera3D.KEEP_HEIGHT else viewport.x
+	var distance := maxf(8.0, lens_span / (2.0 * tan(deg_to_rad(32.0) * 0.5) * target_pixels))
+	var world_height := sketch_size.y / maxf(pixels_per_unit, 0.001)
+	var focus := to_global(anchor) + camera.global_basis.y * world_height * 0.5
+	var destination := Transform3D(camera.global_basis, focus + camera.global_basis.z * distance)
+	return global_transform.affine_inverse() * destination
+
+func _settle_offering(_ground: Node, body: RigidBody3D) -> void:
+	if not is_instance_valid(body) or body != offered: return
+	body.set_deferred("freeze", true)
+	body.set_deferred("linear_velocity", Vector3.ZERO)
+
 func _offer_item() -> void:
 	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY"]:
 		return
@@ -195,6 +216,15 @@ func _offer_item() -> void:
 	offered.name = "OfferedDrawing"
 	if offered is RigidBody3D:
 		offered.freeze = true
+		# The reveal can drop onto terrain, but actors cannot kick the gift away.
+		offered.collision_layer = 0
+		offered.collision_mask = dog.GROUND_MASK
+		offered.axis_lock_linear_x = true
+		offered.axis_lock_linear_z = true
+		offered.lock_rotation = true
+		offered.contact_monitor = true
+		offered.max_contacts_reported = 1
+		offered.body_entered.connect(_settle_offering.bind(offered), CONNECT_ONE_SHOT)
 	offered.hide()
 	add_child(offered)
 	offered.global_position = sketch_anchor + (Vector3.UP * 2.0 if item.movable else Vector3.ZERO)

@@ -13,6 +13,9 @@ This supersedes older cloth-cover descriptions in the stage integration notes.
   and zooms. River now anchors its preview to the drawing plane as well; Dog and
   Bird retain their existing terrain anchors. The endpoint is the same location
   used by the drawing preview, not a separate tent or construction prop.
+- Woodland fits the camera to the submitted sketch, with at most 30% enlargement
+  and space for the feathered mist. Large drawings use a wider framing instead of
+  being cropped by a fixed-distance close-up.
 - Early interpretation and reference images keep their existing lifecycle. The
   effect remains until the finished model is actually presented, including the
   short interval after the backend reports READY.
@@ -42,6 +45,8 @@ new downloaded assets, persistent draft copies or backend calls.
   active particles, sketch-relative bounds and camera anchoring, no remaining tent,
   persistence through READY, model cleanup and cancellation. Its `--visual` mode
   captures each scene using Forward+.
+- `dog_offering_framing_smoke.gd`: small, large, wide and tall sketch framing,
+  mist margins, and a revealed offering that remains still when the dog approaches.
 - Existing `encounter_flow_smoke.gd` and `dog_presentation_smoke.gd`: generation
   focus, completed-result hold, camera restoration and failure/cancel recovery.
 - `bird_encounter_smoke.gd`: enlarged defence and giant bird progression with the
