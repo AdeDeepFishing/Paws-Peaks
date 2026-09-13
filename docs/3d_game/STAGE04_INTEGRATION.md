@@ -13,7 +13,8 @@ issue #31. E04 otter interaction, drawing rules and Stage 5 remain separate work
 - Stage 3's main progression is horizontal; forward/back movement remains available.
   The shared exit marker supports world -Z for Stage 2 and world +X for Stage 3.
 - Direct entry: `3d_game/scenes/sunset_cove/sunset_cove.tscn`.
-- Stage 4 uses the shared Moonlit Wanderer at visual scale 1.44, with walking,
+- Stage 4 uses the shared Moonlit Wanderer at visual scale 1.08 (25% smaller than
+  the previous 1.44 appearance), with walking,
   sprinting, jumping and the existing keyboard/controller controls.
 - Spawn is on the near beach at (0, 2, 6), with a short drop onto the sand.
   The delivered 53-degree camera keeps its orientation and pulls back three units

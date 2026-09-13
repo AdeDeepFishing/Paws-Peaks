@@ -17,8 +17,8 @@ transition to Stage 4 is now available through issue #31.
   Cove at x>=9.5. This vertical screen boundary covers all Z positions and heights;
   jumping onto the rock is unnecessary. See [Stage 04 integration](STAGE04_INTEGRATION.md).
 - Uses the shared Moonlit Wanderer, walking, jumping, sprinting and controller input.
-- September 13 visual adjustment: the Stage 3 protagonist is 20% larger than its
-  previous appearance (scale 1.2 to 1.44). Movement and capsule collision retain
+- September 13 visual adjustment: the Stage 3 protagonist uses scale 1.656,
+  a further 15% increase from 1.44. Movement and capsule collision retain
   their shared settings.
 - Spawns on the central path at x=0, z=-0.5. The authored 49-degree perspective
   camera retains its initial position and orientation, then follows ground movement.

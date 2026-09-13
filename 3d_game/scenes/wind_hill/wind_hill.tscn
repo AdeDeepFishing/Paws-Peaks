@@ -41,7 +41,7 @@ far = 500.0
 
 [node name="Player" parent="." instance=ExtResource("4")]
 position = Vector3(0, 2, -0.5)
-appearance_scale = 1.44
+appearance_scale = 1.656
 
 [node name="SunsetCoveExit" type="Marker3D" parent="."]
 position = Vector3(9.5, 0, 0)
