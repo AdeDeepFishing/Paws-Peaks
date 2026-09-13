@@ -1,0 +1,82 @@
+{
+  "plain": {
+    "description": "Smooth neutral surface",
+    "roughness": 0.85,
+    "metallic": 0
+  },
+  "wood": {
+    "description": "Wood grain",
+    "roughness": 0.8,
+    "metallic": 0
+  },
+  "bark": {
+    "description": "Tree bark",
+    "roughness": 0.95,
+    "metallic": 0
+  },
+  "stone": {
+    "description": "Mottled stone",
+    "roughness": 0.95,
+    "metallic": 0
+  },
+  "brick": {
+    "description": "Brickwork",
+    "roughness": 0.9,
+    "metallic": 0
+  },
+  "fabric": {
+    "description": "Woven cloth",
+    "roughness": 0.95,
+    "metallic": 0
+  },
+  "knit": {
+    "description": "Knitted yarn",
+    "roughness": 0.95,
+    "metallic": 0
+  },
+  "leather": {
+    "description": "Soft leather",
+    "roughness": 0.8,
+    "metallic": 0
+  },
+  "metal": {
+    "description": "Brushed metal",
+    "roughness": 0.38,
+    "metallic": 0.85
+  },
+  "ceramic": {
+    "description": "Glazed ceramic",
+    "roughness": 0.3,
+    "metallic": 0
+  },
+  "rubber": {
+    "description": "Matte rubber",
+    "roughness": 0.9,
+    "metallic": 0
+  },
+  "paper": {
+    "description": "Paper fibers",
+    "roughness": 0.95,
+    "metallic": 0
+  },
+  "bone": {
+    "description": "Bone or ivory",
+    "roughness": 0.75,
+    "metallic": 0
+  },
+  "fur": {
+    "description": "Short fur",
+    "roughness": 0.95,
+    "metallic": 0
+  },
+  "scales": {
+    "description": "Overlapping scales",
+    "roughness": 0.65,
+    "metallic": 0
+  },
+  "food": {
+    "description": "Bread or biscuit crumb",
+    "roughness": 0.95,
+    "metallic": 0
+  }
+}

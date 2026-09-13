@@ -28,12 +28,13 @@ class GameBridgeTests(unittest.TestCase):
         def pipeline(argv, *, output_folder, on_event):
             self.assertEqual(argv, ['--image', str(self.folder / 'request/input.png'), '--game-stage', 'river'])
             self.assertEqual(output_folder, self.folder / 'response/artifacts')
-            on_event({'stage': 'model', 'status': 'FAILED', 'error': 'POLL_TIMEOUT', 'signed_url': 'secret'})
+            on_event({'stage': 'model', 'status': 'FAILED', 'error': 'POLL_TIMEOUT', 'signed_url': 'secret', 'texture_path': str(output_folder / 'texture.png')})
             return 1
         with patch.object(run.pipeline, 'main', side_effect=pipeline) as provider:
             self.assertEqual(run.execute(self.folder, 'live-test', 'E01', 'live'), 1)
             provider.assert_called_once()
         self.assertEqual(self.status()['error'], 'POLL_TIMEOUT')
+        self.assertNotIn('texture_path', self.status())
         self.assertNotIn('signed_url', self.status())
         self.assertNotIn('secret', (self.folder / 'response/results.jsonl').read_text())
 
@@ -69,6 +70,8 @@ class GameBridgeTests(unittest.TestCase):
                 self.assertEqual(status()['item']['name'], 'Dog Bone')
                 fixture = run.ROOT.parent / 'docs/test-artifacts/stage2-2026-09-13'
                 self.assertEqual(Path(status()['model_path']).read_bytes(), (fixture / 'model.glb').read_bytes())
+                self.assertEqual(status()['item']['texture_key'], 'bone')
+                self.assertEqual(status()['item']['color'], '#E8D9B7')
                 self.assertEqual(Path(status()['reference_path']).read_bytes(), (fixture / 'reference.jpg').read_bytes())
             self.assertIn('reference_path', status())
             wait_for(lambda: status().get('pool_checked'))

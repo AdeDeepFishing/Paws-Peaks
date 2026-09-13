@@ -177,4 +177,11 @@ verified offline.
 - Godot `res://tests/river_smoke.gd`: existing drawing/gameplay regression coverage.
 
 See [encounter presentation and movement](ENCOUNTER_FLOW.md) for construction
-closeups, delayed coins, result reveals, and assisted crossing.
+closeups, result reveals, and assisted crossing.
+
+### Reusable material and color
+
+The six-field item includes `texture_key` and `color`, validated before loading the
+model. See [Material palette](MATERIAL_PALETTE.md) for the shared reference color,
+whole-object rendering and asset catalog. Stage 1's fixture uses brown wood;
+Stage 2's uses ivory bone. Material selection is independent of mobility and class.

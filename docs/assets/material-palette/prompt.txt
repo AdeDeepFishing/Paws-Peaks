@@ -1,0 +1,11 @@
+Create a single square game-material atlas: exactly 4 rows and 4 columns of equally sized texture swatches, filling a 1024 x 1024 image edge to edge. Every cell is exactly 256 x 256 pixels. No gutters, borders, divider lines, labels, numbers or text.
+
+Style: soft hand-painted storybook surfaces, gentle brush strokes, simple readable patterns, low contrast. Only neutral LIGHT GRAYS and white, no color. These are tintable albedo textures: no perspective, object silhouettes, lighting gradients, cast shadows, shiny highlights or baked ambient occlusion. Each cell is a flat material surface with a subtle pattern that can repeat seamlessly. Keep patterns broad and readable at small game sizes. Avoid photorealistic detail and noise.
+
+Exact cell order, left to right:
+Row 1: plain soft chalk wash; straight wood grain; irregular tree bark grooves; softly mottled stone.
+Row 2: small staggered bricks; woven cloth crosshatch; knitted yarn loops; softly creased leather.
+Row 3: gently brushed metal; smooth ceramic glaze; matte fine rubber grain; handmade paper fibers.
+Row 4: lightly porous bone; short soft fur strands; small overlapping scales; porous bread or biscuit crumb.
+
+Each swatch must fill its whole cell with one material. Keep all patterns independent and within their own cell. Do not depict samples as physical blocks or objects. The result is a flat texture atlas ready to crop, not an illustration of a sample board.
