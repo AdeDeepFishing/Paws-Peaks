@@ -33,6 +33,7 @@ var objective: Label
 var coins_label: Label
 var status_label: Label
 var book: Button
+var drawing_shine: Control
 var controls: Label
 var modal: Control
 var surface: Control
@@ -110,8 +111,7 @@ func _on_leaving_drawing_area(body: Node3D) -> void:
 func _update_drawing_entry() -> void:
 	book.visible = true
 	book.disabled = presentation.busy or not in_drawing_area or completed or bridge_built or request.state == "PENDING"
-	var glow := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.004)
-	book.modulate = Color.WHITE if book.disabled else Color(1.1 + glow * 0.12, 1.05 + glow * 0.08, 0.8)
+	drawing_shine.set_active(not book.disabled)
 	book.text = "E / %s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
 	cancel_button.visible = not presentation.busy and request.state == "PENDING" and not completed
 
@@ -479,6 +479,7 @@ func _build_ui() -> void:
 	book.offset_top = -92
 	book.offset_bottom = -28
 	book.add_theme_font_size_override("font_size", 20)
+	drawing_shine = preload("res://ui/drawing_shine.gd").attach(book)
 	cancel_button = _button(root, "Stop waiting", func():
 		request.cancel()
 		status_label.text = "Stopped waiting. Your drawing is saved." + (" The provider job may still be running." if generation.mode == 2 else "")

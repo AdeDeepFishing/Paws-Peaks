@@ -36,11 +36,7 @@ func _process(delta: float) -> void:
 	var near := near_dog()
 	draw_button.disabled = dog.distracted or request.state == "PENDING" or not player.is_on_floor()
 	draw_button.text = "Path is clear" if dog.solved else ("E · Offer drawing" if request.state == "READY" and not dog.distracted else "E · Draw")
-	if not drawing and near and not draw_button.disabled:
-		var glow := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.004)
-		draw_button.modulate = Color(1.1 + glow * 0.12, 1.05 + glow * 0.08, 0.8)
-	else:
-		draw_button.modulate = Color.WHITE
+	drawing_shine.set_active(not drawing and near and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
 	modes.disabled = request.state == "PENDING" or dog.distracted
 

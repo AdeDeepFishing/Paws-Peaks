@@ -18,6 +18,7 @@ var status: Label
 var objective: Label
 var hud_root: Control
 var draw_button: Button
+var drawing_shine: Control
 
 func _ready() -> void:
 	var art := get_node(art_path)
@@ -101,6 +102,7 @@ func _build_ui() -> void:
 	draw_button.add_theme_stylebox_override("normal", paper)
 	draw_button.add_theme_font_size_override("font_size", 20)
 	draw_button.add_theme_color_override("font_color", Color("273d36"))
+	drawing_shine = preload("res://ui/drawing_shine.gd").attach(draw_button)
 
 func _navigation_button(parent: Node, node_name: String, text: String, scene: String, paper: StyleBoxFlat) -> void:
 	var button := Button.new()

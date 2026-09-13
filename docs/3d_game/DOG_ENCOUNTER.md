@@ -37,7 +37,10 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
   starts a fresh encounter, as with the existing preview navigation.
 
 The drawing button is also visible during exploration in the river and shared
-later-stage previews. It glows when the river or dog challenge is available.
+later-stage previews. When the river or dog challenge is available, it shines with a pearl-white
+surface, moving pastel iridescence, a rainbow rim, a soft breathing halo and
+two small star glints. Text and the pen icon retain dark ink for readability.
+The shared effect restores normal button styles when inactive.
 Stages with no implemented drawing interaction keep it disabled. The HUD is
 still hidden during drawing.
 
