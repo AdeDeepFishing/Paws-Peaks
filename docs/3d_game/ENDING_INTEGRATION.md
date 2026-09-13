@@ -8,11 +8,13 @@ transition, gentler dawn and victory recap requested in #60.
 Stage 5's `EndingExit` enters `res://scenes/ending/dawn_forest.tscn` when the
 player reaches world **z <= -12**. The boundary covers every X position and
 height, so there is no small target to hit and jumping does not bypass it.
-The clearing is reachable from the normal spawn by walking forward.
+The clearing is reachable from the normal spawn by walking around the solid
+Storykeeper and returning to the central path behind it.
 
-This is the user-approved temporary route while the boss is absent.
+This is the user-approved temporary route while boss gameplay is unfinished.
 `moonlit_forest_level.gd` exports `preview_ending_enabled` (currently true).
-When implementing #36, set that property false and call
+The visual-only boss integration (#36) retains this preview route. When
+implementing the actual boss encounter, set that property false and call
 `complete_boss_encounter()` after actual victory. The explicit hook uses the
 same deferred, duplicate-guarded transition, independently of the walk gate.
 No boss or combat victory is simulated by this integration.

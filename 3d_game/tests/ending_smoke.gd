@@ -34,8 +34,26 @@ func run() -> void:
 	var worker := root.get_node("GenerationWorker")
 	var level = forest()
 	await frames(45)
+	# Walk beside the solid Storykeeper to reach the existing preview exit.
+	Input.action_press("move_right")
+	for i in 45:
+		level.player.window_focused = true
+		await frames(1)
+	Input.action_release("move_right")
 	Input.action_press("move_up")
-	for i in 360:
+	for i in 240:
+		level.player.window_focused = true
+		await frames(1)
+		if level.player.position.z < -8.5: break
+	Input.action_release("move_up")
+	# Return to the central path behind the boss, before the scenery rocks.
+	Input.action_press("move_left")
+	for i in 45:
+		level.player.window_focused = true
+		await frames(1)
+	Input.action_release("move_left")
+	Input.action_press("move_up")
+	for i in 180:
 		if not is_instance_valid(level): break
 		level.player.window_focused = true
 		await frames(1)

@@ -7,6 +7,8 @@
 
 [ext_resource type="Script" path="res://scripts/woodland/path_exit.gd" id="5"]
 
+[ext_resource type="PackedScene" path="res://scenes/boss/storykeeper.tscn" id="6"]
+
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.07, 0.12, 0.22, 1)
@@ -52,3 +54,6 @@ appearance_scale = 1.08
 position = Vector3(0, 0, -12)
 script = ExtResource("5")
 destination = "res://scenes/ending/dawn_forest.tscn"
+
+[node name="Storykeeper" parent="." instance=ExtResource("6")]
+position = Vector3(0, 0, -6)
