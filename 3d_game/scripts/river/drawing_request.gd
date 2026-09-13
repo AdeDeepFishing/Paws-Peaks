@@ -4,6 +4,7 @@ extends Node
 ## response to accept_response. Disable mock_mode before connecting a real backend.
 signal request_prepared(payload: Dictionary)
 signal state_changed(state: String)
+signal request_failed(request_id: String, error_code: String, message: String)
 
 @export var mock_mode := true
 @export var mock_delay := 3.0
@@ -78,6 +79,8 @@ func _deliver_mock(request_id: String, outcome: int) -> void:
 					"description": "Your sketch can give the dog something to enjoy.",
 					"type": "FOOD" if outcome == 0 else ("TOY" if outcome == 1 else "UNKNOWN")
 				}
+	if response.get("item") is Dictionary:
+		response.item["movable"] = response.item.type != "BRIDGE"
 	accept_response(response)
 
 func accept_response(response: Dictionary) -> bool:
@@ -108,7 +111,9 @@ func accept_response(response: Dictionary) -> bool:
 
 ## Classification membership is validated by the backend stage configuration.
 static func valid_item(value: Variant) -> bool:
-	if not value is Dictionary or value.size() != 3:
+	if not value is Dictionary or value.size() != 4:
+		return false
+	if not value.get("movable") is bool:
 		return false
 	for key in ["name", "description", "type"]:
 		if not value.get(key) is String:
@@ -129,13 +134,17 @@ func reset() -> void:
 	result = {}
 	message = ""
 
-func fail_current(reason: String) -> void:
+func fail_current(reason: String, code: String = "GENERATION_FAILED") -> void:
 	if state in ["PENDING", "READY"]:
-		_fail(reason)
+		_fail(reason, code)
 
-func _fail(reason: String) -> void:
+func _fail(reason: String, code: String = "GENERATION_FAILED") -> void:
+	var failed_id := active_id
 	message = reason
+	result = {}
+	model_path = ""
 	_set_state("FAILED")
+	request_failed.emit(failed_id, code, reason)
 
 func _set_state(next: String) -> void:
 	state = next

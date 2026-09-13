@@ -4,6 +4,7 @@ const Level = preload("res://scenes/river/river_crossing.tscn")
 const Model = preload("res://scripts/river/generated_model.gd")
 var failed := false
 var early_events: Array[String] = []
+var failure_events: Array[Dictionary] = []
 
 func check(value: bool, message: String) -> void:
 	if not value:
@@ -13,7 +14,12 @@ func check(value: bool, message: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 
+func capture_preview() -> void:
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("/private/tmp/paws-generation-reference.png")
+
 func run() -> void:
+	root.size = Vector2i(1152, 720)
 	var level = Level.instantiate()
 	level.auto_advance = false
 	level.get_node("EncounterPresentation").duration_scale = 0.01
@@ -25,12 +31,19 @@ func run() -> void:
 	var worker_pid: int = worker.process_id
 	level.generation.interpretation_ready.connect(func(_id: String, item: Dictionary):
 		check(level.request.state == "PENDING" and item.has("name"), "Interpretation arrives before completion")
-		early_events.append("item"))
+		early_events.append("item")
+		check(level.generation_preview.card.visible and level.generation_preview.item_name.text == item.name, "Early interpretation is visible on screen")
+		check(level.request.model_path.is_empty(), "Interpretation displays before the model exists"))
 	level.generation.reference_image_ready.connect(func(_id: String, path: String):
 		check(level.request.state == "PENDING" and FileAccess.file_exists(path), "Reference arrives before completion")
-		early_events.append("image"))
+		early_events.append("image")
+		check(level.generation_preview.image.texture != null, "Reference image appears during generation")
+		check(level.generation_preview.image.get_global_rect().is_equal_approx(level.surface.snapshot_screen_rect()), "Reference overlay uses the submitted sketch position and size")
+		check(level.generation_preview.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Preview does not block game input")
+		if "--visual" in OS.get_cmdline_user_args(): capture_preview())
 	var image := Image.new()
-	level.surface.strokes.append(PackedVector2Array([Vector2(100, 100), Vector2(300, 200)]))
+	level.surface.reference_size = level.surface.size
+	level.surface.strokes.append(PackedVector2Array([Vector2(460, 240), Vector2(720, 370)]))
 	image.load_png_from_buffer(level.surface.snapshot_png())
 	check(image.get_pixel(0, 0).a == 0.0, "Transport input has transparent background")
 	check(level.request.submit(image.save_png_to_buffer(), "E01"), "Submit starts a desktop request")
@@ -40,8 +53,10 @@ func run() -> void:
 	check(early_events == ["item", "image"], "Early results arrive exactly once in order")
 	check(worker.process_id == worker_pid and worker.is_running(), "Worker survives completion")
 	check(level.request.state == "READY", "Fixture reaches READY: " + level.request.message)
+	check(level.generation_preview.image.texture == null, "Reference image clears when generation completes")
 	if level.presentation.busy:
 		await level.presentation.settled
+	check(not level.generation_preview.visible, "Preview clears when model is presented")
 	check(level.bridge_built, "Returned model automatically enables crossing")
 	check(is_instance_valid(level.generated_visual), "Actual GLB appears in scene")
 	check(not level.get_node("Bridge/Deck/Visual").visible, "Placeholder is hidden")
@@ -84,6 +99,38 @@ func run() -> void:
 	check(worker.process_id == worker_pid and worker.is_running(), "Cancel preserves listener")
 	level.generation.consume_status(old_status)
 	check(not level.bridge_built, "Canceled result cannot build a bridge")
+
+	level.request.request_failed.connect(func(id: String, code: String, message: String):
+		failure_events.append({"request_id": id, "code": code, "message": message}))
+	var failure_status: Dictionary = {}
+	for code in ["SERVICE_UNAVAILABLE", "OPENAI_IMAGE_ERROR", "INVALID_MODEL_OUTPUT", "GENERATION_FAILED"]:
+		check(level.request.submit(image.save_png_to_buffer(), "E01"), "Failure allows a new submission")
+		var current_id: String = level.request.active_id
+		if not failure_status.is_empty():
+			check(current_id != failure_status.request_id, "Retry gets a fresh request identity")
+			level.generation.consume_status(failure_status)
+			check(level.request.state == "PENDING", "Late failure cannot affect the new sketch")
+		failure_status = old_status.duplicate(true)
+		failure_status.merge({"request_id": current_id, "stage": "error", "status": "FAILED", "error": code,
+			"item": {"invalid": "retained partial data"}}, true)
+		var count := failure_events.size()
+		level.generation.consume_status(failure_status)
+		check(failure_events.size() == count + 1 and failure_events.back().code == code, "Failure signal preserves provider error code")
+		check(failure_events.back().request_id == current_id, "Failure signal identifies the failed sketch")
+		check(not level.generation_preview.visible, "Failure clears the generation overlay")
+		check(level.request.state == "FAILED" and level.request.result.is_empty() and level.request.model_path.is_empty(), "Failure clears usable result and releases pending state")
+		check(level.generation.partial_item.is_empty() and level.generation.reference_path.is_empty(), "Failure clears partial presentation data")
+		check(level.request.message.contains("Try another sketch"), "Failure offers another sketch")
+		check(not level.request.snapshot.is_empty(), "Failure preserves the drawing")
+		level.generation.consume_status(failure_status)
+		check(failure_events.size() == count + 1, "Repeated terminal failure emits only once")
+	image.set_pixel(200, 200, Color.BLACK)
+	check(level.request.submit(image.save_png_to_buffer(), "E01"), "A different sketch can be submitted after failure")
+	var late_success := failure_status.duplicate(true)
+	late_success.status = "SUCCEEDED"
+	level.generation.consume_status(late_success)
+	check(level.request.state == "PENDING" and not level.bridge_built, "Late success cannot complete the new sketch")
+	level.request.cancel()
 
 	check(Model.load_visual("res://project.godot", 10.4, true) == null, "Invalid GLB is rejected")
 	level.queue_free()

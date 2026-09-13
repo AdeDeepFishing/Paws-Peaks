@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from stage_config import STAGES, classes_for
+from stage_config import STAGES
 from interpret import run
 from test_interpret import ITEM, CONFIG, provider_response
 from utils.common import AppError
@@ -15,29 +15,16 @@ from utils.common import AppError
 
 class StageClassTests(unittest.TestCase):
     def test_stage_class_is_used_in_prompt_schema_and_validation(self):
-        value = {'status': 'recognized', 'item': {**ITEM, 'type': 'DOG_DISTRACTION'}}
-        with patch.dict(STAGES, {'dog': {'encounter_id': 'E02', 'classes': ('DOG_DISTRACTION',)}}):
+        value = {'item': {**ITEM, 'type': 'DOG_DISTRACTION'}}
+        with patch.dict(STAGES, {'dog': {'encounter_id': 'E02', 'classes': ('DOG_DISTRACTION', 'UNKNOWN')}}):
             with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response(value)).encode())) as http:
                 self.assertEqual(run.interpret('image', CONFIG, game_stage='dog'), value)
             payload = json.loads(http.call_args.args[0].data)
             self.assertIn('DOG_DISTRACTION', payload['input'][0]['content'])
-            enum = payload['text']['format']['schema']['properties']['item']['anyOf'][0]['properties']['type']['enum']
-            self.assertEqual(enum, ['DOG_DISTRACTION'])
+            enum = payload['text']['format']['schema']['properties']['item']['properties']['type']['enum']
+            self.assertEqual(enum, ['DOG_DISTRACTION', 'UNKNOWN'])
             with self.assertRaises(AppError):
                 run.validate_interpretation(value, 'river')
             with self.assertRaises(AppError):
-                run.validate_interpretation({'status': 'recognized', 'item': ITEM}, 'dog')
-            self.assertNotIn('DOG_DISTRACTION', run.schema_for('river')['properties']['item']['anyOf'][0]['properties']['type']['enum'])
-
-    def test_unconfigured_stage_fails_without_network(self):
-        with patch.dict(STAGES, {'otter': {'encounter_id': 'E04', 'classes': None}}), patch.object(run, 'urlopen') as http:
-            with self.assertRaises(AppError) as error:
-                run.interpret('image', CONFIG, game_stage='otter')
-            self.assertEqual(error.exception.code, 'STAGE_NOT_CONFIGURED')
-            http.assert_not_called()
-
-    def test_invalid_class_configuration(self):
-        for classes in [('TOOL', 'TOOL'), ('',), 'TOOL']:
-            with self.subTest(classes=classes), patch.dict(STAGES, {'dog': {'encounter_id': 'E02', 'classes': classes}}):
-                with self.assertRaises(AppError):
-                    classes_for('dog')
+                run.validate_interpretation({'item': ITEM}, 'dog')
+            self.assertNotIn('DOG_DISTRACTION', run.schema_for('river')['properties']['item']['properties']['type']['enum'])

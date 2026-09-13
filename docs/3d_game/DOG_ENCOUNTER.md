@@ -21,9 +21,9 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
 - **AI drawing · Uses credits** uses the existing E02 / `dog` backend contract.
   Nothing is submitted until the player draws and explicitly offers it. The game
   passes the actual PNG to the persistent worker; FOOD and TOY are accepted.
-- **Offline playtest · No AI** exposes explicit sample outcomes: Food, Toy,
+- **Mock outcomes · No AI** exposes explicit sample outcomes: Food, Toy,
   Unclear, Service failure, Unsuitable. It does not recognize the drawing or
-  generate a mesh. It uses a simple colored 3D stand-in for the offering.
+  generate a mesh. It uses the Stage 2 test bone model. **Sample bone · No AI** also exercises the backend fixture with its saved reference image and model.
 - While the canvas is open, protagonist input, dog movement and its walking clip are paused.
   Exploration resumes after the initial camera movement; the forward route stays guarded while waiting.
   A result received far away waits for the player to return and press E.
@@ -32,14 +32,15 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
   the close-up stays on the cover until generation finishes. The cover lifts away,
   revealing only the 3D offering. The result holds for two seconds, then the camera
   returns over one second. Only afterward does the dog show a heart, jump once and run
-  over, slow to a walk, and collect it. The three-field item response needs no
+  over, slow to a walk, and collect it. The four-field item response includes `movable` and needs no
   durability; the dog state prevents repeated offerings. The dog stays off the path with a heart and **Thank you!**.
-  The offering is at world x=-2.8, z=0, with its base just above the terrain,
-  clear of the roadside plants. The dog stops to its left at x=-5.6, z=-0.6,
-  faces the offering and leaves the road
-  center open. The original drawing and name are not floating scene overlays;
-  the draft remains in the canvas for retries. This applies to all accepted generated
-  objects and offline stand-ins.
+  The sketch's bottom center is projected onto terrain when submitted. This world
+  anchor places the cover, reference overlay and model. Movable objects fall from
+  two units above it when revealed; fixed objects stay anchored. The dog approaches
+  the object's position with a small sideways collection offset.
+  Interpretation appears on the right until the model is revealed. The reference
+  image replaces the submitted sketch preview and clears when the model is ready.
+  The draft remains available in the canvas for retries.
 - Unclear, unrelated, timeout, cancellation and invalid-model outcomes preserve
   the sketch and permit retry. Weapons are not a solution. Repeated submissions,
   duplicate offers and late canceled results cannot repeat the resolution.

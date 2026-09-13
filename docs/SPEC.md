@@ -65,9 +65,11 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 
 ## 2. Decisions and current status
 
-September 13 contract update: recognized AI items now contain only `name`,
-`description`, and stage-specific `type`. Numeric item stats and capability tags
-are removed from the backend/game contract. This supersedes earlier stat/tag
+September 13 contract update: AI items contain `name`, `description`, stage-specific
+`type`, and boolean `movable`. Interpretation identifies a likely common object
+before classification and always returns an item when the call succeeds. Movable
+objects fall under physics; fixed objects remain anchored. Numeric item stats and
+capability tags are removed from the backend/game contract. This supersedes earlier stat/tag
 planning references below; future encounter mechanics must be authored separately.
 Stage 1 enables its fixed crossing for `BRIDGE` and no longer checks or spends
 AI-generated durability.
@@ -94,7 +96,7 @@ AI-generated durability.
 | Background music and SFX | Confirmed | Required, with player volume controls |
 | Narration and dialogue | Confirmed correction | English spoken narration and key NPC dialogue, with English subtitles |
 | Voice production | Available option | User has an ElevenLabs subscription; proposed pre-generated audio, with exact voice/plan/credits still to verify |
-| AI item fields | Required | `name`, `description`, and stage-specific `type`; no numeric stats or tags |
+| AI item fields | Required | `name`, `description`, stage-specific `type`, and boolean `movable`; no numeric stats or tags |
 | Otter NPC | Stage 4 confirmed; details open | The fourth stage is an otter encounter. What the player helps with and what the otter does afterward remain undecided |
 | Submission deliverables | Confirmed | Playable game URL plus gameplay video so judges can both play and watch; exact portal/video format/browser requirements still need checking |
 | Hosting | Open | Vercel is a candidate; sponsorship does not establish deployment access or credits |
@@ -383,7 +385,7 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 
 ### Classification and solution rules
 
-The backend returns `name`, `description`, and `type`; capability tags and numeric
+The backend returns `name`, `description`, `type`, and `movable`; capability tags and numeric
 stats are not required. Stage-specific classes are defined in
 [the backend contract](backend/BACKEND.md#approved-classes). River accepts `BRIDGE`
 for its authored crossing; Dog accepts `FOOD` or `TOY` for distraction. Remaining-stage effects and success conditions remain
@@ -493,13 +495,13 @@ Error response:
 
 ### Required item fields and gameplay use
 
-Recognized items contain exactly `name`, `description`, and stage-specific `type`.
+Recognized items contain exactly `name`, `description`, stage-specific `type`, and boolean `movable`.
 Validate their string types, lengths, and classification membership against the
 [backend contract](backend/BACKEND.md#item-validation). Unknown but recognizable
 objects use `UNKNOWN`; unrecognizable drawings return `item: null` with `uncertain`.
 No numeric statistics or tags are generated, validated, displayed, or consumed.
 Game rules use the class and authored encounter behavior. Manual mode must return
-the same three-field item with clear manual provenance.
+the same four-field item with clear manual provenance.
 
 ### Waiting, cancellation, and fallback
 

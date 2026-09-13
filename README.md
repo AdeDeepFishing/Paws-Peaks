@@ -134,6 +134,8 @@ backend/.venv/bin/python backend/sketch_to_model/run.py --image path/to/sketch.p
 Omit `--image` to use the saved sample sketch; add `--dry-run` to validate inputs
 without API calls. The flow uses separate OpenAI interpretation and low-quality 816 × 816 image-edit
 requests, then untextured Meshy T2 (~1,000 faces) and a local PNG preview. Outputs and timings are saved locally.
+See the [three API steps and data flow](docs/backend/BACKEND.md#current-flow) for
+request inputs, outputs, and how interpretation becomes available while generation continues.
 See the [test report](docs/backend/BACKEND.md#historical-benchmarks) for results and limitations.
 The retained September 12 run took 19.70 seconds; this is a historical measurement,
 not a current latency guarantee. The generated shape still needs review.

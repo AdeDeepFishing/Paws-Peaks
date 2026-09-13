@@ -66,18 +66,27 @@ def generate(job_dir, mode, emit, game_stage):
     response_dir = job_dir / "response"
     if mode == "fixture":
         stage_number = STAGES[game_stage]["stage_number"]
-        if stage_number != 1:
+        if stage_number == 1:
+            fixture = ROOT.parent / "docs/test-artifacts/sketch-to-model-2026-09-12"
+            sample = json.loads((fixture / "description.json").read_text())
+            # Project the retained sample onto the current fixed-crossing contract.
+            sample["item"] = {key: sample["item"][key] for key in ("name", "description", "type")}
+            sample["item"].update(type="BRIDGE", movable=False)
+            reference_name = "reference.png"
+        elif stage_number == 2:
+            fixture = ROOT.parent / "docs/test-artifacts/stage2-2026-09-13"
+            # Authored fixture metadata for the retained generated bone assets.
+            sample = {"item": {"name": "Dog Bone",
+                               "description": "A dog bone that could attract or reward the dog.",
+                               "type": "FOOD", "movable": True}}
+            reference_name = "reference.jpg"
+        else:
             raise AppError("FIXTURE_NOT_AVAILABLE", "No offline sample exists for this stage.")
-        fixture = ROOT.parent / "docs/test-artifacts/sketch-to-model-2026-09-12"
-        sample = json.loads((fixture / "description.json").read_text())
-        # This fixed offline ladder represents a crossing under the current class set.
-        sample["item"] = {key: sample["item"][key] for key in ("name", "description", "type")}
-        sample["item"]["type"] = "BRIDGE"
-        item = validate_interpretation(sample, game_stage)["item"]
+        item = validate_interpretation({"item": sample["item"]}, game_stage)["item"]
         emit({"stage": "reference_image", "status": "PENDING", "item": item})
         time.sleep(0.4)
-        reference = response_dir / "reference.png"
-        shutil.copyfile(fixture / "reference.png", reference)
+        reference = response_dir / reference_name
+        shutil.copyfile(fixture / reference_name, reference)
         emit({"stage": "model", "status": "PENDING", "reference_path": str(reference)})
         time.sleep(0.4)
         target = response_dir / "model.glb"

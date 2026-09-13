@@ -20,7 +20,7 @@ func frames(count: int) -> void:
 
 func response(id: String, item_type: String = "BRIDGE") -> Dictionary:
 	return {"schema_version": 2, "request_id": id, "status": "recognized", "item": {
-		"name": "Paper bridge", "description": "A sturdy crossing.", "type": item_type
+		"name": "Paper bridge", "description": "A sturdy crossing.", "type": item_type, "movable": item_type != "BRIDGE"
 	}}
 
 func screenshot(name: String) -> void:

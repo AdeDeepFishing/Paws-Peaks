@@ -17,8 +17,8 @@ def edit_settings(prompt, model=DEFAULT_MODEL, size=DEFAULT_SIZE):
     if size not in ("816x816", "1024x1024"):
         raise AppError("INVALID_INPUT", "Choose 816x816 or 1024x1024 for the reference image.")
     return {"model": model, "prompt": prompt, "n": "1", "size": size,
-            "quality": "low", "output_format": "jpeg", "output_compression": "70",
-            "background": "opaque"}
+            "quality": "low", "output_format": "png",
+            "background": "transparent"}
 
 
 def generate(image_path, prompt, config, folder, model=DEFAULT_MODEL, size=DEFAULT_SIZE):
@@ -53,9 +53,9 @@ def generate(image_path, prompt, config, folder, model=DEFAULT_MODEL, size=DEFAU
         if len(result["data"]) != 1:
             raise ValueError("Expected one image")
         content = base64.b64decode(result["data"][0]["b64_json"], validate=True)
-        if not content.startswith(b"\xff\xd8\xff"):
-            raise ValueError("Expected JPEG")
-        path = folder / "reference.jpg"
+        if not content.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise ValueError("Expected PNG")
+        path = folder / "reference.png"
         path.write_bytes(content)
         # Ensure the result can enter the existing Meshy image-input path.
         image_input(path)

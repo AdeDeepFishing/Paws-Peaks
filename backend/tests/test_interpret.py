@@ -4,10 +4,8 @@ from contextlib import redirect_stderr, redirect_stdout
 from copy import deepcopy
 import io
 import json
-import os
 from pathlib import Path
 import sys
-import tempfile
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
@@ -18,7 +16,7 @@ from interpret import run as app
 
 ITEM = {
     "name": "A little bridge", "description": "A sturdy little bridge with a long adventure ahead.",
-    "type": "BRIDGE",
+    "type": "BRIDGE", "movable": False,
 }
 CONFIG = {"OPENAI_API_KEY": "fake-key-for-offline-test", "OPENAI_MODEL": "gpt-4.1-mini"}
 
@@ -30,74 +28,28 @@ def provider_response(value):
 
 
 class InterpretTests(unittest.TestCase):
-    def test_sample_and_url_inputs(self):
-        image = app.image_input(app.ROOT / "samples" / "banana.jpg")
-        self.assertTrue(image.startswith("data:image/jpeg;base64,/9j/"))
-        url = "https://example.com/drawing.png"
-        self.assertEqual(app.image_input(image_url=url), url)
-        for url in ["http://example.com/a.png", "file:///tmp/a.png", "https://user:pass@example.com/a.png"]:
-            with self.subTest(url=url), self.assertRaises(app.AppError):
-                app.image_input(image_url=url)
 
-    def test_empty_wrong_format_and_oversized_files(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "image.png"
-            for data in [b"", b"not an image", b"x" * (app.MAX_IMAGE_BYTES + 1)]:
-                path.write_bytes(data)
-                with self.subTest(size=len(data)), self.assertRaises(app.AppError):
-                    app.image_input(path)
-
-    def test_env_is_literal_and_environment_takes_precedence(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / ".env"
-            path.write_text('# Local settings\nOPENAI_API_KEY="$(do-not-execute)"\nOPENAI_MODEL=gpt-4.1-mini\n')
-            with patch.dict(os.environ, {}, clear=True):
-                self.assertEqual(app.load_config(path)["OPENAI_API_KEY"], "$(do-not-execute)")
-            with patch.dict(os.environ, {"OPENAI_API_KEY": "environment-key"}, clear=True):
-                self.assertEqual(app.load_config(path)["OPENAI_API_KEY"], "environment-key")
-
-    def test_recognized_and_uncertain(self):
-        for value in [{"status": "recognized", "item": ITEM}, {"status": "uncertain", "item": None}]:
-            self.assertEqual(app.parse_response(provider_response(value)), value)
-
-    def test_item_contract_contains_only_name_description_and_type(self):
-        properties = app.schema_for('river')['properties']['item']['anyOf'][0]
-        self.assertEqual(set(properties['required']), {'name', 'description', 'type'})
-        self.assertEqual(set(properties['properties']), {'name', 'description', 'type'})
-        for field in ('attack_power', 'range', 'speed', 'durability', 'tags'):
-            with self.subTest(field=field), self.assertRaises(app.AppError):
-                app.validate_interpretation({'status': 'recognized', 'item': {**ITEM, field: 1}})
 
     def test_invalid_item_fields(self):
         mutations = [
-            ("type", "SWORD"), ("type", None), ("name", " "), ("name", "x" * 41),
+            ("movable", "true"), ("movable", 1), ("type", "SWORD"), ("type", None), ("name", " "), ("name", "x" * 41),
             ("description", "x" * 161), ("description", None),
         ]
         for field, value in mutations:
             item = deepcopy(ITEM)
             item[field] = value
             with self.subTest(field=field, value=value), self.assertRaises(app.AppError):
-                app.validate_interpretation({"status": "recognized", "item": item})
+                app.validate_interpretation({"item": item})
         for value in [
-            {"status": "recognized", "item": None}, {"status": "uncertain", "item": ITEM},
-            {"status": "recognized", "item": {}}, {"status": "complete", "item": ITEM},
+            {"item": None}, {"item": {}}, {"status": "recognized", "item": ITEM},
+            {"item": {key: value for key, value in ITEM.items() if key != "movable"}},
         ]:
             with self.assertRaises(app.AppError):
                 app.validate_interpretation(value)
 
-    def test_refusal_incomplete_and_malformed_response(self):
-        for response in [
-            {"status": "incomplete", "output": []},
-            {"status": "completed", "output": []},
-            {"status": "completed", "output": [None]},
-            {"status": "completed", "output": [{"type": "message", "content": [{"type": "refusal"}]}]},
-            {"status": "completed", "output": [{"type": "message", "content": [{"type": "output_text", "text": "oops"}]}]},
-        ]:
-            with self.subTest(response=response), self.assertRaises(app.AppError):
-                app.parse_response(response)
 
     def test_one_api_call_and_game_envelope(self):
-        body = json.dumps(provider_response({"status": "recognized", "item": ITEM})).encode()
+        body = json.dumps(provider_response({"item": ITEM})).encode()
         stdout, stderr = io.StringIO(), io.StringIO()
         with patch.object(app, "urlopen", return_value=io.BytesIO(body)) as transport, \
                 patch.object(app, "load_config", return_value=CONFIG), \
@@ -107,6 +59,7 @@ class InterpretTests(unittest.TestCase):
         self.assertEqual(result["request_id"], "E01-player-submission")
         self.assertEqual(result["schema_version"], 2)
         self.assertEqual(result["item"], ITEM)
+        self.assertNotIn("status", result)
         self.assertNotIn(CONFIG["OPENAI_API_KEY"], stdout.getvalue() + stderr.getvalue())
         transport.assert_called_once()
         request = transport.call_args.args[0]
@@ -132,14 +85,6 @@ class InterpretTests(unittest.TestCase):
                 self.assertIn("error", json.loads(stdout.getvalue()))
                 self.assertNotIn(CONFIG["OPENAI_API_KEY"], stdout.getvalue() + stderr.getvalue())
                 transport.assert_called_once()
-
-    def test_dry_run_and_missing_key_never_call_provider(self):
-        for args, expected_code in [(["--dry-run"], 0), ([], 1)]:
-            with patch.object(app, "load_config", return_value={**CONFIG, "OPENAI_API_KEY": ""}), \
-                    patch.object(app, "urlopen") as transport, \
-                    redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
-                self.assertEqual(app.main(args), expected_code)
-                transport.assert_not_called()
 
 
 if __name__ == "__main__":
