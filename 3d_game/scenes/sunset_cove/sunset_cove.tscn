@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/woodland/woodland_level.gd" id="1"]
+[ext_resource type="PackedScene" path="res://models/stage04/sunset_cove.glb" id="2"]
+[ext_resource type="Script" path="res://scripts/sunset_cove/sunset_cove_art.gd" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/river/river_player.tscn" id="4"]
+[ext_resource type="Script" path="res://scripts/sunset_cove/water_reflection.gd" id="5"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.77, 0.54, 0.52, 1)
+ambient_light_source = 2
+ambient_light_color = Color(1, 0.96, 0.9, 1)
+ambient_light_energy = 0.5
+
+[node name="SunsetCove" type="Node3D"]
+script = ExtResource("1")
+art_path = NodePath("Stage04Art")
+authored_camera_name = "Illustration_View"
+chapter = "04"
+stage_title = "Sunset Cove"
+fallback_spawn = Vector3(0, 2, 6)
+camera_pullback = 3.0
+return_scene = "res://scenes/wind_hill/wind_hill.tscn"
+return_label = "Back to Wind Hill"
+
+[node name="Stage04Art" parent="." instance=ExtResource("2")]
+script = ExtResource("3")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-50, -30, 0)
+light_color = Color(1, 0.94, 0.84, 1)
+light_energy = 0.75
+
+[node name="StageCamera" type="Camera3D" parent="."]
+current = true
+far = 260.0
+
+[node name="Player" parent="." instance=ExtResource("4")]
+position = Vector3(0, 2, 6)
+appearance_scale = 1.08
+
+[node name="WaterReflection" type="Node" parent="."]
+script = ExtResource("5")

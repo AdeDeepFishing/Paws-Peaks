@@ -161,7 +161,7 @@ provides the imported environment, wind and shadow animation, fixed-angle camera
 and walking/jumping. Dog encounter gameplay is not yet implemented.
 See [Stage 02 integration](docs/3d_game/STAGE02_INTEGRATION.md) for source ownership and checks.
 
-All three scene previews use the delivered Moonlit Wanderer protagonist, with idle, walking and
+All four scene previews use the delivered Moonlit Wanderer protagonist, with idle, walking and
 running animations. See [hero integration](docs/3d_game/HERO_INTEGRATION.md) for assets,
 animation handling and the temporary jump pose.
 
@@ -174,3 +174,15 @@ painted environment, restored textures, terrain collision, the shared protagonis
 and a 16-second wind animation at 80% of the delivered maximum strength.
 **Back to woodland** returns to Stage 2. Crow encounter gameplay remains unimplemented.
 See [Stage 03 integration](docs/3d_game/STAGE03_INTEGRATION.md) for asset repair and checks.
+
+## Preview Sunset Cove
+
+In Stage 3, walk right toward the large rock beside the tree. Reaching its near
+edge automatically enters Stage 4, including when walking beside the path or
+jumping; climbing onto the rock is unnecessary. You can also run
+`3d_game/scenes/sunset_cove/sunset_cove.tscn` directly. Sunset Cove includes the
+painted beach and cave, collision, the shared protagonist, wind and water motion,
+and live water reflections of the sunset, scenery and character.
+**Back to Wind Hill** returns to Stage 3. Otter encounter gameplay remains open.
+See [Stage 04 integration](docs/3d_game/STAGE04_INTEGRATION.md) for verification and
+differences from the source HTML renderer.

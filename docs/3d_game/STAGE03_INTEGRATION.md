@@ -1,7 +1,8 @@
 # Stage 03: Wind Hill integration
 
 Updated: 2026-09-12. This is a playable environment preview. The E03 crow
-encounter, drawing rules, success condition and transition to E04 remain open.
+encounter, drawing rules and success condition remain open. The environment
+transition to Stage 4 is now available through issue #31.
 
 ## Entry and controls
 
@@ -12,9 +13,12 @@ encounter, drawing rules, success condition and transition to E04 remain open.
 - Alternatively, run `3d_game/scenes/wind_hill/wind_hill.tscn` directly in Godot.
 - **Back to woodland** returns to a fresh Stage 2 preview. Environment transitions
   do not represent completing the dog or crow encounters.
+- Continue horizontally right to the large rock beside the tree to enter Sunset
+  Cove at x>=9.5. This vertical screen boundary covers all Z positions and heights;
+  jumping onto the rock is unnecessary. See [Stage 04 integration](STAGE04_INTEGRATION.md).
 - Uses the shared Moonlit Wanderer, walking, jumping, sprinting and controller input.
-- September 13 visual adjustment: the Stage 3 protagonist is 20% larger than its
-  previous appearance (scale 1.2 to 1.44). Movement and capsule collision retain
+- September 13 visual adjustment: the Stage 3 protagonist uses scale 1.8216,
+  a further 10% increase from 1.656. Movement and capsule collision retain
   their shared settings.
 - Spawns on the central path at x=0, z=-0.5. The authored 49-degree perspective
   camera retains its initial position and orientation, then follows ground movement.

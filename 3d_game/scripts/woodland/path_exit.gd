@@ -1,13 +1,16 @@
 extends Marker3D
 
 @export_file("*.tscn") var destination: String
+@export_enum("Forward (-Z)", "Right (+X)") var direction := 0
 var transitioning := false
 @onready var player: Node3D = get_parent().get_node("Player")
 
 func _physics_process(_delta: float) -> void:
-	# Forward travel is world -Z. The entire X axis shares this exit boundary,
-	# including the shoulders and jumps; a narrow overlap box can be bypassed.
-	if transitioning or player.global_position.z > global_position.z:
+	# Each boundary covers all lateral positions and jump heights.
+	var reached := player.global_position.z <= global_position.z
+	if direction == 1:
+		reached = player.global_position.x >= global_position.x
+	if transitioning or not reached:
 		return
 	transitioning = true
 	# Defer scene removal until the current physics iteration finishes.

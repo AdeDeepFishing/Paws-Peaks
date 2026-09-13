@@ -931,3 +931,15 @@ solution rules and progression to E04 remain open. See
 September 13 playtest correction: the Stage 2 exit is a full-width boundary at
 world z=-28. Reaching it at any X position, including beside the path or during
 a jump, enters Stage 3. It no longer requires overlap with a narrow path area.
+
+## September 13 asset update: Stage 4 Sunset Cove (#31)
+
+The supplied Sunset Cove is available as a playable environment preview. Stage 3
+progresses horizontally to the right: reaching the large rock's near edge at
+world x>=9.5 enters Stage 4, with no restriction on Z position or jump height.
+This follows the user's requested vertical screen boundary and requires no jump
+onto the rock. Stage 4 includes the delivered terrain, camera, shared protagonist,
+painted materials and exported animation, with native water and sky motion and
+live planar water reflections.
+E04 otter gameplay and Stage 5 remain open. See
+[Stage 04 integration](3d_game/STAGE04_INTEGRATION.md) for checks and visual limits.

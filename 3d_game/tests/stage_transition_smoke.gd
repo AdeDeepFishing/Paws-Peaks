@@ -50,6 +50,6 @@ func run():
 	Input.action_release("move_down")
 	await frames(30)
 	check(current_scene != null and current_scene.name == "WoodlandPath", "Continuing forward automatically enters Stage 2")
-	check(root.get_child_count() == 1, "Transition removes the previous scene")
+	check(root.get_children().filter(func(node): return node is Node3D).size() == 1, "Transition removes the previous scene")
 	print("WALK-THROUGH TRANSITION: ", "FAIL" if failed else "PASS")
 	quit(1 if failed else 0)

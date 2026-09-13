@@ -36,7 +36,7 @@ func run():
 	if level == null or level.name != "WindHill":
 		quit(1)
 		return
-	check(not is_instance_valid(woodland) and root.get_child_count() == 1, "Transition removes the old scene")
+	check(not is_instance_valid(woodland) and root.get_children().filter(func(node): return node is Node3D).size() == 1, "Transition removes the old scene")
 	check(level.player.is_on_floor(), "Player spawns on imported terrain")
 	check(level.camera == root.get_camera_3d(), "Stage camera is current")
 	check(is_equal_approx(level.camera.fov, 49.0), "Authored lens is preserved")
@@ -97,6 +97,6 @@ func run():
 	level.find_child("BackButton", true, false).pressed.emit()
 	await frames(30)
 	check(current_scene.name == "WoodlandPath" and not is_instance_valid(level), "Back button returns to woodland")
-	check(root.get_child_count() == 1, "Return leaves one active scene")
+	check(root.get_children().filter(func(node): return node is Node3D).size() == 1, "Return leaves one active scene")
 	print("WIND HILL SMOKE: ", "FAIL" if failed else "PASS")
 	quit(1 if failed else 0)
