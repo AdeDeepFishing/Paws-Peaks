@@ -325,7 +325,7 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
   TOY (for example a toy bone) are the supported solutions.
   WEAPON and UNKNOWN give a contextual retry; they never open the route.
-- A successful object appears at the authored roadside offering spot with the original
+- A successful object appears on clear road surface, away from the roadside plants, with the original
   sketch visible. The dog jumps once, runs toward it, slows to a walk, then collects
   it and displays a heart and “Thank you!” while remaining off the path.
 - The forward boundary is blocked at every lateral position and jump height until

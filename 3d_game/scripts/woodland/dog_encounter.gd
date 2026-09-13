@@ -4,7 +4,8 @@ const DrawingSurface = preload("res://scripts/river/drawing_surface.gd")
 const GeneratedModel = preload("res://scripts/river/generated_model.gd")
 const GUARD_Z := -4.8
 const DRAW_RADIUS := 16.0
-const OFFER_POSITION := Vector3(-8, 0.15, -2)
+const OFFER_POSITION := Vector3(-2.8, 0.15, 0)
+const COLLECTION_OFFSET := Vector3(-2.8, 0, -0.6)
 
 @onready var dog = $Wolfdog
 @onready var request = $DrawingRequest
@@ -135,6 +136,10 @@ func _offer_item() -> void:
 	offered.name = "OfferedDrawing"
 	add_child(offered)
 	offered.position = OFFER_POSITION
+	var probe := PhysicsRayQueryParameters3D.create(offered.global_position + Vector3.UP * 3, offered.global_position + Vector3.DOWN * 3, dog.GROUND_MASK)
+	var ground := get_world_3d().direct_space_state.intersect_ray(probe)
+	if not ground.is_empty():
+		offered.global_position.y = ground.position.y + 0.03
 	if visual:
 		offered.add_child(visual)
 	var image := Image.new()
@@ -155,7 +160,7 @@ func _offer_item() -> void:
 	label.position.y = sketch.position.y + 1.3
 	offered.add_child(label)
 	# Stop with the muzzle by the offering and the body clear of the main path.
-	if dog.distract(OFFER_POSITION + Vector3(2.8, 0, 0), OFFER_POSITION):
+	if dog.distract(offered.global_position + COLLECTION_OFFSET, offered.global_position):
 		status.text = "You caught the dog's attention!"
 		objective.text = "Watch the dog collect your drawing."
 

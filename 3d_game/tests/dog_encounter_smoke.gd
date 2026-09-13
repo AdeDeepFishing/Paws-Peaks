@@ -151,6 +151,7 @@ func run():
 		if level.can_exit(): break
 	check("fetch_run" in seen_states and "fetch_walk" in seen_states, "Dog runs to the offering and slows down to collect it")
 	check(level.can_exit() and level.dog.position.x < -4, "Collection leaves the dog off the main path and opens the exit")
+	check(not level.player.test_move(Transform3D(Basis.IDENTITY, Vector3(0, 0.2, 3)), Vector3(0, 0, -10)), "The dog's new collection position leaves a physical passage down the center of the road")
 	check(level.dog.has_node("Thanks"), "Collection displays a heart and thank-you")
 	await capture("collected")
 	level.player.respawn(Vector3(0, 0.1, 0))
