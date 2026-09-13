@@ -113,7 +113,7 @@ func run():
 	root.add_child(level)
 	await frames(45)
 	check(level.player.visual.character != null, "River uses the same protagonist")
-	check(level.player.visual.scale.is_equal_approx(Vector3.ONE), "River retains original character size")
+	check(level.player.visual.scale.is_equal_approx(Vector3.ONE * 2.0), "River displays the character at twice the original size")
 	level.player.respawn(Vector3(-4.1, 1.5, -6.3))
 	await frames(45)
 	level._open_book()

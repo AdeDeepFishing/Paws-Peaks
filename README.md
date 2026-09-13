@@ -9,7 +9,7 @@ A four-day game jam project about drawing objects to solve animal encounters.
 See [Sketch-to-model stage classes](docs/backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#current-multi-stage-request-contract) for the **River, Dog, Crows and Otter
 classification sets**, request format, and result logs.
 
-Read [SPEC.md](docs/SPEC.md) for the draft gameplay scope, traversal and coins, background AI and item stats,
+Read [SPEC.md](docs/SPEC.md) for the draft gameplay scope, traversal, background AI and item stats,
 narration/dialogue, music and sound, team responsibilities, milestones, and acceptance checks.
 See [reuse research](docs/3d_game/REUSE_RESEARCH.md) for candidate Godot foundations, version pins, and license notes.
 Open decisions are marked explicitly; this specification describes planned work, not implemented features.
@@ -46,10 +46,13 @@ Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 - `.gitattributes`: normalizes text line endings across team computers.
 
 The first-stage prototype now includes third-person walking/jumping/sprinting, the stag01 storybook creek and a fixed overhead camera,
-eight collectible coins, a transparent scene drawing overlay, 512 × 512 PNG output, asynchronous desktop generation,
+a transparent scene drawing overlay, 512 × 512 PNG output, asynchronous desktop generation,
 automatic placement of returned GLB models, fall recovery, and an ending/restart loop.
 Simple synthesized feedback sounds are included; final art, music, voiced narration, live API playtesting,
-pushing/climbing, the remaining four stages, and Web deployment are still outstanding.
+pushing/climbing, later encounter mechanics, and Web deployment are still outstanding.
+Stage 2 includes the [dog distraction encounter](docs/3d_game/DOG_ENCOUNTER.md).
+Issue #37 removes coin pickups/counters from active gameplay, clears the far-bank
+bridgehead, doubles the Stage 1 character visual, and brings its normal camera about 18% closer.
 
 ## Try the first stage
 
@@ -59,11 +62,15 @@ pushing/climbing, the remaining four stages, and Web deployment are still outsta
 3. Draw with the left mouse button. Undo and Clear are available; closing preserves the draft.
 4. Leave **Sample model · No AI** selected to test the Python-to-GLB workflow without keys.
    Every sketch gets the same sample ladder. Select **Live AI · Uses credits** for actual generation after backend setup.
-5. Watch the short construction closeup. Coins then drop onto the near bank to collect while you wait.
-   A second closeup reveals the completed model.
+5. The camera slowly moves into the construction view over two seconds and stays there
+   until generation finishes. The finished object remains in closeup for two seconds,
+   then the camera returns to normal. After the opening camera move, you can still
+   walk and use **Stop waiting**. No coins spawn.
 6. When the bridge appears, walk across to finish. Near the bridge, input gently follows its axis;
    release to stop or reverse to walk back. No Use confirmation is required.
-7. **Esc** cancels drawing. Leaving the river hides the drawing entry; use **Stop waiting** to stop waiting without losing your draft.
+7. **Esc** cancels drawing or a pending request. The drawing entry stays visible during
+   exploration and shines near an available challenge. **Stop waiting** also restores
+   the normal camera without losing your draft.
 
 Controllers: **left stick or D-pad** to move, **A/Cross** to jump, hold **RB/R1** to sprint,
 **X/Square** to toggle drawing, and **B/Circle** to close it. In panels, use the

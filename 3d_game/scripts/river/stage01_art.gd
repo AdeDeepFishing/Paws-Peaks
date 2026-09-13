@@ -3,6 +3,12 @@ extends Node3D
 ## Keep paint overlays and water visual-only. Terrain and solid props use
 ## the delivered geometry, so slopes and shore edges match the artwork.
 func _ready() -> void:
+	# Move the far-bank bridge obstruction as one painted prop. Its collision
+	# is generated below after relocation, so the old bridgehead stays clear.
+	for label in ["Lavender_boulder_06", "Lavender_boulder_06_dry_brush"]:
+		var rock := find_child(label, true, false) as Node3D
+		if rock:
+			rock.global_position += Vector3(5, 0, -5)
 	for node in find_children("*", "MeshInstance3D", true, false):
 		var label := String(node.name)
 		if label.ends_with("_bank_meadow") or label.ends_with("_bank_painted_cliff") or label.ends_with("_painted_branches") or (label.begins_with("Lavender_boulder_") and not label.ends_with("_dry_brush")):

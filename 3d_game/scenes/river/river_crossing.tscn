@@ -37,19 +37,6 @@ size = Vector3(0.44, 0.04, 2.05)
 albedo_color = Color(0.83, 0.65, 0.45, 1)
 roughness = 1.0
 
-[sub_resource type="CylinderMesh" id="CoinMesh"]
-top_radius = 0.24
-bottom_radius = 0.24
-height = 0.1
-radial_segments = 12
-
-[sub_resource type="StandardMaterial3D" id="Gold"]
-albedo_color = Color(1, 0.76, 0.24, 1)
-shading_mode = 0
-
-[sub_resource type="SphereShape3D" id="CoinShape"]
-radius = 0.65
-
 [sub_resource type="BoxShape3D" id="FenceX"]
 size = Vector3(0.5, 8, 112)
 
@@ -74,7 +61,7 @@ script = ExtResource("5_art_setup")
 position = Vector3(8, 32, 8)
 rotation = Vector3(-1.082451, 0.489957, 0)
 projection = 1
-size = 22.0
+size = 18.6
 current = true
 far = 200.0
 
@@ -100,8 +87,6 @@ material_override = SubResource("Wood")
 shape = SubResource("DeckShape")
 disabled = true
 
-[node name="Coins" type="Node3D" parent="."]
-
 [node name="EncounterPresentation" type="Node" parent="."]
 script = ExtResource("7_presentation")
 
@@ -113,6 +98,7 @@ script = ExtResource("3_request")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector3(-6.3, 1.5, -6.3)
+appearance_scale = 2.0
 
 [node name="Plank0" type="MeshInstance3D" parent="Bridge"]
 position = Vector3(-5.04, 0.14, 0)
@@ -223,110 +209,6 @@ material_override = SubResource("PlankWood")
 position = Vector3(5.04, 0.14, 0)
 mesh = SubResource("PlankMesh")
 material_override = SubResource("PlankWood")
-
-[node name="Coin01" type="Area3D" parent="Coins"]
-position = Vector3(-8, 1.9, -4)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin01"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin01"]
-shape = SubResource("CoinShape")
-
-[node name="Coin02" type="Area3D" parent="Coins"]
-position = Vector3(-7, 1.9, -8)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin02"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin02"]
-shape = SubResource("CoinShape")
-
-[node name="Coin03" type="Area3D" parent="Coins"]
-position = Vector3(-10, 1.9, -7)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin03"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin03"]
-shape = SubResource("CoinShape")
-
-[node name="Coin04" type="Area3D" parent="Coins"]
-position = Vector3(-5, 1.9, -2)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin04"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin04"]
-shape = SubResource("CoinShape")
-
-[node name="Coin05" type="Area3D" parent="Coins"]
-position = Vector3(7, 1.9, -4)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin05"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin05"]
-shape = SubResource("CoinShape")
-
-[node name="Coin06" type="Area3D" parent="Coins"]
-position = Vector3(8, 1.9, -8)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin06"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin06"]
-shape = SubResource("CoinShape")
-
-[node name="Coin07" type="Area3D" parent="Coins"]
-position = Vector3(10, 1.9, -7)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin07"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin07"]
-shape = SubResource("CoinShape")
-
-[node name="Coin08" type="Area3D" parent="Coins"]
-position = Vector3(6, 1.9, -2)
-collision_layer = 0
-collision_mask = 1
-
-[node name="Visual" type="MeshInstance3D" parent="Coins/Coin08"]
-rotation_degrees = Vector3(90, 0, 0)
-mesh = SubResource("CoinMesh")
-material_override = SubResource("Gold")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Coins/Coin08"]
-shape = SubResource("CoinShape")
 
 [node name="Boundary0" type="StaticBody3D" parent="."]
 position = Vector3(-39, 3, -29)
