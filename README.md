@@ -196,3 +196,13 @@ and live water reflections of the sunset, scenery and character.
 **Back to Wind Hill** returns to Stage 3. Otter encounter gameplay remains open.
 See [Stage 04 integration](docs/3d_game/STAGE04_INTEGRATION.md) for verification and
 differences from the source HTML renderer.
+
+## Preview Moonlit Forest
+
+In Stage 4, walk right toward the cave. Reaching the cave approach enters Stage 5
+even from the surrounding grass, without jumping onto a rock. You can also run
+`3d_game/scenes/moonlit_forest/moonlit_forest.tscn` directly. The scene includes
+the painted night forest, terrain collision, shared protagonist, wind, moving
+clouds and fireflies. **Back to Sunset Cove** returns to Stage 4.
+Final boss gameplay remains separate. See
+[Stage 05 integration](docs/3d_game/STAGE05_INTEGRATION.md) for assets and checks.

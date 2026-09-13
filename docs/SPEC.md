@@ -942,8 +942,18 @@ This follows the user's requested vertical screen boundary and requires no jump
 onto the rock. Stage 4 includes the delivered terrain, camera, shared protagonist,
 painted materials and exported animation, with native water and sky motion and
 live planar water reflections.
-E04 otter gameplay and Stage 5 remain open. See
+E04 otter gameplay remains open. See
 [Stage 04 integration](3d_game/STAGE04_INTEGRATION.md) for checks and visual limits.
+
+## September 13 asset update: Stage 5 Moonlit Forest (#32)
+
+The supplied Moonlit Forest V4 is integrated as a playable environment preview.
+Walking right to Stage 4's cave approach at world x>=5.5 enters Stage 5 across
+all depth positions and jump heights. The forest retains the delivered painted
+assets, camera, cloud/canopy/firefly animation and lights, with native foliage
+wind, night lighting, terrain collision, the shared protagonist and return
+navigation. This completes scene integration only; E05 final boss gameplay (#36)
+and the ending remain open. See [Stage 05 integration](3d_game/STAGE05_INTEGRATION.md).
 
 ## September 13: Stage 2 dog interaction (#38)
 
