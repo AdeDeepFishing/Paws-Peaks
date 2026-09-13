@@ -516,7 +516,10 @@ the same three-field item with clear manual provenance.
 - Keep provider keys in server-side environment variables, never in Git, Godot resources, or browser bundles.
 - Set upload limits, server-side request limits, and a spending ceiling before sharing a public URL. The account owner must choose the actual quota and budget.
 - Do not treat an embedded client token, CORS, or a freely recreated client ID as sufficient abuse prevention.
-- Avoid logging or permanently storing raw drawings by default; send only the image and necessary context.
+- Keep only the latest optional draft export across encounters (`user://drawings/latest.png`),
+  replacing it after a valid submission and removing old timestamped test exports.
+  Pending requests keep independent snapshots so another draft cannot alter their input.
+  Send only the image and necessary context.
 - Verify the provider's separate retention policy before making any privacy promise.
 - Briefly disclose near the first submission that the drawing is sent to an AI service. No personal information is required.
 

@@ -36,7 +36,7 @@ func run() -> void:
 	level.auto_advance = false
 	level.get_node("EncounterPresentation").duration_scale = 0.01
 	level.get_node("DesktopGeneration").mode = 0
-	level.drawing_export_directory = "user://test-drawings/river-smoke"
+	level.get_node("DrawingRequest").draft_directory = "user://test-drawings/river-smoke"
 	root.add_child(level)
 	await frames(30)
 	check(level.player.is_on_floor(), "Player spawns on the near bank")
@@ -72,13 +72,13 @@ func run() -> void:
 	var sample := Image.create(512, 512, false, Image.FORMAT_RGB8)
 	sample.fill(Color.WHITE)
 	var first_png := sample.save_png_to_buffer()
-	var first_path: String = level._save_drawing(first_png)
+	var first_path: String = load("res://scripts/river/draft_store.gd").save_latest(first_png, level.request.draft_directory)
 	sample.fill(Color.BLACK)
 	var second_png := sample.save_png_to_buffer()
-	var second_path: String = level._save_drawing(second_png)
-	check(not first_path.is_empty() and first_path != second_path, "Repeated exports have distinct filenames")
-	check(FileAccess.get_file_as_bytes(first_path) == first_png, "Earlier drawing stays unchanged after another export")
-	check(FileAccess.get_file_as_bytes(second_path) == second_png, "New drawing is saved with its own content")
+	var second_path: String = load("res://scripts/river/draft_store.gd").save_latest(second_png, level.request.draft_directory)
+	check(not first_path.is_empty() and first_path == second_path, "Repeated exports replace the same latest draft")
+	check(FileAccess.get_file_as_bytes(first_path) == second_png, "Earlier export is replaced only by the new drawing")
+	check(FileAccess.get_file_as_bytes(second_path) == second_png, "Latest drawing contains the new content")
 	check(canvas.snapshot_png().is_empty(), "Empty canvas cannot be exported")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT

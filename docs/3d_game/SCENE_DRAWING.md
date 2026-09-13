@@ -30,7 +30,10 @@ the persistent Python listener stays alive.
   switching, automatic encounter result placement and the existing request boundary.
 - The PNG uses RGBA: opaque black ink and fully transparent background. It is 512 × 512, cropped around
   ink with padding and scaled uniformly. No scene, UI or stroke outline is captured.
-- Each submission writes a unique file under `user://drawings/`. The
+- All encounters share `user://drawings/latest.png`. A valid new submission atomically
+  replaces that draft, then removes former timestamped exports. Invalid submissions
+  and failed writes preserve the prior draft. This bounds the optional test archive
+  to one image; active backend requests retain their independent input snapshots. The
   `DrawingRequest.request_prepared` signal carries `request_id`, `encounter_id`, `game_stage`, and
   the immutable image in `image_base64`. Receiving it is separate from calling a provider.
 - Stroke positions are screen-space drafts, not world coordinates or object placement.

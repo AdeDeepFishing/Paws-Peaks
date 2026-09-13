@@ -39,6 +39,7 @@ func run():
 	root.add_child(level)
 	current_scene = level
 	level.generation.configure(0)
+	level.request.draft_directory = "user://test-drawings/dog_encounter_smoke"
 	level.presentation.duration_scale = 0.01
 	level.modes.select(1)
 	level.request.mock_delay = 0.05
@@ -171,6 +172,7 @@ func run():
 	root.add_child(level)
 	current_scene = level
 	level.generation.configure(0)
+	level.request.draft_directory = "user://test-drawings/dog_encounter_smoke"
 	level.presentation.duration_scale = 0.01
 	level.request.mock_delay = 0.05
 	await frames(60)

@@ -38,6 +38,7 @@ func fresh():
 	root.add_child(level)
 	current_scene = level
 	level.generation.configure(0)
+	level.request.draft_directory = "user://test-drawings/dog_presentation_smoke"
 	level.request.mock_delay = 60.0
 	await frames(40)
 
