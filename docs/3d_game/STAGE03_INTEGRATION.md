@@ -36,11 +36,46 @@ strong-wind deformation**. `wind_strength = 0.8` is exposed on `Stage03Art`.
 The imported `Strong_Wind_16s` clip is duplicated at runtime and its blend-shape
 weights are scaled, retaining the 16-second timing. This softens branches, leaves,
 grass, flowers, shadows and cloud deformation without accumulating reductions when
-the scene is re-entered. Cloud travel and feather trajectories retain source timing.
+the scene is re-entered. Feather trajectories retain source timing. Cloud motion uses the separate
+continuous cycle described below.
 
-The delivery warns that cloud travel may reset visibly at the loop boundary.
-Tree collision stays in its base pose while the upper branches sway. These remain
-preview limitations; no dynamic collision or wind force on the player is implied.
+Tree collision stays in its base pose while the upper branches sway. No dynamic
+collision or wind force on the player is implied.
+
+### Continuous clouds (#50, September 13)
+
+The supplied 16-second clip resets both the 11 cloud layers' positions and their
+baked morph poses. At the repeat boundary a layer jumped 36.898 world units in
+one 60 FPS frame. Fixing translation alone still left a visible shape reset
+(the sampled deformed vertex moved 1.036 units in one frame).
+
+The runtime now disables only cloud position and blend-shape tracks in the
+copied wind animation, and plays those tracks in a separate **64-second drift**.
+A cosine time mapping moves through the original cloud poses and back, easing
+to a stop at each turn. Both endpoints match, including the baked shape.
+The motion stays within the delivered cloud positions, and never teleports to
+an origin or abruptly reverses. The cloud's existing 80% deformation is retained;
+trees, grass, flowers, shadows and feathers keep their original 16-second clock.
+The imported GLB and its shared animation resource are unchanged.
+
+`wind_hill_cloud_loop_smoke.gd` runs the actual runtime animation players through
+two complete cloud cycles at 60 FPS. It checks all 11 layers for translation
+jumps, abrupt velocity changes, baked vertex jumps and frozen motion. The test
+failed on the original loop and on the incomplete translation-only fix. With
+the complete fix, the largest position step is 0.030212 units, sampled deformed
+vertex step 0.031518 units, and per-frame velocity change 0.001484 units/frame.
+
+```sh
+godot --headless --path 3d_game --script res://tests/wind_hill_cloud_loop_smoke.gd
+```
+
+For rendered boundary comparisons, omit `--headless` and append `-- --visual`.
+This runs the full stage and saves six `/private/tmp/paws-stage03-cloud-*.png`
+frames around 16 seconds (the old reset), 32 seconds (the far turn), and
+64 seconds (the new repeat). Forward+ frames were inspected on Apple M1;
+the sky remains continuous at these boundaries. The existing Stage 3 traversal
+smoke also passes, including source wind amplitude, movement, jump and recovery.
+These checks do not establish Web rendering or browser performance.
 
 ## Source and texture repair
 
