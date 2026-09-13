@@ -11,6 +11,7 @@ signal request_failed(request_id: String, error_code: String, message: String)
 @export var timeout_seconds := 20.0
 
 const GAME_STAGES := {"E01": "river", "E02": "dog", "E03": "crows", "E04": "otter"}
+const MaterialPalette = preload("res://scripts/river/material_palette.gd")
 const DraftStore = preload("res://scripts/river/draft_store.gd")
 var draft_directory := "user://drawings"
 var saved_draft_path := ""
@@ -87,6 +88,8 @@ func _deliver_mock(request_id: String, outcome: int) -> void:
 				}
 	if response.get("item") is Dictionary:
 		response.item["movable"] = response.item.type != "BRIDGE"
+		response.item["texture_key"] = "wood" if response.item.type == "BRIDGE" else "bone"
+		response.item["color"] = "#B88755" if response.item.type == "BRIDGE" else "#E8D9B7"
 	accept_response(response)
 
 func accept_response(response: Dictionary) -> bool:
@@ -117,7 +120,9 @@ func accept_response(response: Dictionary) -> bool:
 
 ## Classification membership is validated by the backend stage configuration.
 static func valid_item(value: Variant) -> bool:
-	if not value is Dictionary or value.size() != 4:
+	if not value is Dictionary or value.size() != 6:
+		return false
+	if not MaterialPalette.valid_selection(value.get("texture_key"), value.get("color")):
 		return false
 	if not value.get("movable") is bool:
 		return false

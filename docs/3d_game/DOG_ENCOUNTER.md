@@ -24,7 +24,9 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
   so circling does not move the interaction boundary away from a stationary player.
 - **AI drawing · Uses credits** uses the existing E02 / `dog` backend contract.
   Nothing is submitted until the player draws and explicitly offers it. The game
-  passes the actual PNG to the persistent worker; FOOD and TOY are accepted.
+  passes the actual PNG to the persistent worker. FOOD and TOY distract the dog;
+  UNKNOWN objects render at the sketch anchor but do not advance the encounter.
+  After their reveal, the player can draw again; submitting replaces the previous object.
 - **Mock outcomes · No AI** exposes explicit sample outcomes: Food, Toy,
   Unclear, Service failure, Unsuitable. It does not recognize the drawing or
   generate a mesh. It uses the Stage 2 test bone model. **Sample bone · No AI** also exercises the backend fixture with its saved reference image and model.
@@ -38,8 +40,8 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
   completely in frame. Exploration and Stop waiting return after the initial movement;
   the close-up smoothly tracks the group until generation finishes. The particles and
   sketch disappear when the 3D offering is revealed. The result holds for two seconds, then the camera
-  returns over one second. Only afterward does the dog show a heart, jump once and run
-  over, slow to a walk, and collect it. The four-field item response includes `movable` and needs no
+  returns over one second. For FOOD and TOY, only afterward does the dog show a heart, jump once and run
+  over, slow to a walk, and collect it. The six-field item response includes `movable`, `texture_key` and `color` and needs no
   durability; the dog state prevents repeated offerings. The dog stays off the path with a heart and **Thank you!**.
   The sketch's bottom center is projected onto terrain when submitted. This world
   anchor places the particles, reference overlay and model. Movable objects fall from

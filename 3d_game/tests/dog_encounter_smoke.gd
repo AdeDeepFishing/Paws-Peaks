@@ -125,14 +125,27 @@ func run():
 	level._open_drawing()
 	check(level.surface.snapshot_png() == draft, "Closing the canvas preserves the draft")
 	level._close_drawing()
-	for outcome in [2, 3, 4]:
+	for outcome in [2, 3]:
 		await draw(level, outcome)
-		check(level.request.state == "FAILED" and not level.can_exit(), "Unclear, failure, and unrelated drawings allow retry without opening the exit")
+		check(level.request.state == "FAILED" and not level.can_exit(), "Unclear and failed requests allow retry without opening the exit")
 		check(level.surface.has_drawing(), "Failed request preserves the sketch")
+	level.player.respawn(level.spawn)
+	await frames(60)
+	await draw(level, 4)
+	for i in 120:
+		if not level.presentation.active: break
+		await frames(1)
+	check(level.request.state == "READY" and is_instance_valid(level.offered) and level.offered.visible, "UNKNOWN model is rendered after the reveal")
+	check(not level.dog.distracted and not level.can_exit(), "UNKNOWN model cannot distract the dog or unlock progress")
+	check(level.status.text.contains("won't distract"), "UNKNOWN result explains its lack of gameplay effect")
+	var unknown_model = level.offered
 	level._open_drawing()
+	check(level.drawing and is_instance_valid(unknown_model), "Player can draw again while the UNKNOWN model remains visible")
+	sketch_in_front(level)
 	level.request.mock_delay = 5.0
 	level.choices.selected = 0
 	level._submit()
+	check(level.offered == null, "Submitting a replacement clears the previous offering")
 	var old_id: String = level.request.active_id
 	var rect: Rect2 = level.surface.snapshot_screen_rect()
 	check(level.camera.unproject_position(level.sketch_anchor).distance_to(Vector2(rect.get_center().x, rect.end.y)) < 1.0, "Ground anchor projects to the sketch's bottom center")
@@ -142,7 +155,7 @@ func run():
 	var preview_rect: Rect2 = level.generation_preview.image.get_global_rect()
 	check(Vector2(preview_rect.get_center().x, preview_rect.end.y).distance_to(level.camera.unproject_position(saved_anchor)) < 1.0, "Reference overlay tracks the same world anchor when camera moves")
 	check(level.sketch_anchor == saved_anchor, "Camera movement does not recalculate the submission anchor")
-	level.generation.interpretation_ready.emit(old_id, {"name": "Drawn food", "description": "A tasty snack could keep the dog busy.", "type": "FOOD", "movable": true})
+	level.generation.interpretation_ready.emit(old_id, {"name": "Drawn food", "description": "A tasty snack could keep the dog busy.", "type": "FOOD", "movable": true, "texture_key": "plain", "color": "#D9C6A0"})
 	check(level.generation_preview.card.visible and level.generation_preview.item_name.text == "Drawn food", "Dog encounter displays early interpretation")
 	level.generation.reference_image_ready.emit(old_id, ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/reference.jpg"))
 	check(level.generation_preview.image.texture != null and level.generation_preview.visible, "Dog encounter displays reference overlay while pending")
@@ -179,7 +192,7 @@ func run():
 	await draw(level, 0)
 	var model_path := ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/model.glb")
 	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "model_path": model_path,
-		"item": {"name": "Drawn food", "description": "A snack for the dog.", "type": "FOOD", "movable": true}})
+		"item": {"name": "Drawn food", "description": "A snack for the dog.", "type": "FOOD", "movable": true, "texture_key": "plain", "color": "#D9C6A0"}})
 	check(level.offered is RigidBody3D, "Movable interpretation creates a physics body")
 	check(level.offered.global_position.is_equal_approx(level.sketch_anchor + Vector3.UP * 2), "Movable model drops above the submitted sketch location")
 	check(level.offered.freeze and not level.dog.distracted, "Movable model waits under the cover before falling")
@@ -187,10 +200,10 @@ func run():
 	while level.presentation.active: await frames(1)
 	check(level.request.state == "READY" and level.dog.state == "jump", "Food triggers one excited jump after reveal")
 	check(not level.can_exit(), "Jump alone does not unlock the path")
-	check(level.item.size() == 4 and level.item.type == "FOOD", "Offering accepts the item mobility contract")
+	check(level.item.size() == 6 and level.item.type == "FOOD", "Offering accepts the item mobility contract")
 	var offered: Node3D = level.offered
 	level._offer_item()
-	check(level.offered == offered and level.item.size() == 4, "Repeated offer cannot replay or duplicate the object")
+	check(level.offered == offered and level.item.size() == 6, "Repeated offer cannot replay or duplicate the object")
 	await capture("jump")
 	await frames(30)
 	check(level.offered.global_position.y < drop_y - 0.1, "Movable model falls under gravity")
@@ -226,7 +239,7 @@ func run():
 	level.request.mock_mode = false
 	await draw(level, 1)
 	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "model_path": model_path,
-		"item": {"name": "Fixed toy", "description": "A toy fixed to the ground.", "type": "TOY", "movable": false}})
+		"item": {"name": "Fixed toy", "description": "A toy fixed to the ground.", "type": "TOY", "movable": false, "texture_key": "plain", "color": "#D9C6A0"}})
 	check(level.offered is StaticBody3D, "Fixed interpretation creates an anchored body")
 	if level.offered == null:
 		quit(1)

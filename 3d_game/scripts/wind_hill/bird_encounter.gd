@@ -190,7 +190,7 @@ func _offer_item() -> void:
 	if request.mock_mode:
 		offered = Sample.create(item.get("name") == "Shield")
 	else:
-		offered = GeneratedModel.load_visual(request.model_path, 3.0, false)
+		offered = GeneratedModel.load_visual(request.model_path, 3.0, false, item)
 		if offered == null:
 			request.fail_current("The generated protection could not be loaded.")
 			return

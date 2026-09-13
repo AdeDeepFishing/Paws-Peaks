@@ -25,8 +25,8 @@ multiple-crow premise. The backend stage identity remains `E03` / `crows`.
   The canvas locks protagonist movement and hides the normal HUD; the bird keeps
   flying and flapping. Its beak pitches downward along the descending swoop
   toward the protagonist, then follows the upward recovery.
-- Live generation uses the existing desktop worker and the four-field item
-  contract. DEFENCE is the supported solution. BOW, MAGIC and UNKNOWN remain
+- Live generation uses the existing desktop worker and the six-field item
+  contract, including the shared material key and color. DEFENCE is the supported solution. BOW, MAGIC and UNKNOWN remain
   recognized backend categories. A successful generated model is displayed even
   when its type is unsuitable; it stays at the landing point with a clear retry
   prompt and does not unlock the route. The next submission replaces that preview.
@@ -117,7 +117,8 @@ rejected the type before calling the model loader, so no 3D result appeared.
 The handler now separates successful model presentation from encounter success.
 The actual umbrella models were classified UNKNOWN. Stage 3 classification
 guidance now explicitly includes ordinary umbrellas and shields as DEFENCE after
-object identification. The API contract is unchanged; no new paid request was made.
+object identification. The classification guidance preserves the shared six-field API contract, including
+material selection and color from #61; no new paid request was made.
 Offline tests establish the prompt payload, not new recognition accuracy.
 
 `encounter_playtest_smoke.gd` drives the real desktop completion adapter with an

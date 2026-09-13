@@ -19,6 +19,16 @@ func capture_preview() -> void:
 	root.get_texture().get_image().save_png("/private/tmp/paws-generation-reference.png")
 
 func run() -> void:
+	var palette = preload("res://scripts/river/material_palette.gd")
+	check(palette.entries().size() == 16, "Sixteen reusable material keys are available")
+	for key in palette.entries():
+		var material = palette.material(key, "#FFFFFF")
+		check(material != null and material.albedo_texture.get_size() == Vector2(128, 128), "Palette tile loads at lightweight size: " + key)
+	var brown = palette.material("wood", "#B88755")
+	var blue = palette.material("wood", "#719FB8")
+	check(brown.albedo_texture == blue.albedo_texture and brown.albedo_color != blue.albedo_color, "One material supports independent tint colors")
+	check(palette.material("metal", "#FFFFFF").metallic > brown.metallic, "Material presets vary physical appearance")
+	check(not palette.valid_selection("../wood", "#FFFFFF") and not palette.valid_selection("wood", "red"), "Palette rejects invalid keys and colors")
 	root.size = Vector2i(1152, 720)
 	var level = Level.instantiate()
 	level.auto_advance = false

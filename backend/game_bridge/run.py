@@ -71,14 +71,14 @@ def generate(job_dir, mode, emit, game_stage):
             sample = json.loads((fixture / "description.json").read_text())
             # Project the retained sample onto the current fixed-crossing contract.
             sample["item"] = {key: sample["item"][key] for key in ("name", "description", "type")}
-            sample["item"].update(type="BRIDGE", movable=False)
+            sample["item"].update(type="BRIDGE", movable=False, texture_key="wood", color="#B88755")
             reference_name = "reference.png"
         elif stage_number == 2:
             fixture = ROOT.parent / "docs/test-artifacts/stage2-2026-09-13"
             # Authored fixture metadata for the retained generated bone assets.
             sample = {"item": {"name": "Dog Bone",
                                "description": "A dog bone that could attract or reward the dog.",
-                               "type": "FOOD", "movable": True}}
+                               "type": "FOOD", "movable": True, "texture_key": "bone", "color": "#E8D9B7"}}
             reference_name = "reference.jpg"
         else:
             raise AppError("FIXTURE_NOT_AVAILABLE", "No offline sample exists for this stage.")

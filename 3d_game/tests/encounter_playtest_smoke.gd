@@ -51,7 +51,7 @@ func run():
 	if not visual:
 		level.player.velocity.y = 4.0
 		await frames(3)
-	level.generation.consume_status({"schema_version":1, "request_id":level.request.active_id, "encounter_id":"E03", "game_stage":"crows", "status":"SUCCEEDED", "stage":"complete", "item":{"name":"Unusual object", "description":"An object that does not provide protection.", "type":"UNKNOWN", "movable":true}, "model_path":path})
+	level.generation.consume_status({"schema_version":1, "request_id":level.request.active_id, "encounter_id":"E03", "game_stage":"crows", "status":"SUCCEEDED", "stage":"complete", "item":{"name":"Unusual object", "description":"An object that does not provide protection.", "type":"UNKNOWN", "movable":true, "texture_key":"fabric", "color":"#D6B886"}, "model_path":path})
 	if not visual:
 		check(await wait_for(func(): return level.player.is_on_floor(), 3), "Airborne completion waits for a safe landing")
 		level._open_drawing()
@@ -67,7 +67,7 @@ func run():
 	check(level.offered == null, "A new submission replaces the previous preview instead of accumulating models")
 	level.generation.request_id = level.request.active_id
 	level.generation.finished = false
-	level.generation.consume_status({"schema_version":1, "request_id":level.request.active_id, "encounter_id":"E03", "game_stage":"crows", "status":"SUCCEEDED", "stage":"complete", "item":{"name":"Umbrella", "description":"Protective canopy.", "type":"DEFENCE", "movable":true}, "model_path":path})
+	level.generation.consume_status({"schema_version":1, "request_id":level.request.active_id, "encounter_id":"E03", "game_stage":"crows", "status":"SUCCEEDED", "stage":"complete", "item":{"name":"Umbrella", "description":"Protective canopy.", "type":"DEFENCE", "movable":true, "texture_key":"fabric", "color":"#D6B886"}, "model_path":path})
 	check(await wait_for(func(): return is_instance_valid(level.offered) and level.offered.visible, 4), "Supported completion displays its generated model")
 	await frames(20)
 	await capture("supported-model")

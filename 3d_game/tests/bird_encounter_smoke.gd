@@ -135,18 +135,18 @@ func run():
 	level.request.mock_delay = 30.0
 	for kind in ["BOW", "MAGIC"]:
 		draw(level, 0)
-		level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Unsupported idea", "description":"Use protection instead.", "type":kind, "movable":true}})
+		level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Unsupported idea", "description":"Use protection instead.", "type":kind, "movable":true, "texture_key":"fabric", "color":"#D6B886"}})
 		check(level.request.state == "FAILED" and not level.can_exit(), "Unsupported class gives a retry: " + kind)
 	# Missing model is recoverable and never substitutes a mock in live mode.
 	draw(level, 0)
 	check(level.generation.mode == 0, "Saved-model test never starts the backend")
 	level.request.mock_mode = false
-	level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Umbrella", "description":"Protects from the bird.", "type":"DEFENCE", "movable":true}, "model_path":"/private/tmp/paws34-missing-model.glb"})
+	level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Umbrella", "description":"Protects from the bird.", "type":"DEFENCE", "movable":true, "texture_key":"fabric", "color":"#D6B886"}, "model_path":"/private/tmp/paws34-missing-model.glb"})
 	check(level.request.state == "FAILED" and not level.can_exit(), "Missing generated model fails safely")
 	level.request.mock_mode = true
 	draw(level, 0)
 	level.request.mock_mode = false
-	var response := {"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Umbrella", "description":"Protects from the bird.", "type":"DEFENCE", "movable":true}, "model_path":ProjectSettings.globalize_path("res://../docs/test-artifacts/stage3-2026-09-13/model.glb")}
+	var response := {"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Umbrella", "description":"Protects from the bird.", "type":"DEFENCE", "movable":true, "texture_key":"fabric", "color":"#D6B886"}, "model_path":ProjectSettings.globalize_path("res://../docs/test-artifacts/stage3-2026-09-13/model.glb")}
 	level.request.accept_response(response)
 	check(not level.request.accept_response(response), "Duplicate completion cannot restart protection")
 	if visual:

@@ -215,7 +215,7 @@ func assist_crossing(direction: Vector3) -> Vector3:
 
 func _place_generated_model() -> bool:
 	var crossing := _supports_bridge()
-	var visual: Node3D = GeneratedModel.load_visual(request.model_path, 10.4 if crossing else 1.8, crossing)
+	var visual: Node3D = GeneratedModel.load_visual(request.model_path, 10.4 if crossing else 1.8, crossing, request.result)
 	if visual == null:
 		return false
 	_clear_generated_model()

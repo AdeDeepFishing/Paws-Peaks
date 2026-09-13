@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Orchestrate three generation calls: interpret -> image edit -> model generation."""
+"""Interpret -> image edit -> model generation, with reusable game materials selected during interpretation."""
 
 import argparse
 import base64
@@ -59,7 +59,8 @@ def main(argv=None, *, output_folder=None, on_event=None, on_response=None):
     parser.add_argument("--style-prompt", default=STYLE_PROMPT)
     parser.add_argument("--openai-image-model", default=image_edit.DEFAULT_MODEL)
     parser.add_argument("--openai-image-size", choices=("816x816", "1024x1024"), default=image_edit.DEFAULT_SIZE)
-    parser.add_argument("--target-faces", type=int, default=1000)
+    parser.add_argument("--target-faces", type=int, default=500,
+                        help="T2 geometry target (default: 500 for lightweight game objects).")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     if not 100 <= args.target_faces <= 15000:
@@ -93,7 +94,7 @@ def main(argv=None, *, output_folder=None, on_event=None, on_response=None):
                 image, config, prompt=SKETCH_PROMPT, game_stage=args.game_stage))
         model_generation.save_job(folder / "description.json", description)
         print(json.dumps({"stage": "description", "result": description}), flush=True)
-        # 2. Image edit: one OpenAI request returns the reference image.
+        # 2. Image edit: one reference image using the selected material and color.
         emit({"stage": "reference_image", "status": "PENDING", "item": description["item"]})
         prompt = reference_prompt(description["item"], args.style_prompt)
         (folder / "reference_prompt.txt").write_text(prompt)

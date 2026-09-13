@@ -2,7 +2,7 @@
 
 STYLE_PROMPT = ("Turn this rough sketch into a clear, three-dimensional reference of the "
                 "object described below. Preserve its silhouette and proportions. "
-                "The original sketch is the visual authority if the description conflicts with it. "
+                "The original sketch is the authority for shape and pose if the description conflicts with it. "
                 "Keep exactly its orientation, endpoint positions and viewpoint. "
                 "Do not turn a diagonal object upright or substitute a conventional product pose. "
                 "Do not rotate, mirror, flip, straighten or reorient the object. "
@@ -18,5 +18,10 @@ STYLE_PROMPT = ("Turn this rough sketch into a clear, three-dimensional referenc
 
 def reference_prompt(item, style):
     return (style + "\nObject description: " + item["name"] + ". " + item["description"]
+            + "\nMaterial: " + item["texture_key"] + ". Use " + item["color"]
+            + " as the dominant base color across the whole object, matching the game's material tint. "
+            "Use this supplied color even if the sketch or description suggests other colors. "
+            "Keep a simple, muted storybook style. "
+            "Avoid contrasting colors on separate parts; keep the object mostly one color."
             + "\nUse simple solid forms with minimal shading. No fine surface detail, "
             "decorative textures, scenery, labels or extra objects. Prioritize readable geometry.")

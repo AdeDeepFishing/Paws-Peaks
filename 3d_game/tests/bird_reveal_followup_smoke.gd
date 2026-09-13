@@ -18,8 +18,10 @@ func run():
 	check(root.get_visible_rect().encloses(Rect2(level.generation_preview.mist.position, level.generation_preview.mist.size)), "Stronger cover remains bounded around the sketch")
 	await capture("held-cover")
 	level.request.mock_mode = false
-	level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Umbrella", "description":"Protects the protagonist.", "type":"DEFENCE", "movable":true}, "model_path":ProjectSettings.globalize_path("res://../docs/test-artifacts/stage3-2026-09-13/model.glb")})
+	level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Umbrella", "description":"Protects the protagonist.", "type":"DEFENCE", "movable":true, "texture_key":"fabric", "color":"#D6B886"}, "model_path":ProjectSettings.globalize_path("res://../docs/test-artifacts/stage3-2026-09-13/model.glb")})
 	check(await wait_for(func(): return is_instance_valid(level.offered) and level.offered.visible, 4), "Model reveal still completes")
+	for mesh in level.offered.get_children():
+		check(mesh.material_override is StandardMaterial3D and mesh.material_override.albedo_color.is_equal_approx(Color("#D6B886")), "Revealed protection uses the shared material and interpreted color")
 	check(level.camera.transform.is_equal_approx(held), "Result hold uses the same stationary camera")
 	check(not level.generation_preview.mist.active, "Cover disappears when the model is shown")
 	check(await wait_for(func(): return level.bird.phase == "departing", 8), "Bird starts its exit after being blocked")

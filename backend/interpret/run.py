@@ -4,6 +4,7 @@
 import argparse
 from copy import deepcopy
 import json
+import re
 from pathlib import Path
 import sys
 from urllib.error import HTTPError, URLError
@@ -18,6 +19,7 @@ from utils.common import provider_urlopen as urlopen
 from utils.profiling import Profiler, measure, metric
 
 from stage_config import STAGES, classes_for
+from material_palette import KEYS as TEXTURE_KEYS, PROMPT as PALETTE_PROMPT
 
 API_URL = "https://api.openai.com/v1/responses"
 TYPES = list(classes_for("river"))
@@ -26,6 +28,8 @@ ITEM_PROPERTIES = {
     "description": {"type": "string", "maxLength": 160},
     "type": {"type": "string", "enum": TYPES},
     "movable": {"type": "boolean"},
+    "texture_key": {"type": "string", "enum": TEXTURE_KEYS},
+    "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
 }
 SCHEMA = {
     "type": "object", "additionalProperties": False,
@@ -47,6 +51,11 @@ identity to fit a class or solve the challenge.
 Also decide whether the identified object is movable: true for portable or loose
 objects such as food, toys, tools, or a freestanding chair; false for fixed structures
 such as a bridge or building. Base this on the object itself, not the stage class.
+Choose one texture_key from the material palette for the object's dominant material.
+Use plain if none fits. Choose color as an opaque #RRGGBB hex tint, based on visible
+sketch colors or a plausible natural color when the sketch is monochrome. Prefer
+warm, muted storybook colors. The saved textures are neutral grayscale; material
+and color are independent. Do not put color names or file paths in texture_key.
 Always return an item; do not return an uncertainty status or a null item.
 Write a short English name. In description, write one complete English sentence naming the object and its possible usefulness.
 Aim for 80-120 characters and never exceed 160. Shorten the wording to finish the sentence; never cut off a word or phrase.
@@ -73,6 +82,10 @@ def validate_interpretation(value, game_stage="river"):
     if not isinstance(item["description"], str) or len(item["description"]) > 160 or item["type"] not in allowed_types:
         raise invalid
     if type(item["movable"]) is not bool:
+        raise invalid
+    if not isinstance(item["texture_key"], str) or item["texture_key"] not in TEXTURE_KEYS:
+        raise invalid
+    if not isinstance(item["color"], str) or not re.fullmatch(r"#[0-9A-Fa-f]{6}", item["color"]):
         raise invalid
     return value
 
@@ -107,6 +120,7 @@ def interpret(image, config, prompt=PROMPT, game_stage="river"):
     guidance = STAGES[game_stage].get("classification_guidance", "")
     if guidance:
         prompt += "\n" + guidance
+    prompt += "\n" + PALETTE_PROMPT
     key = config["OPENAI_API_KEY"]
     if not key or key.lower().startswith(("your_", "paste_")):
         raise AppError("CONFIG_ERROR", "Fill OPENAI_API_KEY in backend/.env, then run again.")

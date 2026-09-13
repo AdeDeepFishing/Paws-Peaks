@@ -39,6 +39,7 @@ class StageClassTests(unittest.TestCase):
         self.assertIn('shield', context)
         self.assertIn('DEFENCE', context)
         self.assertIn("Do not change its", prompt)
+        self.assertIn(run.PALETTE_PROMPT, prompt)
         http.assert_called_once()
         # This meaning is stage-specific; it must not steer river identification.
         with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response({'item': ITEM})).encode())) as river_http:
