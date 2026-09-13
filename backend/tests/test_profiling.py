@@ -10,9 +10,9 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import profiling
-from image_text_to_3d import run as models
-from sketch_to_narrative import run as narrative
+from utils import profiling
+from model_generation import run as models
+from interpret import run as narrative
 
 
 class ProfilingTests(unittest.TestCase):
@@ -93,7 +93,7 @@ class ProfilingTests(unittest.TestCase):
     def test_profiled_model_status_records_identity_and_provider_time(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "job.json"
-            path.write_text(json.dumps({"schema_version": 1, "feature": "image_text_to_3d", "provider": "meshy",
+            path.write_text(json.dumps({"schema_version": 1, "feature": "model_generation", "provider": "meshy",
                                         "request_id": "E01-test", "task_id": "task-test", "status": "PENDING"}))
             task = {"id": "task-test", "status": "IN_PROGRESS", "created_at": 1000, "started_at": 2000, "finished_at": 0}
             with patch.object(profiling, "PROFILE_DIR", Path(directory) / "profiles"), \

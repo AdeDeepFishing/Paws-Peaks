@@ -65,6 +65,13 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 
 ## 2. Decisions and current status
 
+September 13 contract update: recognized AI items now contain only `name`,
+`description`, and stage-specific `type`. Numeric item stats and capability tags
+are removed from the backend/game contract. This supersedes earlier stat/tag
+planning references below; future encounter mechanics must be authored separately.
+Stage 1 enables its fixed crossing for `BRIDGE` and no longer checks or spends
+AI-generated durability.
+
 | Topic | Status | Decision or working assumption |
 |---|---|---|
 | Game name | Confirmed | Paws & Peaks |
@@ -87,7 +94,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 | Background music and SFX | Confirmed | Required, with player volume controls |
 | Narration and dialogue | Confirmed correction | English spoken narration and key NPC dialogue, with English subtitles |
 | Voice production | Available option | User has an ElevenLabs subscription; proposed pre-generated audio, with exact voice/plan/credits still to verify |
-| AI item fields | Required | Type, Attack power, Range, Speed, Durability, plus identification and encounter-effect tags |
+| AI item fields | Required | `name`, `description`, and stage-specific `type`; no numeric stats or tags |
 | Otter NPC | Stage 4 confirmed; details open | The fourth stage is an otter encounter. What the player helps with and what the otter does afterward remain undecided |
 | Submission deliverables | Confirmed | Playable game URL plus gameplay video so judges can both play and watch; exact portal/video format/browser requirements still need checking |
 | Hosting | Open | Vercel is a candidate; sponsorship does not establish deployment access or credits |
@@ -121,8 +128,8 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 | F02 | Traversal | Walk, jump, sprint, fixed stage camera, one bounded pushable-crate interaction, and a designated climb route |
 | F03 | Proximity interaction | Approach an encounter, see a prompt, and interact with one clear target |
 | F04 | Drawing canvas | One pen, undo last stroke, clear, submit, and back |
-| F05 | Real AI interpretation | Analyze actual drawings and return validated type, attack_power, range, speed, durability, name, description, and tags |
-| F06 | Original-art object | Original sketch, interpretation, a readable stat card, and visible use feedback |
+| F05 | Real AI interpretation | Analyze actual drawings and return validated name, description, and stage-specific type |
+| F06 | Original-art object | Original sketch, interpretation, a readable item description, and visible use feedback |
 | F07 | Five stages | River crossing, large dog, crows, otter, final boss in that order; finalize and implement the solution rules for all five before submission |
 | F08 | Otter encounter | A complete fourth-stage interaction after the team defines the task and outcome; no assumed tutorial role or mandatory boss assistance |
 | F09 | Recovery | Invalid objects, uncertainty, timeout, network failure, and repeated input cannot soft-lock play |
@@ -234,7 +241,7 @@ The previous blocking INTERPRETING game state is removed. **A pending network re
 | EXPLORING | Walk, jump, sprint, push, climb, and inspect scenery |
 | DIALOGUE / OBSERVING | Read/listen to encounter dialogue; open drawing or return |
 | DRAWING | Edit a draft; movement and camera input are suspended |
-| ITEM_VIEW | Read artwork, interpretation, and stats; close, redraw, or use if near the correct target |
+| ITEM_VIEW | Read artwork, interpretation, and classification; close, redraw, or use if near the correct target |
 | RESOLVING | Watch a short authored result; player movement is temporarily suspended |
 | ENDING | Read/listen to conclusion, view credits, or restart |
 
@@ -300,7 +307,7 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - **Confirmed premise:** the player wants to reach the other bank, but the river is too wide to cross unaided.
 - **Reference example:** the concept shows a raft-like drawing. Preserve the experience of drawing an aid and then using it to cross.
 - **Implementation proposal:** use E01 for the first drawing tutorial, guided by the narrator and short English UI prompts. The otter does not appear as the tutorial guide.
-- **Confirmed Day 1 implementation:** a fixed, walkable bridge using a long and sturdy idea. The prototype rule accepts LONG_REACH + STURDY and positive remaining durability, then spends one use. Dimensions are authored, not derived from item Range. The raft route is deferred; additional supported solutions remain design work.
+- **Confirmed Day 1 implementation:** a fixed, walkable bridge using a long and sturdy idea. The prototype accepts class BRIDGE and commits placement once. Dimensions and collision are authored; no AI stats or tags are required. The raft route is deferred; additional supported solutions remain design work.
 - Use authored crossing positions and a safe endpoint instead of simulating water or arbitrary bridge construction. Prevent normal jumps or crate-assisted jumps from bypassing the intended crossing.
 - While analysis runs, the player may explore and collect in a safe near-bank pocket. Returning a ready result must not start the crossing automatically.
 - **Completion:** using an accepted object gets the player safely to the far bank and opens E02.
@@ -313,7 +320,7 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
   plays Idle Alert when the protagonist approaches, and walks or runs across the path
   to intercept attempts to pass. There is no damage or combat requirement.
 - Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
-  TOY (for example a toy bone) with positive durability are the supported solutions.
+  TOY (for example a toy bone) are the supported solutions.
   WEAPON and UNKNOWN give a contextual retry; they never open the route.
 - A successful object appears at the authored roadside offering spot with the original
   sketch visible. The dog jumps once, runs toward it, slows to a walk, then collects
@@ -321,9 +328,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - The forward boundary is blocked at every lateral position and jump height until
   collection finishes. The E03 exit also checks encounter completion independently.
   Once cleared, the full-width z=-28 exit works as before.
-- One accepted offering consumes one durability. Attack, range and speed remain item
-  metadata; dog travel speed and the offering position are authored. No damage formula
-  or item-stat combat thresholds are introduced.
+- One accepted offering starts the distraction once. Dog travel speed and the offering
+  position are authored; no numeric item stats are required or consumed.
 - Drawing pauses protagonist input and dog pursuit. Processing restores exploration;
   it cannot unlock passage. Failed, unclear and canceled results preserve the draft
   for retry, and stale/duplicate results cannot replay the resolution.
@@ -366,28 +372,19 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - Do not prescribe a sword-only fight, a health-bar system, a fixed phase count, an otter-assisted victory, or a specific ending without team agreement.
 - Reserve a boss scene and ending transition for integration. A placeholder is not a finished boss.
 - Preserve safe background processing, original-art use feedback, and valid retry paths regardless of the eventual boss design.
-- **Decision required before final implementation:** define one minimum complete boss loop and its ending, then document any alternative solutions. Update affected state flags, tags, stat rules, voice lines, and tests together.
+- **Decision required before final implementation:** define one minimum complete boss loop and its ending, then document any alternative solutions. Update affected state flags, class-based rules, voice lines, and tests together.
 
-### Effect vocabulary and solution rules
+### Classification and solution rules
 
-The type/stat JSON contract remains required. Effect tags below are a working vocabulary for interpreting drawings; they do not replace an encounter-specific rule sheet.
+The backend returns `name`, `description`, and `type`; capability tags and numeric
+stats are not required. Stage-specific classes are defined in
+[the backend contract](backend/BACKEND.md#approved-classes). River accepts `BRIDGE`
+for its authored crossing; Dog accepts `FOOD` or `TOY` for distraction. Remaining-stage effects and success conditions remain
+separate gameplay design decisions; classification alone does not implement them.
 
-| Tag | Meaning | Example / status |
-|---|---|---|
-| LONG_REACH | Extends reach or spans distance | Long pole or board; candidate for E01 |
-| FLOATS | Functions as a flotation aid | Raft or flotation ring; candidate for E01 |
-| STURDY | Provides firm support | Solid board; candidate for a crossing solution |
-| PROTECTS | Provides cover or shielding | Shield or umbrella; proposed addition for E03, subject to rule confirmation |
-| FOOD | Something an animal may consider food | E02 accepts FOOD to distract the dog; E04 feeding is not established |
-| SOUND | Produces noticeable sound | Available vocabulary; deterrent effectiveness must be agreed per stage |
-| OTHER | No supported effect applies | Unrelated object |
-
-- Keep one or two tags per item; OTHER is exclusive. Confirm the final allowed tag set before wiring server validation and fixtures.
-- E02/E05 may use accepted type and statistics with an authored action; adding a generic weapon tag is not required until a rule needs it.
-- The design target remains multiple reasonable solutions. Record accepted examples, rejected examples, action/threshold conditions, and feedback for each finalized route. Do not claim ten implemented routes simply because five stages are planned.
-- Test at least 12 varied sketches before locking rules, including raft/bridge candidates, weapons, shields/umbrellas, rough or unrelated shapes, mixed objects, and text-bearing drawings.
-- Tags and statistics express simplified game affordances, not reliable physical measurements inferred from a sketch.
-- If a tag repeatedly fails recognition, adjust the rule or offer explicit purpose confirmation. A model result alone must not declare the stage solved.
+The design target remains multiple reasonable solutions. Record accepted/rejected
+examples, authored actions, and feedback for each finalized route. Test varied
+sketches before locking rules, including rough, unrelated, and text-bearing inputs.
 
 ## 7. Drawing and object presentation
 
@@ -407,7 +404,7 @@ The type/stat JSON contract remains required. Effect tags below are a working vo
 ### Object presentation
 
 - Show the original sketch, a short English name, a one-sentence interpretation, Type, Attack power, Range, Speed, Durability, Use, and Draw again. Mark combat-only fields as informational where no matching action exists; do not imply every item can attack.
-- E01 now presents the resulting object directly at its encounter location; original drawings remain saved as input data, not attached paper props. Other stages’ item/stat presentation remains to be designed.
+- E01 now presents the resulting object directly at its encounter location; original drawings remain saved as input data, not attached paper props. Other stages’ item presentation remains to be designed.
 - Background removal, mesh generation, and drawing-shaped collision are not required.
 - Generated names and descriptions never control game rules.
 - A missing or failed response leaves the previous usable item intact.
@@ -424,7 +421,7 @@ The type/stat JSON contract remains required. Effect tags below are a working vo
 
 ### Ownership of decisions
 
-- AI: analyze the drawing and propose an object type, attack power, range, speed, durability, name, short interpretation, and allowed effect tags.
+- AI: analyze the drawing and return a name, short description, and stage-specific object type.
 - Server: call the provider, validate and normalize all fields into game-approved ranges and type budgets, enforce request limits, and protect credentials.
 - Godot: own game state, validate usable data, evaluate encounter rules, and execute predefined effects.
 
@@ -460,12 +457,7 @@ Recognized response:
   "item": {
     "name": "A sturdy plank",
     "description": "A long wooden board that looks strong enough to support you.",
-    "type": "TOOL",
-    "attack_power": 8,
-    "range": 3.0,
-    "speed": 0.8,
-    "durability": 5,
-    "tags": ["LONG_REACH", "STURDY"]
+    "type": "BRIDGE"
   }
 }
 ```
@@ -473,7 +465,7 @@ Recognized response:
 - Proposed limits: name up to 40 characters, description up to 160 characters, displayed as plain text.
 - Tags contain one or two unique allowed values. Unsupported values invalidate the response.
 - For an unclear image, return the same version/request fields with `status: "uncertain"` and `item: null`.
-- A recognizable but unsupported object may return `recognized` with only OTHER.
+- A recognizable object outside the selected stage’s classes may return `recognized` with `type: UNKNOWN`.
 - The client combines the validated item data with its original snapshot. The server need not return the image.
 
 Error response:
@@ -492,28 +484,15 @@ Error response:
 - Proposed HTTP mapping: 400/413 for invalid input, 429 for limits, 502/503 for provider or output failures. Final mapping must be agreed during integration.
 - The client uses local English error messages instead of displaying provider errors or stack traces.
 
-### Required item fields and units
+### Required item fields and gameplay use
 
-Use lowercase snake_case JSON keys; the UI uses the human-readable labels requested by the team. All five fields are mandatory for every recognized item, including UNKNOWN types. Class choices depend on the game stage; see [Sketch-to-model stage classes](backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#approved-classes).
-
-| UI label | JSON key | Proposed domain | Meaning |
-|---|---|---|---|
-| Type | `type` | Stage-specific set from `backend/stage_config.py`; see [approved classes](backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#approved-classes) | Only classes allowed for the current stage; capabilities belong in tags |
-| Attack power | `attack_power` | Integer 0–100 | Potential strength for an implemented attack/break action; zero is valid for a non-attacking item |
-| Range | `range` | Finite number 0–8 | Maximum effective reach in world units; world scale convention is one unit approximately one meter |
-| Speed | `speed` | Finite number 0.5–2.0 | Item-action speed multiplier relative to a base action of 1.0; not the player's walking/sprint speed |
-| Durability | `durability` | Integer 1–10 | Maximum successful uses; client tracks remaining uses separately |
-
-- These are initial balancing bounds, not measurements recovered reliably from a drawing. Final per-type budgets are a Day 1 design task.
-- Require correct data types; reject missing fields, invalid enum values, NaN/infinite values, and malformed output. Normalize finite numeric proposals to approved global and per-type bounds before sending the accepted response to Godot.
-- Godot checks the same contract and displays only the accepted numbers. No raw model output directly changes the game.
-- UNKNOWN is an item type; OTHER is an exclusive effect tag. They are different fields. Uncertain recognition still returns `item: null` rather than inventing an item.
-- Type is not a winning-answer lookup. Keep effect tags because category alone does not determine whether an object solves the encounter.
-- P0 includes all stats in real AI output, validation, and the item card. E02 consumes one durability on an accepted offering; finalize remaining stat use in the E05 boss rule sheet; any E01 span/reach threshold remains a candidate rather than the former bag-retrieval rule. `speed` can scale an approved use sequence; `durability` decrements only after a successful use commits once.
-- Failed attempts, inspection, drawing, network errors, and canceled actions never spend durability. An exhausted item can always be replaced with a free basic drawing; no progression soft-lock.
-- Define whether and how `attack_power` affects the approved dog/boss actions before implementing those stages. It remains informational for unrelated actions. Do not apply arbitrary model numbers directly to health or invent a full combat engine merely to consume the field.
-- Do not derive an overall Power Score yet. Keep each field interpretable and avoid rewarding unrealistic text written into the sketch.
-- Manual mode creates items through the same type/stat templates and tag rules, with clear manual provenance; it must not return an incompatible object shape.
+Recognized items contain exactly `name`, `description`, and stage-specific `type`.
+Validate their string types, lengths, and classification membership against the
+[backend contract](backend/BACKEND.md#item-validation). Unknown but recognizable
+objects use `UNKNOWN`; unrecognizable drawings return `item: null` with `uncertain`.
+No numeric statistics or tags are generated, validated, displayed, or consumed.
+Game rules use the class and authored encounter behavior. Manual mode must return
+the same three-field item with clear manual provenance.
 
 ### Waiting, cancellation, and fallback
 
@@ -647,7 +626,7 @@ Minimum delivery: **one BGM track, ten SFX event categories, and the agreed narr
 | PlayerController | Walk/jump/sprint, camera input, bounded push/climb, safe respawn, modal movement locks | Encounter solutions |
 | InteractionController | Nearby target and interaction prompt | Model calls |
 | DrawingCanvas | Strokes, undo, clear, PNG snapshot | Correct-answer rules |
-| AIClient / RequestManager | Background lifecycle, originating encounter, timeout, errors, full stat validation, ready notification | Movement locks or scene progression |
+| AIClient / RequestManager | Background lifecycle, originating encounter, timeout, errors, item contract validation, ready notification | Movement locks or scene progression |
 | EncounterController | Tag rules, result sequence, route unlocking | Generated code execution |
 | ItemCard | Original artwork, text, Use and Redraw actions | Credentials |
 | AudioManager | Music, SFX, Voice, mixing, volume, mute | Gameplay success |
@@ -702,7 +681,7 @@ Decide the server code location after selecting the hosting approach. Fixed resp
 | Yanwen (Developer A) | Movement, camera, drawing canvas and PNG output, first river stage, client-side interaction/integration | Explore, open the sketchbook, draw, submit PNG, and use a returned idea to cross a placeholder bridge |
 | Beichun (Developer B) | AI interface, backend requests, image interpretation, validated JSON response | Accept Yanwen's PNG request and return real structured results without blocking exploration |
 | Designer A | Art direction, player/NPC assets, compact level and waiting-area layout | One readable zone with an optional nearby activity pocket |
-| Designer B | Encounter rules/stat budgets, English script, ElevenLabs voice production, music/SFX, playtests | Solution/stat matrix, short script manifest, and audio samples |
+| Designer B | Encounter rules, English script, ElevenLabs voice production, music/SFX, playtests | Solution matrix, short script manifest, and audio samples |
 
 - The developer split above is confirmed by the Day 1 task sheet. Designer responsibilities remain proposals. Assign final dialogue/voice wiring and Web deployment ownership explicitly; those are not implemented by the river prototype.
 - Any teammate may submit the final package. The submitter posts confirmation and links for the team; yanwen checks the internal target and takes over if submission is still missing at 21:00 JST on September 15.
@@ -768,12 +747,12 @@ These are proposed tasks, not issues already created on GitHub.
 | T02 | P0 | Reuse spike and minimal Web deployment | Both devs | T01 | Pinned candidate runs in 4.7.2 Compatibility on the actual host; licenses recorded |
 | T03 | P0 | Walk/jump/sprint, fixed stage camera, interaction, checkpoint | Dev A | T02 | Grounded controls work; safe reset preserves session state |
 | T04 | P0 | Canvas, snapshot, undo/clear | Dev B | T01 | Valid PNG submission; no empty calls or cursor conflicts |
-| T05 | P0 | AI type/stats/tags contract and server bounds | Dev B + Designer B | T04 | All five requested fields returned and validated; malformed data is recoverable |
+| T05 | P0 | AI item contract and validation | Dev B + Designer B | T04 | Name, description, and stage-specific type returned and validated; malformed data is recoverable |
 | T06 | Retired (#37) | Coin pickups, counter and tally removed | Dev A | None | Active scenes contain no coin pickups or counter |
-| T07 | P0 | Background request and non-modal ready/error lifecycle | Dev B | T03–T06 | Move/collect while pending; late reply, respawn, cancel and restart handled correctly |
-| T08 | P0 | E01 river crossing and original-art stat card | Both devs | T05, T07 | Real drawing enables an approved safe crossing after the generation presentation; narrator guides the first drawing |
+| T07 | P0 | Background request and non-modal ready/error lifecycle | Dev B | T03–T06 | Move while pending; late reply, respawn, cancel and restart handled correctly |
+| T08 | P0 | E01 river crossing and original-art item presentation | Both devs | T05, T07 | Real drawing enables an approved safe crossing after the generation presentation; narrator guides the first drawing |
 | T09 | P0 | Bounded crate pushing and designated climb route | Dev A | T03, T06 | Safe optional traversal, no gate bypass or permanent blockage |
-| T10 | P0 | Finalize E01–E03 solution rules and implement dog/crow interactions | Designer B + Dev A | T08 | Confirmed river/dog/crow premises implemented; accepted alternatives, stat use, gates and retry rules documented |
+| T10 | P0 | Finalize E01–E03 solution rules and implement dog/crow interactions | Designer B + Dev A | T08 | Confirmed river/dog/crow premises implemented; accepted alternatives, authored actions, gates and retry rules documented |
 | T11 | P0 | English script and ElevenLabs production | Designer B | T10; T17/T18 for later-stage lines | Narrator covers E01 tutorial; E04/E05 voice is based on approved designs, with matching subtitles |
 | T12 | P0 | Dialogue, subtitles, Voice channel and skip/ducking | Dev B | T11 | Next/Skip, missing audio, mute, and simultaneous ready notification behave correctly |
 | T13 | P0 | BGM and ten SFX event categories | Designer B + Dev A | T06–T09 | Comfortable loop, pickup, traversal and AI-ready feedback without sound spam |
@@ -781,7 +760,8 @@ These are proposed tasks, not issues already created on GitHub.
 | T15 | P0 | Limits, manual mode and final browser playtests | Both devs; Designer B coordinates | T12–T14 | Section 15 results recorded; real and simulated slow/failing requests tested |
 | T16 | P0 | Gameplay video, credits, submission and confirmation | Any teammate; yanwen fallback | T15 | Playable URL and gameplay video submitted before Sep 15 21:00 JST target; yanwen takes over if missing; hard deadline 23:59 JST |
 | T17 | P0 | Decide E04 otter task and outcome | Team design discussion | Confirmed five-stage sequence | Objective, valid solutions, outcome and any later help explicitly approved; no assumed quest |
-| T18 | P0 | Decide E05 boss strategy and ending | Team design discussion | Confirmed five-stage sequence; T17 only if linked | Minimum boss loop, accepted drawings/stat use, failure/retry, victory and ending explicitly approved |
+| T18 | P0 | Decide E05 boss strategy and ending | Team design discussion | Confirmed five-stage sequence; T17 only if linked | Minimum boss loop, accepted drawings and authored actions, failure/retry, victory and ending explicitly approved |
+| T19 | Unprioritized | Two-image interpretation: sketch plus optional scene/reference context | Unassigned | T05; define second-image role | [Backend acceptance criteria](backend/BACKEND.md#backlog); one-image requests remain compatible; no implementation yet |
 
 ## 15. Acceptance and playtesting
 
@@ -795,7 +775,7 @@ These are proposed tasks, not issues already created on GitHub.
 | Walls, water edge, gates, and sprint-jumps | Cannot bypass unsolved gates even with crate assistance; falls recover at a safe checkpoint |
 | Approach/leave an NPC | One relevant prompt appears and clears at the right range |
 | Open/close panels while holding movement | Character stops during panels and does not resume from stale input |
-| First real drawing | Original artwork plus all five required typed/bounded fields and tags become an item |
+| First real drawing | Original artwork plus validated name, description, and stage-specific type become an item |
 | Submit and continue playing | Canvas closes; walk/jump/sprint work while the request stays pending |
 | AI returns during jumping, climbing, or dialogue | Non-modal notification persists; no camera theft, teleport, or speech interruption |
 | Leave origin area and revisit solved ground while pending | Result stays bound to the original encounter and can be inspected later |
@@ -813,7 +793,7 @@ These are proposed tasks, not issues already created on GitHub.
 | E05 boss | Approved strategy, retry and victory rules work; not marked done while design remains open |
 | Unrelated recognized item | Contextual retry message, no resource penalty |
 | Invalid/missing type or stat, unknown tag, NaN, infinite or oversized text | Agreed validation/normalization prevents broken UI or unbounded game effects |
-| Range, item speed and remaining durability | Range uses world units, speed never changes player sprint, and only a committed successful use spends durability once |
+| Class-based crossing | BRIDGE enables the authored crossing exactly once; UNKNOWN and BOAT do not; no AI stats or tags are required |
 | Uncertain recognition | Redraw or clearly labeled purpose selection is available |
 | Timeout, offline, 429, or provider error | Waiting ends; retry/manual mode remains available |
 | Cancel/restart followed by late response | Old data cannot replace current state or advance the game; ordinary walking does not invalidate a valid request |
@@ -873,7 +853,7 @@ Already settled: production has begun on September 12; five-stage order and the 
 | Final setting and ending presentation | Storybook trail; paper/story boss and narrator connection are visual-reference proposals | E05 design decision, before final art/voice |
 | Narrator/otter voices and exact English script | Pre-generated ElevenLabs clips and subtitles; later-stage lines await design | Before voice generation |
 | Audio sources | Instrumental BGM, SFX and scripted voices | Before final audio selection |
-| Item stat budgets and action coverage | Five fields required; E02 uses one durability per offering; E05 stat effects remain open | E05 rules and integration |
+| Item classes and action coverage | Three-field item contract confirmed; E02 accepts FOOD/TOY; boss actions remain open | E05 rules and integration |
 | AI provider/model, account owner, spending cap | Not selected | Before real integration/public access |
 | Named implementation owners | Role split remains a proposal; submission fallback already assigned to yanwen | Team task assignment |
 

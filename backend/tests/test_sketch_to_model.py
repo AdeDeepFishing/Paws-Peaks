@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sketch_to_model import run
-from common import AppError
+from utils.common import AppError
 
 
 class PipelineTests(unittest.TestCase):
@@ -26,22 +26,26 @@ class PipelineTests(unittest.TestCase):
             data_uri = "data:image/png;base64," + base64.b64encode(original).decode()
             stack.enter_context(patch.object(run, "image_input", side_effect=[data_uri, "edited-image"]))
             stack.enter_context(patch.object(run.Profiler, "finish"))
-            interpretation = stack.enter_context(patch.object(run, 'interpret', return_value=description))
+            interpretation = stack.enter_context(patch.object(run.interpret, 'interpret', return_value=description))
             def generate(source, prompt, config, output, model, size):
                 self.assertEqual(self.events[-1]['item'], description['item'])
                 self.assertEqual(source.read_bytes(), original)
                 if edit_error:
                     raise edit_error
                 return output / 'reference.jpg'
-            reference = stack.enter_context(patch.object(run.openai_edit, 'generate', side_effect=generate))
-            create = stack.enter_context(patch.object(run, "create_job"))
-            stack.enter_context(patch.object(run, "refresh_job", return_value={"status": "SUCCEEDED"}))
-            stack.enter_context(patch.object(run, "download_model", return_value="model.glb"))
+            reference = stack.enter_context(patch.object(run.image_edit, 'generate', side_effect=generate))
+            create = stack.enter_context(patch.object(run.model_generation, "create_job"))
+            stack.enter_context(patch.object(run.model_generation, "refresh_job", return_value={"status": "SUCCEEDED"}))
+            stack.enter_context(patch.object(run.model_generation, "download_model", return_value="model.glb"))
             stack.enter_context(patch.object(run, "preview_result", return_value={"preview_error": "PREVIEW_RENDER_FAILED"} if preview_error else {"preview_path": "model.png"}))
             stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
             stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
             self.events = []
-            code = run.main([], on_event=self.events.append)
+            self.responses = []
+            output_folder = Path(folder) / 'output/sketch_to_model/test-run'
+            output_folder.mkdir(parents=True)
+            (output_folder / 'benchmark.jsonl').write_text('')
+            code = run.main([], output_folder=output_folder, on_event=self.events.append, on_response=self.responses.append)
             interpretation.assert_called_once_with(data_uri, {}, prompt=run.SKETCH_PROMPT, game_stage="river")
             saved = list(Path(folder).glob("output/sketch_to_model/*/input.png"))
             self.assertEqual(len(saved), 1)
@@ -61,11 +65,16 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(reference.call_count, 1)
         create.assert_not_called()
+        self.assertEqual(self.responses[-1]['operation'], 'openai_image_edit')
+        self.assertEqual(self.responses[-1]['status'], 'FAILED')
 
     def test_defaults_pass_edited_image_to_untextured_t2(self):
         code, reference, create = self.run_mock_pipeline(
             {"status": "recognized", "item": {"name": "Ladder", "description": "Rails"}})
         self.assertEqual(code, 0)
+        self.assertEqual([r['operation'] for r in self.responses], [
+            'openai_interpretation', 'openai_image_edit', 'meshy_submit', 'meshy_status', 'model_download'])
+        self.assertTrue(all(r['status'] == 'SUCCEEDED' and r['duration_ms'] >= 0 for r in self.responses))
         self.assertEqual(reference.call_args.args[-1], "816x816")
         self.assertEqual(reference.call_args.args[-2], "gpt-image-2.5-flare")
         payload = create.call_args.args[0]

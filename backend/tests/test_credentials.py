@@ -11,7 +11,7 @@ from urllib.request import HTTPSHandler, Request, build_opener
 from urllib.response import addinfourl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import common
+from utils import common
 
 
 class CredentialTests(unittest.TestCase):

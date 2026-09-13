@@ -13,7 +13,7 @@ func frames(n: int):
 		await physics_frame
 		await process_frame
 func ready_response() -> Dictionary:
-	return {"schema_version":2,"request_id":level.request.active_id,"status":"recognized","item":{"name":"Bridge","description":"A crossing.","type":"TOOL","attack_power":0,"range":6,"speed":1,"durability":8,"tags":["LONG_REACH","STURDY"]}}
+	return {"schema_version":2,"request_id":level.request.active_id,"status":"recognized","item":{"name":"Bridge","description":"A crossing.","type":"BRIDGE"}}
 func prepare_draw():
 	# Let the physics overlap cache observe leaving the area after a restart.
 	level.player.respawn(level.SPAWN)
@@ -123,7 +123,7 @@ func run():
 	level._submit()
 	while level.presentation.busy: await level.presentation.settled
 	var unsuitable := ready_response()
-	unsuitable.item.tags = ["OTHER"]
+	unsuitable.item.type = "UNKNOWN"
 	level.request.accept_response(unsuitable)
 	check(not level.bridge_built and not level.presentation.holding, "Unsuitable mock result releases the held camera for retry")
 	level.restart()

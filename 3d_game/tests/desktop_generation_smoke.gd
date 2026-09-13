@@ -52,7 +52,7 @@ func run() -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("/private/tmp/paws-generated-model.png")
 	var sent_image := Image.new()
-	sent_image.load(level.generation.job_dir.path_join("input.png"))
+	sent_image.load(level.generation.job_dir.path_join("request/input.png"))
 	check(sent_image.get_pixel(0, 0).a == 0.0, "Python receives PNG with alpha preserved")
 	level.player.respawn(Vector3(-4.8, 1.6, -6.0))
 	for i in 30: await physics_frame
@@ -62,9 +62,12 @@ func run() -> void:
 		await physics_frame
 	Input.action_release("move_right")
 	check(level.completed, "Single-key crossing works with the actual generated GLB")
-	var submitted = JSON.parse_string(FileAccess.get_file_as_string(level.generation.job_dir.path_join("claimed.json")))
+	var submitted = JSON.parse_string(FileAccess.get_file_as_string(level.generation.job_dir.path_join("request/claimed.json")))
 	check(submitted.game_stage == "river", "Game sends the river stage label")
 	var old_status = JSON.parse_string(FileAccess.get_file_as_string(level.generation.job_dir.path_join("status.json")))
+	check(FileAccess.file_exists(level.generation.job_dir.path_join("response/results.jsonl")), "Response history lives in response folder")
+	check(level.request.model_path.begins_with(level.generation.job_dir.path_join("response") + "/"), "Generated asset lives in response folder")
+	check(old_status.request_received_at <= old_status.response_received_at, "Arrival timestamps are present and ordered")
 	level.restart()
 	check(not is_instance_valid(level.generated_visual), "Restart removes generated model")
 	check(level.get_node("Bridge/Deck/CollisionShape3D").shape.size.z == 2.0, "Restart restores default collision width")

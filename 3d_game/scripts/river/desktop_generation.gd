@@ -44,22 +44,23 @@ func _start(payload: Dictionary) -> void:
 		fail(worker.startup_error if not worker.startup_error.is_empty() else "The generation worker stopped. Restart the game.")
 		return
 	job_dir = worker.worker_dir.path_join(request_id)
-	if DirAccess.make_dir_recursive_absolute(job_dir) != OK:
+	var request_dir := job_dir.path_join("request")
+	if DirAccess.make_dir_recursive_absolute(request_dir) != OK:
 		fail("Could not create a generation folder. Your drawing is safe.")
 		return
-	var file := FileAccess.open(job_dir.path_join("input.png"), FileAccess.WRITE)
+	var file := FileAccess.open(request_dir.path_join("input.png"), FileAccess.WRITE)
 	if file == null:
 		fail("Could not save the generation input. Your drawing is safe.")
 		return
 	file.store_buffer(request.snapshot)
 	file.close()
-	var mailbox := FileAccess.open(job_dir.path_join("request.tmp"), FileAccess.WRITE)
+	var mailbox := FileAccess.open(request_dir.path_join("request.tmp"), FileAccess.WRITE)
 	if mailbox == null:
 		fail("Could not submit the generation request.")
 		return
 	mailbox.store_string(JSON.stringify({"request_id": request_id, "encounter_id": payload.encounter_id, "game_stage": payload.game_stage, "mode": "live" if mode == 2 else "fixture"}))
 	mailbox.close()
-	if DirAccess.rename_absolute(job_dir.path_join("request.tmp"), job_dir.path_join("request.json")) != OK:
+	if DirAccess.rename_absolute(request_dir.path_join("request.tmp"), request_dir.path_join("request.json")) != OK:
 		fail("Could not submit the generation request.")
 		return
 	progress_changed.emit("Starting generation..." if mode == 2 else "Loading the offline sample model...")

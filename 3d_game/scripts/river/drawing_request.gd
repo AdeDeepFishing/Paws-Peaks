@@ -10,7 +10,6 @@ signal state_changed(state: String)
 @export var timeout_seconds := 20.0
 
 const GAME_STAGES := {"E01": "river", "E02": "dog", "E03": "crows", "E04": "otter"}
-const TAGS := ["LONG_REACH", "FLOATS", "STURDY", "PROTECTS", "FOOD", "SOUND", "OTHER"]
 var state := "IDLE"
 var active_id := ""
 var encounter_id := ""
@@ -66,17 +65,13 @@ func _deliver_mock(request_id: String, outcome: int) -> void:
 			response["item"] = {
 				"name": "Paper bridge" if outcome == 0 else "A little flower",
 				"description": "A long, sturdy idea to carry you across." if outcome == 0 else "Lovely, but it cannot support a crossing.",
-				"type": "BRIDGE" if outcome == 0 else "UNKNOWN", "attack_power": 0, "range": 8.0,
-				"speed": 1.0, "durability": 3,
-				"tags": ["LONG_REACH", "STURDY"] if outcome == 0 else ["OTHER"]
+				"type": "BRIDGE" if outcome == 0 else "UNKNOWN"
 			}
 			if game_stage == "dog":
 				response["item"] = {
 					"name": "Drawn food" if outcome == 0 else ("Drawn toy" if outcome == 1 else "A little flower"),
 					"description": "Your sketch can give the dog something to enjoy.",
-					"type": "FOOD" if outcome == 0 else ("TOY" if outcome == 1 else "UNKNOWN"),
-					"attack_power": 0, "range": 8.0, "speed": 1.0, "durability": 3,
-					"tags": ["FOOD"] if outcome == 0 else ["OTHER"]
+					"type": "FOOD" if outcome == 0 else ("TOY" if outcome == 1 else "UNKNOWN")
 				}
 	accept_response(response)
 
@@ -108,29 +103,14 @@ func accept_response(response: Dictionary) -> bool:
 
 ## Classification membership is validated by the backend stage configuration.
 static func valid_item(value: Variant) -> bool:
-	if not value is Dictionary:
+	if not value is Dictionary or value.size() != 3:
 		return false
 	for key in ["name", "description", "type"]:
 		if not value.get(key) is String:
 			return false
 	if value["name"].is_empty() or value["name"].length() > 40 or value["description"].length() > 160 or value["type"].strip_edges().is_empty() or value["type"].length() > 40:
 		return false
-	var bounds := {"attack_power": Vector2(0, 100), "range": Vector2(0, 8), "speed": Vector2(0.5, 2), "durability": Vector2(1, 10)}
-	for key in bounds:
-		var number: Variant = value.get(key)
-		if not (number is int or number is float):
-			return false
-		if not is_finite(float(number)) or number < bounds[key].x or number > bounds[key].y:
-			return false
-		if key in ["attack_power", "durability"] and float(number) != floor(float(number)):
-			return false
-	var tags: Variant = value.get("tags")
-	if not tags is Array or tags.size() < 1 or tags.size() > 2:
-		return false
-	for tag in tags:
-		if not tag is String or tag not in TAGS or tags.count(tag) != 1:
-			return false
-	return not ("OTHER" in tags and tags.size() != 1)
+	return true
 
 func cancel() -> void:
 	generation += 1

@@ -111,10 +111,10 @@ func run():
 	await draw(level, 0)
 	check(level.request.state == "READY" and level.dog.state == "jump", "Food triggers one excited jump")
 	check(not level.can_exit(), "Jump alone does not unlock the path")
-	check(level.item.durability == 2, "Offering consumes one use")
+	check(level.item.size() == 3 and level.item.type == "FOOD", "Offering accepts the three-field item contract")
 	var offered: Node3D = level.offered
 	level._offer_item()
-	check(level.offered == offered and level.item.durability == 2, "Repeated offer cannot replay or duplicate the object")
+	check(level.offered == offered and level.item.size() == 3, "Repeated offer cannot replay or duplicate the object")
 	await capture("jump")
 	for i in 600:
 		await frames(1)

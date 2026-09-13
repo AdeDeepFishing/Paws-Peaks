@@ -6,10 +6,10 @@ A four-day game jam project about drawing objects to solve animal encounters.
 
 ## Documentation
 
-See [Sketch-to-model stage classes](docs/backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#current-multi-stage-request-contract) for the **River, Dog, Crows and Otter
+See [Sketch-to-model stage classes](docs/backend/BACKEND.md#current-multi-stage-request-contract) for the **River, Dog, Crows and Otter
 classification sets**, request format, and result logs.
 
-Read [SPEC.md](docs/SPEC.md) for the draft gameplay scope, traversal, background AI and item stats,
+Read [SPEC.md](docs/SPEC.md) for the draft gameplay scope, traversal, background AI and item classification,
 narration/dialogue, music and sound, team responsibilities, milestones, and acceptance checks.
 See [reuse research](docs/3d_game/REUSE_RESEARCH.md) for candidate Godot foundations, version pins, and license notes.
 Open decisions are marked explicitly; this specification describes planned work, not implemented features.
@@ -110,7 +110,7 @@ Open `backend/.env` in your editor and fill in only the keys for the features yo
 
 Leave the model settings at their template defaults to start. The scripts load
 `backend/.env` automatically; environment variables with the same names take precedence.
-See [local AI setup](docs/backend/AI_LOCAL_SETUP.md) for Python setup and run commands.
+See [local AI setup](docs/backend/BACKEND.md#setup-and-run) for Python setup and run commands.
 
 **Keep keys private.** `backend/.env` is ignored by Git; commit only the blank
 `backend/.env.example` template. Never put keys in source code, screenshots, logs,
@@ -134,14 +134,17 @@ backend/.venv/bin/python backend/sketch_to_model/run.py --image path/to/sketch.p
 Omit `--image` to use the saved sample sketch; add `--dry-run` to validate inputs
 without API calls. The flow uses separate OpenAI interpretation and low-quality 816 × 816 image-edit
 requests, then untextured Meshy T2 (~1,000 faces) and a local PNG preview. Outputs and timings are saved locally.
-See the [test report](docs/backend/SKETCH_TO_MODEL_RUN_2026-09-12.md) for results and limitations.
-The latest run took 19.70 seconds; the generated shape still needs review.
+See the [test report](docs/backend/BACKEND.md#historical-benchmarks) for results and limitations.
+The retained September 12 run took 19.70 seconds; this is a historical measurement,
+not a current latency guarantee. The generated shape still needs review.
 
 ## Team workflow
 
-For the separate narrative and 3D API scripts, see [local AI setup](docs/backend/AI_LOCAL_SETUP.md).
-`backend/sketch_to_narrative/` uses OpenAI; `backend/image_text_to_3d/` uses Meshy to
-generate untextured geometry from images. Both share `backend/.venv` and an ignored `backend/.env`.
+For the separate narrative and 3D API scripts, see [local AI setup](docs/backend/BACKEND.md#setup-and-run).
+`backend/interpret/` interprets sketches with OpenAI, `backend/image_edit/`
+creates reference images with OpenAI, and `backend/model_generation/` creates
+untextured geometry with Meshy. `backend/sketch_to_model/` runs these three steps
+in order. All share `backend/.venv` and an ignored `backend/.env`.
 The desktop drawing action connects through `backend/game_bridge/` to the sketch-to-model pipeline.
 See [desktop generation](docs/3d_game/DESKTOP_GENERATION.md) for modes, setup, cancellation, and limitations.
 See [backend development instructions](docs/backend/BACKEND.md) for conventions, contracts, and credential handling.

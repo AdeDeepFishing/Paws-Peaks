@@ -25,8 +25,8 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
   A result received far away waits for the player to return and press E.
 - FOOD or TOY appears at the authored left roadside spot, alongside the original
   sketch. In AI mode the returned GLB is also displayed. The dog jumps once, runs
-  over, slows to a walk, and collects it. One durability is spent on the accepted
-  offering. The dog stays off the path with a heart and **Thank you!**.
+  over, slows to a walk, and collects it. The three-field item response needs no
+  durability; the dog state prevents repeated offerings. The dog stays off the path with a heart and **Thank you!**.
 - Unclear, unrelated, timeout, cancellation and invalid-model outcomes preserve
   the sketch and permit retry. Weapons are not a solution. Repeated submissions,
   duplicate offers and late canceled results cannot repeat the resolution.

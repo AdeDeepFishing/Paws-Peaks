@@ -120,7 +120,7 @@ func _on_request_state(state: String) -> void:
 				status.text = "Your drawing is ready. Return to the dog and press E to offer it."
 
 func _offer_item() -> void:
-	if request.state != "READY" or dog.distracted or item.get("type") not in ["FOOD", "TOY"] or item.get("durability", 0) <= 0:
+	if request.state != "READY" or dog.distracted or item.get("type") not in ["FOOD", "TOY"]:
 		return
 	if not near_dog():
 		status.text = "Return to the dog to offer your drawing."
@@ -156,7 +156,6 @@ func _offer_item() -> void:
 	offered.add_child(label)
 	# Stop with the muzzle by the offering and the body clear of the main path.
 	if dog.distract(OFFER_POSITION + Vector3(2.8, 0, 0), OFFER_POSITION):
-		item.durability -= 1
 		status.text = "You caught the dog's attention!"
 		objective.text = "Watch the dog collect your drawing."
 
