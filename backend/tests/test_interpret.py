@@ -16,7 +16,7 @@ from interpret import run as app
 
 ITEM = {
     "name": "A little bridge", "description": "A sturdy little bridge with a long adventure ahead.",
-    "type": "BRIDGE", "movable": False,
+    "type": "BRIDGE", "movable": False, "texture_key": "plain", "color": "#D9C6A0",
 }
 CONFIG = {"OPENAI_API_KEY": "fake-key-for-offline-test", "OPENAI_MODEL": "gpt-4.1-mini"}
 
@@ -32,7 +32,7 @@ class InterpretTests(unittest.TestCase):
 
     def test_invalid_item_fields(self):
         mutations = [
-            ("movable", "true"), ("movable", 1), ("type", "SWORD"), ("type", None), ("name", " "), ("name", "x" * 41),
+            ("texture_key", "../wood"), ("texture_key", "unknown_material"), ("color", "brown"), ("color", "#12345G"), ("color", "#12345678"), ("movable", "true"), ("movable", 1), ("type", "SWORD"), ("type", None), ("name", " "), ("name", "x" * 41),
             ("description", "x" * 161), ("description", None),
         ]
         for field, value in mutations:
@@ -66,6 +66,12 @@ class InterpretTests(unittest.TestCase):
         self.assertEqual(request.full_url, app.API_URL)
         payload = json.loads(request.data)
         self.assertFalse(payload["store"])
+        props = payload["text"]["format"]["schema"]["properties"]["item"]["properties"]
+        self.assertEqual(props["texture_key"]["enum"], app.TEXTURE_KEYS)
+        self.assertEqual(len(app.TEXTURE_KEYS), 16)
+        for key in app.TEXTURE_KEYS:
+            self.assertIn(key, payload["input"][0]["content"])
+            self.assertTrue((app.ROOT.parent / "3d_game/assets/materials" / (key + ".png")).is_file())
         self.assertTrue(payload["text"]["format"]["strict"])
         self.assertTrue(payload["input"][1]["content"][0]["image_url"].startswith("data:image/jpeg;base64,"))
         self.assertEqual(transport.call_args.kwargs["timeout"], 15)

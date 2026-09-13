@@ -1,8 +1,10 @@
 extends RefCounted
 
+const MaterialPalette = preload("res://scripts/river/material_palette.gd")
+
 const MAX_BYTES := 32 * 1024 * 1024
 
-static func load_visual(path: String, span: float, crossing: bool) -> Node3D:
+static func load_visual(path: String, span: float, crossing: bool, item: Dictionary = {}) -> Node3D:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null or file.get_length() < 20 or file.get_length() > MAX_BYTES:
 		return null
@@ -59,7 +61,17 @@ static func load_visual(path: String, span: float, crossing: bool) -> Node3D:
 	var offset := Vector3(-bounds.get_center().x, -_deck_height(result, bounds) if crossing else -bounds.position.y, -bounds.get_center().z)
 	for child in result.get_children():
 		child.position += offset
+	if not item.is_empty() and not apply_palette(result, item):
+		result.free()
+		return null
 	return result
+
+static func apply_palette(visual: Node3D, item: Dictionary) -> bool:
+	var material := MaterialPalette.material(item.get("texture_key", ""), item.get("color", ""))
+	if material == null: return false
+	for mesh in visual.get_children():
+		mesh.material_override = material
+	return true
 
 static func physics_body(visual: Node3D, movable: bool) -> PhysicsBody3D:
 	var body: PhysicsBody3D

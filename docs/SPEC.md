@@ -66,7 +66,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 ## 2. Decisions and current status
 
 September 13 contract update: AI items contain `name`, `description`, stage-specific
-`type`, and boolean `movable`. Interpretation identifies a likely common object
+`type`, boolean `movable`, `texture_key`, and a `#RRGGBB` color tint. Interpretation identifies a likely common object
 before classification and always returns an item when the call succeeds. Movable
 objects fall under physics; fixed objects remain anchored. Numeric item stats and
 capability tags are removed from the backend/game contract. This supersedes earlier stat/tag
@@ -495,13 +495,14 @@ Error response:
 
 ### Required item fields and gameplay use
 
-Recognized items contain exactly `name`, `description`, stage-specific `type`, and boolean `movable`.
+Recognized items contain exactly `name`, `description`, stage-specific `type`, boolean `movable`,
+`texture_key` from the shared material palette, and an opaque `color` hex tint.
 Validate their string types, lengths, and classification membership against the
 [backend contract](backend/BACKEND.md#item-validation). Unknown but recognizable
-objects use `UNKNOWN`; unrecognizable drawings return `item: null` with `uncertain`.
+objects use `UNKNOWN`; ambiguous drawings receive a best-effort common-object guess.
 No numeric statistics or tags are generated, validated, displayed, or consumed.
 Game rules use the class and authored encounter behavior. Manual mode must return
-the same four-field item with clear manual provenance.
+the same six-field item with clear manual provenance.
 
 ### Waiting, cancellation, and fallback
 

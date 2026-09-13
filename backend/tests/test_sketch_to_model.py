@@ -60,7 +60,7 @@ class PipelineTests(unittest.TestCase):
 
     def test_edit_failure_never_submits_mesh(self):
         code, reference, create = self.run_mock_pipeline(
-            {"item": {"name": "Ladder", "description": "Rails"}},
+            {"item": {"name": "Ladder", "description": "Rails", "texture_key": "wood", "color": "#B88755"}},
             AppError("OPENAI_IMAGE_ERROR", "failed"))
         self.assertEqual(code, 1)
         self.assertEqual(reference.call_count, 1)
@@ -69,7 +69,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(self.responses[-1]['status'], 'FAILED')
 
     def test_unknown_item_flows_through_image_edit_and_untextured_t2(self):
-        item = {"name": "Chair", "description": "A chair could provide a place to rest.", "type": "UNKNOWN", "movable": True}
+        item = {"name": "Chair", "description": "A chair could provide a place to rest.", "type": "UNKNOWN", "movable": True, "texture_key": "plain", "color": "#D9C6A0"}
         code, reference, create = self.run_mock_pipeline({"item": item})
         self.assertEqual(code, 0)
         reference.assert_called_once()
@@ -80,6 +80,8 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(prompt.startswith(run.STYLE_PROMPT))
         self.assertIn(item['name'], prompt)
         self.assertIn(item['description'], prompt)
+        self.assertIn("Material: " + item['texture_key'], prompt)
+        self.assertIn("Use " + item['color'] + " as the dominant base color", prompt)
         self.assertNotIn('UNKNOWN', prompt)
         self.assertEqual([r['operation'] for r in self.responses], [
             'openai_interpretation', 'openai_image_edit', 'meshy_submit', 'meshy_status', 'model_download'])
@@ -94,5 +96,9 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(payload["image_url"], "edited-image")
         self.assertNotIn("input_task_id", payload)
         self.assertEqual(payload["ai_model"], "meshy-t2")
-        self.assertEqual(payload["target_polycount"], 1000)
+        self.assertEqual(payload["target_polycount"], 500)
         self.assertFalse(payload["should_texture"])
+
+        self.assertEqual(payload["target_formats"], ["glb"])
+        for key in ("texture_prompt", "texture_resolution", "enable_pbr", "texture_image_url"):
+            self.assertNotIn(key, payload)

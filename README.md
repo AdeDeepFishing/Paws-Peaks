@@ -133,7 +133,10 @@ backend/.venv/bin/python backend/sketch_to_model/run.py --image path/to/sketch.p
 
 Omit `--image` to use the saved sample sketch; add `--dry-run` to validate inputs
 without API calls. The flow uses separate OpenAI interpretation and low-quality 816 × 816 image-edit
-requests, then untextured Meshy T2 (~1,000 faces) and a local PNG preview. Outputs and timings are saved locally.
+requests producing an object reference, then untextured Meshy T2 (~500 faces) and
+a local clay PNG preview. Interpretation also selects a reusable material key and
+color; Godot applies and tints the bundled texture with triplanar mapping. See the
+[16-material palette](docs/3d_game/MATERIAL_PALETTE.md). Outputs and timings are saved locally.
 See the [three API steps and data flow](docs/backend/BACKEND.md#current-flow) for
 request inputs, outputs, and how interpretation becomes available while generation continues.
 See the [test report](docs/backend/BACKEND.md#historical-benchmarks) for results and limitations.
@@ -168,9 +171,8 @@ reward timing, and map-boundary changes.
 
 After crossing the river, keep walking along the far-bank path to its lower-right
 edge to enter the woodland automatically, without a completion dialog. You can also run
-`3d_game/scenes/woodland/woodland_path.tscn` directly in Godot. Stage 2 currently
-provides the imported environment, wind and shadow animation, fixed-angle camera,
-and walking/jumping. Dog encounter gameplay is not yet implemented.
+`3d_game/scenes/woodland/woodland_path.tscn` directly in Godot. Stage 2 includes the imported environment, fixed-angle camera, walking/jumping,
+and the dog distraction encounter. UNKNOWN objects render without unlocking the path.
 See [Stage 02 integration](docs/3d_game/STAGE02_INTEGRATION.md) for source ownership and checks.
 
 All four scene previews use the delivered Moonlit Wanderer protagonist, with idle, walking and

@@ -45,7 +45,7 @@ func _process(delta: float) -> void:
 	super._process(delta)
 	var near := near_dog()
 	draw_button.disabled = dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor()
-	draw_button.text = "Path is clear" if dog.solved else ("E · Offer drawing" if request.state == "READY" and not dog.distracted else "E · Draw")
+	draw_button.text = "Path is clear" if dog.solved else ("E · Offer drawing" if request.state == "READY" and not is_instance_valid(offered) and not dog.distracted else "E · Draw")
 	drawing_shine.set_active(not drawing and near and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
 	modes.disabled = request.state == "PENDING" or dog.distracted or presentation.active
@@ -83,7 +83,7 @@ func near_dog() -> bool:
 func _open_drawing() -> void:
 	if dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor():
 		return
-	if request.state == "READY" and not item.is_empty():
+	if request.state == "READY" and not item.is_empty() and not is_instance_valid(offered):
 		_offer_item()
 		return
 	drawing = true
@@ -142,6 +142,7 @@ func _submit() -> void:
 func _on_request_state(state: String) -> void:
 	match state:
 		"PENDING":
+			_clear_presentation()
 			status.text = "Preparing your drawing. You can keep exploring."
 		"IDLE":
 			sketch_request_id = ""
@@ -152,7 +153,7 @@ func _on_request_state(state: String) -> void:
 			status.text = request.message + " Your sketch is safe; try again."
 		"READY":
 			item = request.result.duplicate(true)
-			if item.get("type") not in ["FOOD", "TOY"]:
+			if item.get("type") not in ["FOOD", "TOY", "UNKNOWN"]:
 				request.fail_current("The dog wants food or a toy. That idea will not distract it.")
 				return
 			if near_dog() and player.is_on_floor():
@@ -172,7 +173,7 @@ func _offering_position() -> Vector3:
 	return to_local(sketch_anchor)
 
 func _offer_item() -> void:
-	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY"]:
+	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY", "UNKNOWN"]:
 		return
 	if not near_dog():
 		status.text = "Return to the dog to offer your drawing."
@@ -182,7 +183,7 @@ func _offer_item() -> void:
 		return
 	var visual: Node3D
 	if not request.model_path.is_empty():
-		visual = GeneratedModel.load_visual(request.model_path, 1.5, false)
+		visual = GeneratedModel.load_visual(request.model_path, 1.5, false, request.result)
 		if visual == null:
 			request.fail_current("The generated object could not be loaded.")
 			return
@@ -202,6 +203,9 @@ func _offer_item() -> void:
 
 func _react_to_offering() -> void:
 	if request.state != "READY" or not is_instance_valid(offered) or dog.distracted: return
+	if item.get("type") not in ["FOOD", "TOY"]:
+		status.text = "Your object is here, but it won't distract the dog. Draw food or a toy."
+		return
 	# React to the final physical position after the covered reveal and drop.
 	if dog.distract(offered.global_position + COLLECTION_OFFSET, offered.global_position):
 		status.text = "You caught the dog's attention!"
