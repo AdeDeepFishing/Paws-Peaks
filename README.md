@@ -206,3 +206,17 @@ the designer's V5 painted night forest, terrain collision, shared protagonist, w
 clouds and fireflies. **Back to Sunset Cove** returns to Stage 4.
 Final boss gameplay remains separate. See
 [Stage 05 integration](docs/3d_game/STAGE05_INTEGRATION.md) for assets and checks.
+
+
+## Preview the dawn ending
+
+Continue deeper into Stage 5's clearing to enter **A New Dawn**. The temporary
+exit covers the full width of the forest, including jumping. The ending uses
+the supplied dawn forest, with moving clouds, painted foliage, morning light,
+a thank-you card and Four Otters team credit. You can keep exploring,
+choose **Back to forest**, or **Play again** to start fresh at the river.
+Direct entry: `3d_game/scenes/ending/dawn_forest.tscn`.
+
+Boss victory is the intended final trigger; the boss is not implemented yet.
+See [Ending integration](docs/3d_game/ENDING_INTEGRATION.md) for the preview
+switch, future victory hook, asset provenance and verification.

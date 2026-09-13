@@ -5,6 +5,11 @@ const SKY_SHADER := preload("res://scripts/moonlit_forest/painted_sky.gdshader")
 const BARK_SHADER := preload("res://scripts/moonlit_forest/painted_bark.gdshader")
 const BARK_PREFIXES := ["Flowing_painted_trunk", "Midground_painted_trunk", "Bough_", "Twig_", "Buttress_root", "Exposed_forest_root"]
 
+@export var animation_name := "Forest_wind_clouds_fireflies"
+@export var key_light_name := "Moon_key"
+@export var directional_energy_scale := 0.5
+@export var local_energy_scale := 0.3
+
 func _ready() -> void:
 	var materials := {}
 	for mesh in find_children("*", "MeshInstance3D", true, false):
@@ -53,19 +58,19 @@ func _ready() -> void:
 					collider.shape.backface_collision = true
 	for animator in find_children("*", "AnimationPlayer", true, false):
 		for clip in animator.get_animation_list():
-			if "Forest_wind_clouds_fireflies" in clip:
+			if animation_name in clip:
 				# The supplied cloud/flight paths are not seamless at 12 seconds.
 				# Reverse their playback instead of teleporting to the first frame.
 				animator.get_animation(clip).loop_mode = Animation.LOOP_PINGPONG
 				animator.play(clip)
-	var moon: DirectionalLight3D = find_child("Moon_key", true, false)
-	if moon:
-		moon.shadow_enabled = true
-		moon.directional_shadow_max_distance = 60.0
+	var key_light: DirectionalLight3D = find_child(key_light_name, true, false)
+	if key_light:
+		key_light.shadow_enabled = true
+		key_light.directional_shadow_max_distance = 60.0
 	# The renderer's light response differs from the source's Three.js/Blender
-	# previews. Keep night colors readable without washing out the glowing plants.
+	# previews. Keep painted colors readable without washing out the glowing plants.
 	for light in find_children("*", "Light3D", true, false):
-		light.light_energy *= 0.5 if light is DirectionalLight3D else 0.3
+		light.light_energy *= directional_energy_scale if light is DirectionalLight3D else local_energy_scale
 
 func _foliage_material(original: BaseMaterial3D, strength: float) -> ShaderMaterial:
 	var material := _paint_material(original, FOLIAGE_SHADER)

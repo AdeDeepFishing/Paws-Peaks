@@ -1,7 +1,9 @@
 # Stage 05: Moonlit Forest integration
 
 Updated: 2026-09-13. Uses the designer's V5 replacement for issue #32.
-The final boss encounter (#36), drawing rules and ending remain separate work.
+The final boss encounter (#36) and drawing rules remain separate work.
+The dawn ending (#52) is connected through a temporary exploration shortcut;
+see [Ending integration](ENDING_INTEGRATION.md).
 
 ## Entry and traversal
 
@@ -27,6 +29,10 @@ The final boss encounter (#36), drawing rules and ending remain separate work.
 ![Moonlit Forest in Godot](../assets/stage05/gameplay.png)
 
 ![Stage 4 cave approach before the exit boundary](../assets/stage05/cave-approach.png)
+
+Continue deeper into the clearing to world **z <= -12** to enter the dawn ending.
+Like the Stage 2 exit, this boundary covers every X position and jump height.
+This is a preview shortcut, not a completed boss encounter.
 
 ## Assets and provenance
 

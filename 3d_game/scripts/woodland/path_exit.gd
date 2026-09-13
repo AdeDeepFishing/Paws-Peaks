@@ -14,6 +14,12 @@ func _physics_process(_delta: float) -> void:
 		reached = player.global_position.x >= global_position.x
 	if transitioning or not reached:
 		return
+	activate()
+
+## Explicit encounter completion can use the same guarded transition as walking.
+func activate() -> void:
+	if transitioning:
+		return
 	transitioning = true
 	# Defer scene removal until the current physics iteration finishes.
 	call_deferred("_change_scene")

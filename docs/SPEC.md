@@ -955,7 +955,8 @@ all depth positions and jump heights. The forest retains the delivered painted
 assets, camera, cloud/canopy/firefly animation and lights, with native foliage
 wind, night lighting, terrain collision, the shared protagonist and return
 navigation. This completes scene integration only; E05 final boss gameplay (#36)
-and the ending remain open. See [Stage 05 integration](3d_game/STAGE05_INTEGRATION.md).
+remains open. The ending presentation is connected as described in the #52 update below.
+See [Stage 05 integration](3d_game/STAGE05_INTEGRATION.md).
 
 ## September 13: Stage 2 dog interaction (#38)
 
@@ -973,3 +974,20 @@ stone is moved, the normal camera is closer, the hero visual is doubled, the cam
 holds until generation finishes plus a two-second result display, and coins are
 removed across active gameplay. Historical September 12 coin notes are retained
 only as change history. See [the current encounter flow](3d_game/ENCOUNTER_FLOW.md).
+
+
+## September 13: Dawn ending presentation (#52)
+
+The user approved the supplied dawn forest as the ending environment, reached
+after Stage 5 boss victory. While the boss is absent, walking deeper into the
+Stage 5 clearing (world z<=-12, across all X positions and heights) is an approved
+temporary shortcut, following the Stage 2-to-3 boundary pattern.
+
+The implemented ending replaces the night forest with the delivered morning
+scene, keeps exploration available, and displays a thank-you card, Four Otters
+team credit, return-to-forest and fresh river restart controls. A dedicated
+boss-completion hook can trigger this scene with the walking shortcut disabled.
+This supersedes earlier open-setting references for the visual ending only.
+The final boss loop, victory call site, ending narration/dialogue, full asset
+credits screen and Web validation remain unfinished. See
+[Ending integration](3d_game/ENDING_INTEGRATION.md).
