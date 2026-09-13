@@ -154,9 +154,6 @@ func _on_request_state(state: String) -> void:
 			status.text = request.message + " Your sketch is safe; try again."
 		"READY":
 			item = request.result.duplicate(true)
-			if item.get("type") not in ["FOOD", "TOY", "UNKNOWN"]:
-				request.fail_current("The dog wants food or a toy. That idea will not distract it.")
-				return
 			if near_dog() and player.is_on_floor():
 				_offer_item()
 			else:
@@ -190,7 +187,7 @@ func _settle_offering(_ground: Node, body: RigidBody3D) -> void:
 	body.set_deferred("linear_velocity", Vector3.ZERO)
 
 func _offer_item() -> void:
-	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY", "UNKNOWN"]:
+	if request.state != "READY" or dog.distracted or is_instance_valid(offered):
 		return
 	if not near_dog():
 		status.text = "Return to the dog to offer your drawing."

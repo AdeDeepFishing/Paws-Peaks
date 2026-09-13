@@ -25,7 +25,8 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
 - **AI drawing · Uses credits** uses the existing E02 / `dog` backend contract.
   Nothing is submitted until the player draws and explicitly offers it. The game
   passes the actual PNG to the persistent worker. FOOD and TOY distract the dog;
-  UNKNOWN objects render at the sketch anchor but do not advance the encounter.
+  All returned classes render at the sketch anchor. Other classes, including
+  WEAPON and UNKNOWN, do not advance the encounter.
   After their reveal, the player can draw again; submitting replaces the previous object.
 - **Mock outcomes · No AI** exposes explicit sample outcomes: Food, Toy,
   Unclear, Service failure, Unsuitable. It does not recognize the drawing or
