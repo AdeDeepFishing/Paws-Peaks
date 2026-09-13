@@ -1,10 +1,14 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/woodland/woodland_level.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/wind_hill/bird_encounter.gd" id="1"]
 [ext_resource type="PackedScene" path="res://models/stage03/wind_hill.glb" id="2"]
 [ext_resource type="Script" path="res://scripts/wind_hill/wind_hill_art.gd" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/river/river_player.tscn" id="4"]
 [ext_resource type="Script" path="res://scripts/woodland/path_exit.gd" id="5"]
+
+[ext_resource type="Script" path="res://scripts/wind_hill/bird_guard.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/river/drawing_request.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/river/desktop_generation.gd" id="8"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -48,3 +52,13 @@ position = Vector3(9.5, 0, 0)
 script = ExtResource("5")
 destination = "res://scenes/sunset_cove/sunset_cove.tscn"
 direction = 1
+
+[node name="BirdGuard" type="Node3D" parent="."]
+script = ExtResource("6")
+
+[node name="DrawingRequest" type="Node" parent="."]
+script = ExtResource("7")
+
+[node name="DesktopGeneration" type="Node" parent="."]
+script = ExtResource("8")
+mode = 2

@@ -17,6 +17,8 @@ func run():
 		root.add_child(hill)
 		current_scene = hill
 		hill.player.set_physics_process(false)
+		# Encounter completion is separately covered by bird_encounter_smoke.
+		hill.solved = true
 		hill.player.position = point
 		await frames(3)
 		if current_scene != hill:

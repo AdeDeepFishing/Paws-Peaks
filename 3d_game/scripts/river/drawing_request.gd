@@ -56,7 +56,7 @@ func submit(png: PackedByteArray, encounter: String, mock_outcome: int = 0) -> b
 	return true
 
 func _deliver_mock(request_id: String, outcome: int) -> void:
-	if game_stage not in ["river", "dog"]:
+	if game_stage not in ["river", "dog", "crows"]:
 		_fail("This stage does not have a mock response yet.")
 		return
 	await get_tree().create_timer(mock_delay).timeout
@@ -78,6 +78,12 @@ func _deliver_mock(request_id: String, outcome: int) -> void:
 					"name": "Drawn food" if outcome == 0 else ("Drawn toy" if outcome == 1 else "A little flower"),
 					"description": "Your sketch can give the dog something to enjoy.",
 					"type": "FOOD" if outcome == 0 else ("TOY" if outcome == 1 else "UNKNOWN")
+				}
+			if game_stage == "crows":
+				response["item"] = {
+					"name": "Umbrella" if outcome == 0 else ("Shield" if outcome == 1 else "A little flower"),
+					"description": "A protective idea to keep the swooping bird at a distance.",
+					"type": "DEFENCE" if outcome in [0, 1] else "UNKNOWN"
 				}
 	if response.get("item") is Dictionary:
 		response.item["movable"] = response.item.type != "BRIDGE"

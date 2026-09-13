@@ -28,6 +28,8 @@ func begin(anchor: Vector3) -> void:
 	_lock(true)
 	var focus := anchor + Vector3.UP * 1.1
 	var destination := Transform3D(home.basis, focus + home.basis.z * 8.0)
+	if level.has_method("presentation_camera_transform"):
+		destination = level.presentation_camera_transform(anchor)
 	tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(camera, "transform", destination, 2.0 * duration_scale)
 	tween.tween_property(camera, "fov", 32.0, 2.0 * duration_scale)
@@ -89,7 +91,10 @@ func cancel() -> void:
 func _lock(value: bool) -> void:
 	busy = value
 	level.player.set_input_enabled(not value)
-	level.dog.paused = value
+	if level.has_method("set_encounter_paused"):
+		level.set_encounter_paused(value)
+	else:
+		level.dog.paused = value
 	level.hud_root.visible = not value
 
 func _remove_cover() -> void:

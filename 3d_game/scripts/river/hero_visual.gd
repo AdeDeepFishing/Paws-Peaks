@@ -86,3 +86,10 @@ func set_motion(moving: bool, sprinting: bool, grounded: bool, thinking: bool = 
 		if next == "think":
 			# Listening is a temporary drawing pose; Stand and Chat is reserved for E04.
 			animator.speed_scale = 0.7
+
+## Visual-only duck and lean; encounter dodging never teleports the player capsule.
+func set_avoidance(amount: float) -> void:
+	if not is_instance_valid(character): return
+	var weight := clampf(amount, 0.0, 1.0)
+	character.scale.y = (1.8 / 1.7) * (1.0 - 0.32 * weight)
+	character.rotation.z = 0.3 * weight
