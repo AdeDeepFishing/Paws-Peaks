@@ -4,10 +4,10 @@ signal swooping
 signal cleared
 
 const FLAP = preload("res://models/bird/flap.glb")
-const IDLE = preload("res://models/bird/idle.glb")
 const VISUAL_SCALE := 4.0
-const LAUNCH := Vector3(6.5, 0.2, -0.8)
-var phase := "perched"
+const ARRIVAL_SECONDS := 5.5
+const ARRIVAL_DEPTH := 140.0
+var phase := "loading"
 var elapsed := 0.0
 var paused := false:
 	set(value):
@@ -15,7 +15,8 @@ var paused := false:
 		for animator in animators:
 			animator.speed_scale = 0.0 if value else 1.0
 var visual: Node3D
-var perch: Node3D
+var arrival_origin := Vector3.ZERO
+var arrival_control := Vector3.ZERO
 var animators: Array[AnimationPlayer] = []
 var start := Vector3.ZERO
 var swoop_target := Vector3.ZERO
@@ -31,15 +32,19 @@ func _ready() -> void:
 	visual.add_child(model)
 	model.scale = Vector3.ONE * VISUAL_SCALE
 	_play(model, "FlapLoop")
-	visual.position = LAUNCH
 	visual.hide()
-	perch = IDLE.instantiate()
-	perch.name = "PerchedMoonwing"
-	perch.scale = Vector3.ONE * VISUAL_SCALE
-	perch.position = LAUNCH
-	perch.rotation.y = -PI / 2
-	add_child(perch)
-	_play(perch, "BreathingIdle")
+	# The parent installs the authored camera after its children become ready.
+	_start_arrival.call_deferred()
+
+func _start_arrival() -> void:
+	var camera: Camera3D = level.camera
+	var viewport := get_viewport().get_visible_rect().size
+	arrival_origin = camera.project_position(viewport * Vector2(0.84, 0.19), ARRIVAL_DEPTH)
+	arrival_control = camera.project_position(viewport * Vector2(0.69, 0.30), 65.0)
+	visual.global_position = arrival_origin
+	visual.rotation.y = atan2(arrival_control.x - arrival_origin.x, arrival_control.z - arrival_origin.z)
+	visual.show()
+	_enter("arriving")
 
 func _play(model: Node, clip: String) -> void:
 	var animator: AnimationPlayer = model.find_child("AnimationPlayer", true, false)
@@ -61,14 +66,13 @@ func _process(delta: float) -> void:
 	var center: Vector3 = level.player.position
 	center.y = maxf(center.y, 0.0)
 	match phase:
-		"perched":
-			if elapsed >= 1.4:
-				perch.hide()
-				visual.show()
-				_enter("arriving")
 		"arriving":
-			_move(LAUNCH.lerp(_orbit(center, 0.0), smoothstep(0.0, 2.5, elapsed)), delta)
-			if elapsed >= 2.5: _enter("circling")
+			var t := smoothstep(0.0, ARRIVAL_SECONDS, elapsed)
+			var endpoint := _orbit(center, 0.0)
+			# Actual camera depth supplies perspective: the giant keeps its world size.
+			var target := arrival_origin.lerp(arrival_control, t).lerp(arrival_control.lerp(endpoint, t), t)
+			_move(target, delta)
+			if elapsed >= ARRIVAL_SECONDS: _enter("circling")
 		"circling":
 			_move(_orbit(center, elapsed), delta)
 			if elapsed >= 3.0:
@@ -102,7 +106,6 @@ func _process(delta: float) -> void:
 func protect(top: float) -> bool:
 	if phase in ["blocked", "departing", "cleared"]: return false
 	protection_top = top
-	perch.hide()
 	visual.show()
 	dodge = 0.0
 	level.player.visual.set_avoidance(0.0)

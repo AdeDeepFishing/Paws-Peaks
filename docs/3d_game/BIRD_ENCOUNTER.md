@@ -10,10 +10,13 @@ multiple-crow premise. The backend stage identity remains `E03` / `crows`.
 
 ## Playthrough
 
-- A single Moonwing waits beside the path, takes flight, circles the protagonist
-  and periodically swoops near them. Its supplied model is scaled fourfold:
+- A single Moonwing flies in from the upper-right distance over 5.5 seconds, then
+  circles the protagonist and periodically swoops near them. Its arrival follows a
+  curved three-dimensional route from 140 camera-depth units, so perspective
+  naturally enlarges the silhouette as it approaches. Its supplied model is scaled fourfold:
   approximately 6.8 units tall in its source pose, compared with the hero's 3.3.
-  The breathing and flapping representations are never visible together.
+  Only the flapping representation is instantiated; the idle delivery is retained as
+  an asset but no longer appears at scene entry.
 - The protagonist automatically ducks and leans away during each swoop. This is
   a visual reaction, with no health loss, forced displacement or timing challenge.
   Walking and jumping still work. The rightward boundary at x=6 stops all bypasses,
@@ -44,7 +47,7 @@ User-supplied assets, copied unchanged from Downloads/bird:
 - `Moonwing-FlapLoop-15k-Handpainted.glb` -> `models/bird/flap.glb`
 - `Moonwing-BreathingIdle-15k-Handpainted.glb` -> `models/bird/idle.glb`
 
-The original painted material, normal map and skinned animation are retained.
+The original painted material, normal map and skinned flap animation are retained.
 Godot extracts project-local texture files beside the GLBs. Source authorship and
 usage terms were not included with this delivery; no third-party license claim is
 made. Downloads is not needed to run the committed project.
@@ -83,3 +86,8 @@ capsule lift was 0.0 units. A reported apparent launch during an automated previ
 was reproduced by its intentional fall/recovery test (1.72 units); that debug
 recovery is not part of the protection sequence. Use the ordinary scene for player
 review, rather than displaying automated traversal/recovery tests as gameplay.
+
+`bird_arrival_smoke.gd` samples the opening route at 60 Hz and verifies upper-right
+entry, increasing projected height at constant model scale, continuous positions,
+and the transition into guarding. Its visual mode captures far, middle and near
+frames without scripted player movement or recovery.

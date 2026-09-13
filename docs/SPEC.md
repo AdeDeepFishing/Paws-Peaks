@@ -353,7 +353,9 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 ### E03 — The Giant Bird (#34)
 
 - **Confirmed September 13:** one very large bird guards Wind Hill. This supersedes
-  the earlier multiple-crow premise. Use the supplied Moonwing breathing and flap clips.
+  the earlier multiple-crow premise. The supplied Moonwing flies in from the distant
+  upper-right sky over 5.5 seconds. Keep its giant world scale fixed; the depth of
+  its approach makes it appear small far away and large near the protagonist.
 - The bird flies near the protagonist, who automatically ducks and leans away.
   No damage or timing challenge is introduced by this encounter.
 - Draw a protective object such as an umbrella or shield. DEFENCE is the supported
