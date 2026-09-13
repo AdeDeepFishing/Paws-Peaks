@@ -1049,3 +1049,8 @@ Retain Stage 2 group framing. When the bird departs, detach the protection from 
 protagonist and animate it tilting, drifting away, shrinking and fading out. Remove
 it after departure; the protagonist must remain grounded. This supersedes the
 earlier persistent equipped-protection behavior.
+
+The subsequent marked screenshot defines the Stage 3 composition more precisely:
+frame the central sketch/cover area as the close-up, moving the shot center upward
+from the ground. Include the sketch bounds when choosing both center and distance;
+small and large drawings should remain prominent without clipping the cover.

@@ -33,8 +33,10 @@ multiple-crow premise. The backend stage identity remains `E03` / `crows`.
   Mock unsupported outcomes have no generated asset and retain their retry response.
 - Soft particles and local blur surround the sketch at its ground contact. The camera moves
   above the grass into a closer 32-degree shot over two seconds, fitted to the
-  protagonist, sketch/mist and generated object. The latest playtest adjustment
-  tightens this framing by approximately 15% where the sketch margins permit.
+  protagonist, sketch/mist and generated object. The submitted sketch and its
+  mist also determine the shot center, lifting the framing away from the ground
+  for large drawings. This matches the user's marked crop: the square preview
+  occupies roughly half the viewport height with the cover fully visible.
   The camera stays fixed throughout
   processing and the result hold, independent of the bird flight path. The bird
   may pass out of this close-up; it no longer determines the generation framing. The elevated angle avoids putting the camera below
@@ -129,3 +131,8 @@ steps without the traversal smoke's fall/recovery sequence.
 bird moves, mist bounds, result hold, detached protection flight and removal,
 grounded protagonist and route unlocking. Its Forward+ visual mode captures the
 opaque cover, early protection departure and clear route using an existing GLB.
+
+`bird_sketch_framing_smoke.gd` covers small, large, wide and tall submissions.
+It checks centered, substantial sketch framing, complete mist bounds and a fixed
+camera while the bird moves. Forward+ captures were inspected against the user's
+marked composition; measured preview heights were approximately 53–55% of the viewport.

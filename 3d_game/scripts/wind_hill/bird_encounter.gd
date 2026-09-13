@@ -72,10 +72,9 @@ func presentation_camera_transform(anchor: Vector3) -> Transform3D:
 	Framing.add_visual(points, player.visual)
 	Framing.add_box(points, AABB(to_global(anchor), Vector3(0, 3, 0)))
 	if is_instance_valid(offered): Framing.add_visual(points, offered)
-	var centers: Array[Vector3] = points.duplicate()
 	# The generation close-up belongs to the sketch and protagonist, not the flight path.
 	Framing.add_sketch(points, generation_preview, basis)
-	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview, presentation.focus_fov, 1.9, 0.83)
+	return global_transform.affine_inverse() * Framing.fit(camera, points, points, basis, generation_preview, presentation.focus_fov, 3.0, 0.83)
 
 func can_exit() -> bool:
 	return solved
