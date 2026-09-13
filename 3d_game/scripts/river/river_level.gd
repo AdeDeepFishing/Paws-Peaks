@@ -271,8 +271,7 @@ func near_crossing() -> bool:
 	return in_drawing_area
 
 func _supports_bridge() -> bool:
-	var tags: Array = current_item.get("tags", [])
-	return "LONG_REACH" in tags and "STURDY" in tags and current_item.get("durability", 0) > 0
+	return current_item.get("type", "") == "BRIDGE"
 
 func can_build_bridge() -> bool:
 	return not bridge_built and request.state == "READY" and request.encounter_id == "E01" and _supports_bridge()
@@ -281,7 +280,6 @@ func build_bridge() -> bool:
 	if not can_build_bridge():
 		return false
 	bridge_built = true
-	current_item["durability"] -= 1
 	bridge.show()
 	$Bridge/Deck/CollisionShape3D.set_deferred("disabled", false)
 	status_label.text = "Your bridge is ready. Walk across to the far bank!"

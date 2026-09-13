@@ -18,10 +18,9 @@ func frames(count: int) -> void:
 		await physics_frame
 		await process_frame
 
-func response(id: String, tags: Array = ["LONG_REACH", "STURDY"]) -> Dictionary:
+func response(id: String, item_type: String = "BRIDGE") -> Dictionary:
 	return {"schema_version": 2, "request_id": id, "status": "recognized", "item": {
-		"name": "Paper bridge", "description": "A sturdy crossing.", "type": "TOOL",
-		"attack_power": 0, "range": 8.0, "speed": 1.0, "durability": 3, "tags": tags
+		"name": "Paper bridge", "description": "A sturdy crossing.", "type": item_type
 	}}
 
 func screenshot(name: String) -> void:
@@ -144,7 +143,7 @@ func run() -> void:
 	check(level.player.position.distance_to(waiting_position) < 0.2 and level.player.input_enabled, "Result closeup restores control without teleporting")
 	check(not level.get_node("Bridge").has_node("Sketch"), "Generated bridge does not display the drawing as a paper canvas")
 	check(not level.request.accept_response(response(id)), "Duplicate completed response cannot create another bridge")
-	check(not level.build_bridge() and level.current_item.durability == 2, "Automatic placement spends durability exactly once")
+	check(not level.build_bridge(), "Automatic placement builds the bridge exactly once")
 	await frames(3)
 	check(not level.get_node("Bridge/Deck/CollisionShape3D").disabled, "The generated bridge has walkable collision")
 	level._open_book()
@@ -169,13 +168,13 @@ func run() -> void:
 	level.request.submit(png, "E01")
 	id = level.request.active_id
 	var invalid := response(id)
-	invalid.item.speed = "fast"
+	invalid.item.type = 5
 	check(not level.request.accept_response(invalid) and level.request.state == "FAILED", "Invalid JSON field types are rejected")
 	level.request.submit(png, "E01")
-	level.request.accept_response(response(level.request.active_id, ["OTHER"]))
+	level.request.accept_response(response(level.request.active_id, "UNKNOWN"))
 	check(not level._supports_bridge(), "Unsuitable items do not solve the encounter")
-	check(not Request.valid_item(response("x").item.merged({"tags": ["OTHER", "STURDY"]}, true)), "OTHER cannot be mixed with another tag")
-	check(not Request.valid_item(response("x").item.merged({"range": INF}, true)), "Nonfinite stats are rejected")
+	check(not Request.valid_item(response("x").item.merged({"tags": []}, true)), "Legacy item fields are rejected")
+	check(not Request.valid_item(response("x").item.merged({"name": 7}, true)), "Non-string names are rejected")
 	level.request.submit(png, "E01")
 	level.request.deadline_ms = Time.get_ticks_msec() - 1
 	await frames(2)

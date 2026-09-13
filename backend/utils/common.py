@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, build_opener, urlopen as standard_urlopen
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 MAX_IMAGE_BYTES = 1024 * 1024
 
 

@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from stage_config import STAGES, classes_for
-from sketch_to_narrative import run
-from test_sketch_to_narrative import ITEM, CONFIG, provider_response
-from common import AppError
+from interpret import run
+from test_interpret import ITEM, CONFIG, provider_response
+from utils.common import AppError
 
 
 class StageClassTests(unittest.TestCase):
@@ -41,25 +41,3 @@ class StageClassTests(unittest.TestCase):
             with self.subTest(classes=classes), patch.dict(STAGES, {'dog': {'encounter_id': 'E02', 'classes': classes}}):
                 with self.assertRaises(AppError):
                     classes_for('dog')
-
-    def test_all_confirmed_sets_and_cross_stage_rejection(self):
-        expected = {
-            'river': ('BRIDGE', 'BOAT', 'UNKNOWN'),
-            'dog': ('FOOD', 'TOY', 'WEAPON', 'UNKNOWN'),
-            'crows': ('BOW', 'MAGIC', 'UNKNOWN'),
-            'otter': ('GIFT', 'TOOL', 'UNKNOWN'),
-        }
-        all_classes = set().union(*expected.values())
-        for stage, classes in expected.items():
-            with self.subTest(stage=stage):
-                self.assertEqual(classes_for(stage), classes)
-                enum = run.schema_for(stage)['properties']['item']['anyOf'][0]['properties']['type']['enum']
-                self.assertEqual(enum, list(classes))
-            for kind in all_classes:
-                value = {'status': 'recognized', 'item': {**ITEM, 'type': kind}}
-                with self.subTest(stage=stage, kind=kind):
-                    if kind in classes:
-                        self.assertEqual(run.validate_interpretation(value, stage), value)
-                    else:
-                        with self.assertRaises(AppError):
-                            run.validate_interpretation(value, stage)

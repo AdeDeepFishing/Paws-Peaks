@@ -6,8 +6,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request
 from uuid import uuid4
 
-from common import AppError, image_input, provider_urlopen
-from profiling import measure, metric
+from utils.common import AppError, image_input, provider_urlopen
+from utils.profiling import measure, metric
 
 DEFAULT_MODEL = "gpt-image-2.5-flare"
 DEFAULT_SIZE = "816x816"

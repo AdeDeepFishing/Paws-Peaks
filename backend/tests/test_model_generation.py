@@ -12,7 +12,7 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from image_text_to_3d import run as app
+from model_generation import run as app
 
 CONFIG = {"MESHY_API_KEY": "fake-meshy-key", "MESHY_MODEL": "meshy-6"}
 ASSET_URL = "https://assets.meshy.ai/example/model.glb?Expires=123"
@@ -39,6 +39,7 @@ class ModelTests(unittest.TestCase):
                 payload = app.build_payload("https://example.com/banana.jpg", "meshy-6")
                 job = app.create_job(payload, CONFIG, path, "E01-original")
                 self.assertEqual(job["task_id"], "task-123")
+                self.assertEqual(job["feature"], "model_generation")
                 self.assertEqual(json.loads(path.read_text())["request_id"], "E01-original")
                 request = transport.call_args.args[0]
                 self.assertEqual(request.method, "POST")
@@ -48,6 +49,17 @@ class ModelTests(unittest.TestCase):
                 with self.assertRaises(app.AppError):
                     app.create_job({}, CONFIG, path, "E01-new")
                 transport.assert_called_once()
+
+    def test_legacy_job_can_be_refreshed_without_resubmission(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'legacy.json'
+            path.write_text(json.dumps({'schema_version': 1, 'feature': 'image_text_to_3d',
+                                        'provider': 'meshy', 'request_id': 'original',
+                                        'task_id': 'task-123', 'status': 'PENDING'}))
+            with patch.object(app, 'api_request', return_value={'id': 'task-123', 'status': 'PENDING'}) as api:
+                job = app.refresh_job(path, CONFIG)
+            self.assertEqual(job['request_id'], 'original')
+            api.assert_called_once_with(CONFIG, task_id='task-123')
 
     def test_uncertain_submission_is_preserved_and_not_retried(self):
         with tempfile.TemporaryDirectory() as directory:

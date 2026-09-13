@@ -1,11 +1,11 @@
 """Backend-owned classification sets for the four game stages."""
-from common import AppError
+from utils.common import AppError
 
 STAGES = {
-    'river': {'encounter_id': 'E01', 'classes': ('BRIDGE', 'BOAT', 'UNKNOWN')},
-    'dog': {'encounter_id': 'E02', 'classes': ('FOOD', 'TOY', 'WEAPON', 'UNKNOWN')},
-    'crows': {'encounter_id': 'E03', 'classes': ('BOW', 'MAGIC', 'UNKNOWN')},
-    'otter': {'encounter_id': 'E04', 'classes': ('GIFT', 'TOOL', 'UNKNOWN')},
+    'river': {'stage_number': 1, 'encounter_id': 'E01', 'classes': ('BRIDGE', 'BOAT', 'UNKNOWN')},
+    'dog': {'stage_number': 2, 'encounter_id': 'E02', 'classes': ('FOOD', 'TOY', 'WEAPON', 'UNKNOWN')},
+    'crows': {'stage_number': 3, 'encounter_id': 'E03', 'classes': ('BOW', 'MAGIC', 'UNKNOWN')},
+    'otter': {'stage_number': 4, 'encounter_id': 'E04', 'classes': ('GIFT', 'TOOL', 'UNKNOWN')},
 }
 
 

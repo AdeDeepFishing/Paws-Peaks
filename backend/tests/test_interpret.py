@@ -13,13 +13,12 @@ from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from sketch_to_narrative import run as app
+from interpret import run as app
 
 
 ITEM = {
     "name": "A little bridge", "description": "A sturdy little bridge with a long adventure ahead.",
-    "type": "BRIDGE", "attack_power": 0, "range": 8.0, "speed": 1.0,
-    "durability": 3, "tags": ["LONG_REACH", "STURDY"],
+    "type": "BRIDGE",
 }
 CONFIG = {"OPENAI_API_KEY": "fake-key-for-offline-test", "OPENAI_MODEL": "gpt-4.1-mini"}
 
@@ -61,14 +60,18 @@ class InterpretTests(unittest.TestCase):
         for value in [{"status": "recognized", "item": ITEM}, {"status": "uncertain", "item": None}]:
             self.assertEqual(app.parse_response(provider_response(value)), value)
 
+    def test_item_contract_contains_only_name_description_and_type(self):
+        properties = app.schema_for('river')['properties']['item']['anyOf'][0]
+        self.assertEqual(set(properties['required']), {'name', 'description', 'type'})
+        self.assertEqual(set(properties['properties']), {'name', 'description', 'type'})
+        for field in ('attack_power', 'range', 'speed', 'durability', 'tags'):
+            with self.subTest(field=field), self.assertRaises(app.AppError):
+                app.validate_interpretation({'status': 'recognized', 'item': {**ITEM, field: 1}})
+
     def test_invalid_item_fields(self):
         mutations = [
-            ("attack_power", True), ("attack_power", 101), ("durability", 1.5),
-            ("range", float("nan")), ("speed", float("inf")), ("range", "8"),
-            ("type", "SWORD"), ("name", " "), ("name", "x" * 41),
-            ("description", "x" * 161), ("tags", []), ("tags", ["EXECUTE"]),
-            ("tags", ["OTHER", "STURDY"]), ("tags", ["STURDY", "STURDY"]),
-            ("tags", [{}]),
+            ("type", "SWORD"), ("type", None), ("name", " "), ("name", "x" * 41),
+            ("description", "x" * 161), ("description", None),
         ]
         for field, value in mutations:
             item = deepcopy(ITEM)

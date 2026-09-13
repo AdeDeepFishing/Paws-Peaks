@@ -16,9 +16,9 @@ from uuid import uuid4
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from common import AppError, ROOT, image_input, load_config
-from common import provider_urlopen as urlopen
-from profiling import Profiler, identify, measure, metric, provider_timings
+from utils.common import AppError, ROOT, image_input, load_config
+from utils.common import provider_urlopen as urlopen
+from utils.profiling import Profiler, identify, measure, metric, provider_timings
 
 API_URL = "https://api.meshy.ai/openapi/v1/image-to-3d"
 MAX_MODEL_BYTES = 64 * 1024 * 1024
@@ -91,7 +91,7 @@ def save_job(path, job):
 def create_job(payload, config, path, request_id):
     require_key(config)
     path.parent.mkdir(parents=True, exist_ok=True)
-    job = {"schema_version": 1, "feature": "image_text_to_3d", "provider": "meshy",
+    job = {"schema_version": 1, "feature": "model_generation", "provider": "meshy",
            "request_id": request_id, "task_id": None, "status": "SUBMITTING"}
     try:
         with path.open("x", encoding="utf-8") as handle:
@@ -125,7 +125,7 @@ def valid_task_id(value):
 def refresh_job(path, config):
     job = json.loads(path.read_text(encoding="utf-8"))
     if (not isinstance(job, dict) or job.get("schema_version") != 1 or
-            job.get("feature") != "image_text_to_3d" or job.get("provider") != "meshy" or
+            job.get("feature") not in ("model_generation", "image_to_3d", "image_text_to_3d") or job.get("provider") != "meshy" or
             not isinstance(job.get("request_id"), str) or not valid_task_id(job.get("task_id"))):
         raise AppError("INVALID_INPUT", "The job file has no valid Meshy task. Check the Meshy dashboard if submission was interrupted.")
     identify(job["request_id"], job["task_id"])
@@ -204,7 +204,7 @@ def main(argv=None):
     source.add_argument("--image", type=Path, default=ROOT / "samples" / "banana.jpg")
     source.add_argument("--image-url")
     create.add_argument("--request-id", default="model-" + uuid4().hex)
-    create.add_argument("--job", type=Path, help="New local manifest path. Defaults to backend/output/image_text_to_3d/<unique-id>.json.")
+    create.add_argument("--job", type=Path, help="New local manifest path. Defaults to backend/output/model_generation/<unique-id>.json.")
     create.add_argument("--dry-run", action="store_true")
     status = commands.add_parser("status", help="Retrieve an existing job once; never creates a new model.")
     status.add_argument("--job", type=Path, required=True)
@@ -214,8 +214,8 @@ def main(argv=None):
     for command in (create, status, download):
         command.add_argument("--profile", action="store_true", help="Print performance to stderr and save a report under backend/output/profiles/.")
     args = parser.parse_args(argv)
-    path = args.job or ROOT / "output" / "image_text_to_3d" / (uuid4().hex + ".json")
-    profiler = Profiler(args.profile, "image_text_to_3d", args.command, getattr(args, "request_id", None))
+    path = args.job or ROOT / "output" / "model_generation" / (uuid4().hex + ".json")
+    profiler = Profiler(args.profile, "model_generation", args.command, getattr(args, "request_id", None))
     outcome = "UNEXPECTED_ERROR"
     try:
         with measure("config_load"):
@@ -225,7 +225,7 @@ def main(argv=None):
                 payload = build_payload(image_input(args.image, args.image_url), config["MESHY_MODEL"])
             metric("target_faces", payload["target_polycount"])
             if args.dry_run:
-                print(json.dumps({"dry_run": True, "feature": "image_text_to_3d", "provider": "meshy",
+                print(json.dumps({"dry_run": True, "feature": "model_generation", "provider": "meshy",
                                   "model": config["MESHY_MODEL"], "api_key_configured": bool(config["MESHY_API_KEY"]),
                                   "image_ready": True, "should_texture": False, "target_format": "glb"}))
                 outcome = "DRY_RUN"
@@ -248,7 +248,7 @@ def main(argv=None):
         outcome = code
     finally:
         profiler.finish(outcome)
-    print(json.dumps({"feature": "image_text_to_3d", "job_file": str(path.resolve()), "error": {"code": code}}))
+    print(json.dumps({"feature": "model_generation", "job_file": str(path.resolve()), "error": {"code": code}}))
     print(message, file=sys.stderr)
     return 1
 

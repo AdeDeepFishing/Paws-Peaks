@@ -48,7 +48,7 @@ Forward+ / Metal on Apple M1 at 1152 × 720 and a 960 × 800 canvas.
 
 ```sh
 godot --path 3d_game --script res://tests/river_smoke.gd -- --visual
-python3 backend/sketch_to_narrative/run.py \
+python3 backend/interpret/run.py \
   --image docs/assets/scene-drawing/bridge-input.png \
   --env-file backend/.env.example --request-id E01-overlay-sample --dry-run
 ```

@@ -24,8 +24,7 @@ The upper-right mode selector has three choices:
   Every drawing gets that same sample. No provider is called.
 - **Mock bridge · No AI**: keeps the original bridge and failure fixtures for gameplay tests.
 - **Live AI · Uses credits**: invokes the real pipeline using private `backend/.env`
-  credentials. Follow [local setup](../backend/AI_LOCAL_SETUP.md) and
-  [sketch-to-model setup](../backend/SKETCH_TO_MODEL_RUN_2026-09-12.md). Selecting this mode and submitting
+  credentials. Follow the [backend setup guide](../backend/BACKEND.md#setup-and-run). Selecting this mode and submitting
   runs paid provider requests. The game never receives API keys.
 
 At the riverbank, draw over the scene and submit. Generation progress appears in the
@@ -36,14 +35,18 @@ The mode cannot change while a request is pending.
 
 Each game session owns an ignored `backend/output/game_bridge/worker-<id>/`
 directory. Python writes `worker.json` when listening. Godot submits work by saving
-`<request-id>/input.png`, then atomically renaming `request.tmp` to `request.json`.
-Python claims that file as `claimed.json`, preventing replay, and dispatches it to
+`<request-id>/request/input.png`, then atomically renaming `request/request.tmp` to
+`request/request.json`. Python claims that file as `request/claimed.json`, preventing replay, and dispatches it to
 one generation thread. The listener remains responsive while generation runs;
 requests execute serially. No automatic paid retries occur.
 
-Each request keeps its exclusive `started.lock`, append-only `results.jsonl` history,
+Each request keeps its exclusive `started.lock`, append-only `response/results.jsonl` history,
 and cumulative atomic `status.json` snapshot. Every recorded update has an `updated_at`
-Unix timestamp and includes the request/stage identity. Image bytes stay in files;
+Unix timestamp and includes the request/stage identity. The sibling `status.json`
+also records `request_received_at` when the backend observes the request before
+queueing, and `response_received_at` when each item/asset or terminal result arrives
+at the bridge. The latter is null before the first result; pool verification
+preserves both arrival times. Receipt is published while queued, before execution. Image bytes stay in files;
 `input_path`, `reference_path`, and `preview_path` point to the original sketch,
 generated reference, and rendered model image. `model_path` points to the GLB.
 
@@ -57,7 +60,7 @@ and status. Completed stages add fields retained through later stages and errors
 
 | Available after | Field | Godot signal on DesktopGeneration |
 |---|---|---|
-| Interpretation | `item` (validated name, description, stats, tags) | `interpretation_ready(request_id, item)` |
+| Interpretation | `item` (validated name, description, type) | `interpretation_ready(request_id, item)` |
 | Reference image | `reference_path` (local image file) | `reference_image_ready(request_id, path)` |
 | Model and preview | `model_path` (local GLB), `preview_path` (sibling `model.png`) | DrawingRequest changes to `READY` |
 
@@ -80,13 +83,13 @@ Inspect saved task IDs before retrying uncertain submissions. Game exit terminat
 the worker. A missing or crashed worker fails submissions explicitly; restart the
 game after correcting setup. Startup never replays work from previous sessions.
 
-Live artifacts and durable provider job IDs stay under each job's `artifacts/`.
+Live artifacts and durable provider job IDs stay under each job's `response/artifacts/`.
 Only local allowed fields enter the game status; API keys and signed URLs remain
 private. The overall game waiting deadline remains 25 minutes.
 
 ## Game stage routing
 
-See [Sketch-to-model stage classes](../backend/SKETCH_TO_MODEL_RUN_2026-09-12.md#current-multi-stage-request-contract) for the full classification contract.
+See [Sketch-to-model stage classes](../backend/BACKEND.md#current-multi-stage-request-contract) for the full classification contract.
 
 Every game request includes a `game_stage` label alongside its `encounter_id`:
 
@@ -117,7 +120,7 @@ The fifth-stage boss in the broader spec remains outside this four-stage API cha
 ## Placement limits
 
 The loader accepts self-contained static GLBs up to 32 MiB and copies mesh nodes only.
-For items tagged LONG_REACH and STURDY, it aligns the longest dimension across the
+For items classified as BRIDGE, it aligns the longest dimension across the
 river, places the dominant horizontal surface at deck height, scales uniformly to
 the authored 10.4-unit crossing, and uses the existing
 walkable deck collider. This collider is a gameplay approximation, not a collision

@@ -8,8 +8,9 @@
 
 ## Backend work
 
-- Read `docs/backend/BACKEND.md` for feature layout, execution, API contracts, and review requirements.
+- Keep backend setup, interfaces, and development guidance in `docs/backend/BACKEND.md`; record generated examples separately in `docs/backend/GENERATED_EXAMPLES.md`. Read the guide before backend work.
 - Keep each AI feature in its own folder under `backend/`; share the local `.venv` and ignored `.env`.
+- Keep shared backend utilities, including local rendering, under `backend/utils/`.
 - Keep backend documentation under `docs/backend/` and game documentation under `docs/3d_game/`. Keep the shared specification under `docs/`. Keep assistant conventions in this root file.
 - Never print, stage, commit, or export API keys, local `.env` files, signed asset URLs, or generated job/profile data.
 - Keep `.env.example` credential values blank. Preserve existing local keys when changing configuration.

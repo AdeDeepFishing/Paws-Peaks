@@ -8,7 +8,7 @@ import sys
 import time
 from uuid import uuid4
 
-from common import ROOT
+from utils.common import ROOT
 
 PROFILE_DIR = ROOT / "output" / "profiles"
 ACTIVE = ContextVar("ai_performance_profile", default=None)

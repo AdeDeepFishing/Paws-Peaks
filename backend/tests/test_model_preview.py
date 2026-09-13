@@ -7,7 +7,7 @@ import unittest
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from model_preview.render import render, triangles, rasterize, preview_result
+from utils.render import render, triangles, rasterize, preview_result
 
 
 class PreviewTests(unittest.TestCase):
