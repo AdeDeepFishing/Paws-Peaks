@@ -33,7 +33,7 @@ def wait_for_task(fetch):
             return task
         if task["status"] in ("FAILED", "CANCELED"):
             raise AppError("GENERATION_FAILED", "Provider generation failed; check the saved task ID.")
-        time.sleep(3)
+        time.sleep(0.1)
     raise AppError("POLL_TIMEOUT", "Task may still be running; check the saved task ID instead of resubmitting.")
 
 
@@ -92,8 +92,6 @@ def main(argv=None, *, output_folder=None, on_event=None, on_response=None):
             description = api_call("openai_interpretation", lambda: interpret.interpret(
                 image, config, prompt=SKETCH_PROMPT, game_stage=args.game_stage))
         model_generation.save_job(folder / "description.json", description)
-        if description["status"] != "recognized":
-            raise AppError("UNCERTAIN_SKETCH", "Sketch was ambiguous; no image or Meshy jobs submitted.")
         print(json.dumps({"stage": "description", "result": description}), flush=True)
         # 2. Image edit: one OpenAI request returns the reference image.
         emit({"stage": "reference_image", "status": "PENDING", "item": description["item"]})

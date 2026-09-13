@@ -19,12 +19,24 @@ func capture(label: String):
 func start():
 	level._open_drawing()
 	check(level.drawing, "Canvas opens before construction")
-	level.surface.strokes.append(PackedVector2Array([Vector2(100,100), Vector2(140,150), Vector2(190,100)]))
+	var front: Vector3 = level.player.global_position + Vector3(0, 0, -3)
+	var query := PhysicsRayQueryParameters3D.create(front + Vector3.UP * 10, front + Vector3.DOWN * 10, level.dog.GROUND_MASK)
+	var hit: Dictionary = level.get_world_3d().direct_space_state.intersect_ray(query)
+	check(not hit.is_empty(), "Mock sketch has ground in front of the player")
+	if hit.is_empty(): return
+	var screen: Vector2 = level.camera.unproject_position(hit.position)
+	level.surface.clear()
+	level.surface.reference_size = level.surface.size
+	level.surface.strokes.append(PackedVector2Array([Vector2(-60, -120), Vector2(0, -30), Vector2(60, -120)]))
+	var rect: Rect2 = level.surface.snapshot_screen_rect()
+	var offset := screen - Vector2(rect.get_center().x, rect.end.y)
+	for i in level.surface.strokes[0].size():
+		level.surface.strokes[0][i] += offset
 	level._submit()
 	check(level.request.state == "PENDING" and level.presentation.phase == "focusing", "Submission starts the construction focus")
 func respond(valid_model := true):
 	var path := ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/model.glb") if valid_model else "res://project.godot"
-	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "item": {"name": "Dog Bone", "description": "A local model fixture.", "type": "FOOD"}, "model_path": path})
+	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "item": {"name": "Dog Bone", "description": "A local model fixture.", "type": "FOOD", "movable": true}, "model_path": path})
 func wait_until(condition: Callable, seconds := 10.0):
 	var deadline := Time.get_ticks_msec() + int(seconds * 1000)
 	while not condition.call() and Time.get_ticks_msec() < deadline:

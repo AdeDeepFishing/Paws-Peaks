@@ -54,6 +54,7 @@ func reveal(target: Vector3) -> void:
 	if level.bridge_built: level.bridge.show()
 	if is_instance_valid(level.generated_visual):
 		level.generated_visual.show()
+	level.generation_preview.model_presented()
 	await get_tree().create_timer(2.0 * duration_scale).timeout
 	if token != epoch: return
 	await _restore(1.0)

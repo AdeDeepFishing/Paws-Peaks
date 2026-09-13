@@ -5,7 +5,6 @@ const GeneratedModel = preload("res://scripts/river/generated_model.gd")
 const Presentation = preload("res://scripts/woodland/dog_presentation.gd")
 const GUARD_Z := -4.8
 const DRAW_RADIUS := 16.0
-const OFFER_POSITION := Vector3(-2.8, 0.15, 0)
 const COLLECTION_OFFSET := Vector3(-2.8, 0, -0.6)
 
 @onready var dog = $Wolfdog
@@ -13,6 +12,7 @@ const COLLECTION_OFFSET := Vector3(-2.8, 0, -0.6)
 @onready var generation = $DesktopGeneration
 var overlay: Control
 var surface: Control
+var generation_preview: Control
 var hint: Label
 var submit_button: Button
 var choices: OptionButton
@@ -22,6 +22,8 @@ var drawing := false
 var item: Dictionary = {}
 var offered: Node3D
 var presentation: Node
+var sketch_anchor := Vector3.ZERO
+var sketch_request_id := ""
 
 func _ready() -> void:
 	super._ready()
@@ -36,6 +38,7 @@ func _ready() -> void:
 	presentation.name = "DogPresentation"
 	add_child(presentation)
 	presentation.finished.connect(_react_to_offering)
+	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
 	status.text = "The dog guards this path. Try drawing food or a toy."
 
 func _process(delta: float) -> void:
@@ -102,25 +105,49 @@ func _close_drawing() -> void:
 	player.set_drawing_active(false)
 	player.set_input_enabled(not presentation.busy)
 
+func _sketch_ground_anchor() -> Variant:
+	var rect: Rect2 = surface.snapshot_screen_rect()
+	if not rect.has_area():
+		return null
+	# The bottom center of the sketch is the object's contact point with the ground.
+	var screen := Vector2(rect.get_center().x, rect.end.y)
+	var origin := camera.project_ray_origin(screen)
+	var direction := camera.project_ray_normal(screen)
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * camera.far, dog.GROUND_MASK, [player.get_rid(), dog.get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty() or hit.normal.y < 0.5:
+		return null
+	return hit.position
+
 func _submit() -> void:
 	if not drawing or dog.distracted:
 		return
 	if not near_dog():
 		hint.text = "Keep this sketch, then move closer to the dog to offer it."
 		return
+	var anchor = _sketch_ground_anchor()
+	if not anchor is Vector3:
+		hint.text = "Draw your object over the ground so it has a place to land."
+		return
 	if not request.submit(surface.snapshot_png(), "E02", choices.selected):
 		hint.text = "Draw something first."
 		return
+	if request.state == "PENDING":
+		sketch_anchor = anchor
+		sketch_request_id = request.active_id
+		generation_preview.anchor_to_world(camera, sketch_anchor)
+		presentation.begin(_offering_position())
 	_close_drawing()
 
 func _on_request_state(state: String) -> void:
 	match state:
 		"PENDING":
 			status.text = "Preparing your drawing. You can keep exploring."
-			presentation.begin(_offering_position())
 		"IDLE":
+			sketch_request_id = ""
 			_clear_presentation()
 		"FAILED":
+			sketch_request_id = ""
 			_clear_presentation()
 			status.text = request.message + " Your sketch is safe; try again."
 		"READY":
@@ -142,11 +169,7 @@ func _clear_presentation() -> void:
 	offered = null
 
 func _offering_position() -> Vector3:
-	var at := OFFER_POSITION
-	var probe := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 3, at + Vector3.DOWN * 3, dog.GROUND_MASK)
-	var ground := get_world_3d().direct_space_state.intersect_ray(probe)
-	if not ground.is_empty(): at.y = ground.position.y + 0.03
-	return at
+	return to_local(sketch_anchor)
 
 func _offer_item() -> void:
 	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY"]:
@@ -154,37 +177,32 @@ func _offer_item() -> void:
 	if not near_dog():
 		status.text = "Return to the dog to offer your drawing."
 		return
+	if sketch_request_id != request.active_id:
+		request.fail_current("The drawing location was lost. Try another sketch.")
+		return
 	var visual: Node3D
 	if not request.model_path.is_empty():
 		visual = GeneratedModel.load_visual(request.model_path, 1.5, false)
 		if visual == null:
 			request.fail_current("The generated object could not be loaded.")
 			return
-	offered = Node3D.new()
+	if visual == null:
+		visual = GeneratedModel.load_visual(ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/model.glb"), 1.5, false)
+		if visual == null:
+			request.fail_current("The offline bone model could not be loaded.")
+			return
+	offered = GeneratedModel.physics_body(visual, item.movable)
 	offered.name = "OfferedDrawing"
+	if offered is RigidBody3D:
+		offered.freeze = true
 	offered.hide()
 	add_child(offered)
-	offered.position = _offering_position()
-	if visual:
-		offered.add_child(visual)
-	else:
-		# Explicit offline playtest uses a simple 3D stand-in, never a drawing overlay.
-		var sample := MeshInstance3D.new()
-		var shape := SphereMesh.new()
-		shape.radius = 0.6
-		shape.height = 1.2
-		sample.mesh = shape
-		sample.position.y = 0.6
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color("cf6659") if item.type == "FOOD" else Color("83b9c3")
-		material.roughness = 1.0
-		sample.material_override = material
-		offered.add_child(sample)
+	offered.global_position = sketch_anchor + (Vector3.UP * 2.0 if item.movable else Vector3.ZERO)
 	presentation.reveal(offered)
 
 func _react_to_offering() -> void:
 	if request.state != "READY" or not is_instance_valid(offered) or dog.distracted: return
-	# Stop with the muzzle by the offering and the body clear of the main path.
+	# React to the final physical position after the covered reveal and drop.
 	if dog.distract(offered.global_position + COLLECTION_OFFSET, offered.global_position):
 		status.text = "You caught the dog's attention!"
 		objective.text = "Watch the dog collect your drawing."
@@ -208,8 +226,9 @@ func _on_collected() -> void:
 func _build_drawing() -> void:
 	modes = OptionButton.new()
 	modes.add_item("AI drawing · Uses credits", 2)
-	modes.add_item("Offline playtest · No AI", 0)
-	modes.selected = 0 if generation.mode == 2 else 1
+	modes.add_item("Sample bone · No AI", 1)
+	modes.add_item("Mock outcomes · No AI", 0)
+	modes.selected = 2 - generation.mode
 	modes.position = Vector2(28, 150)
 	hud_root.add_child(modes)
 	modes.item_selected.connect(func(index: int): generation.configure(modes.get_item_id(index)))

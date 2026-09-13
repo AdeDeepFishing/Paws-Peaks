@@ -53,6 +53,9 @@ func reveal(model: Node3D) -> void:
 		if token != epoch: return
 	_remove_cover()
 	model.show()
+	if model is RigidBody3D:
+		model.freeze = false
+	level.generation_preview.model_presented()
 	await get_tree().create_timer(2.0 * duration_scale).timeout
 	if token != epoch: return
 	phase = "restoring"

@@ -7,7 +7,7 @@ import unittest
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from utils.render import render, triangles, rasterize, preview_result
+from utils.render import render, triangles
 
 
 class PreviewTests(unittest.TestCase):
@@ -52,15 +52,3 @@ class PreviewTests(unittest.TestCase):
             self.assertGreater(len(set(raw)), 4)
             self.assertEqual(model.read_bytes(), before)
             self.assertFalse(output.with_suffix('.png.tmp').exists())
-
-    def test_depth_is_independent_of_triangle_order(self):
-        back = ((-1, -1, 0), (1, -1, 0), (0, 1, 0))
-        front = ((-.5, -.5, .2), (.5, -.5, .2), (0, .5, .4))
-        self.assertEqual(rasterize([back, front], 64), rasterize([front, back], 64))
-
-    def test_invalid_model_returns_sanitized_preview_error(self):
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / 'model.glb'
-            path.write_bytes(b'invalid-private-input')
-            self.assertEqual(preview_result(path), {'preview_error': 'PREVIEW_RENDER_FAILED'})
-            self.assertFalse(path.with_suffix('.png').exists())

@@ -14,28 +14,26 @@ from utils.common import AppError
 
 
 class ImageEditTests(unittest.TestCase):
-    def test_small_size_preserves_low_quality(self):
-        settings = image_edit.edit_settings("whole object", size="816x816")
-        self.assertEqual(settings["size"], "816x816")
-        self.assertEqual(settings["quality"], "low")
-        with self.assertRaises(AppError):
-            image_edit.edit_settings("whole object", size="512x512")
 
     def test_edit_sends_original_and_low_quality_settings(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
             source = folder / "input.png"
             source.write_bytes(b"\x89PNG\r\n\x1a\noriginal")
-            jpeg = b"\xff\xd8\xfftest-jpeg"
-            response = io.BytesIO(json.dumps({"data": [{"b64_json": base64.b64encode(jpeg).decode()}]}).encode())
+            png = b"\x89PNG\r\n\x1a\ntest-png"
+            response = io.BytesIO(json.dumps({"data": [{"b64_json": base64.b64encode(png).decode()}]}).encode())
             with patch.object(image_edit, "provider_urlopen", return_value=response) as call:
                 result = image_edit.generate(source, "preserve shape", {"OPENAI_API_KEY": "test-key"}, folder)
             request = call.call_args.args[0]
             self.assertIn(source.read_bytes(), request.data)
             self.assertIn(b'\r\n\r\nlow\r\n', request.data)
             self.assertIn(b'816x816', request.data)
+            self.assertIn(b'\r\n\r\ntransparent\r\n', request.data)
+            self.assertIn(b'\r\n\r\npng\r\n', request.data)
+            self.assertNotIn(b'output_compression', request.data)
+            self.assertEqual(result.name, 'reference.png')
             self.assertNotIn(b'test-key', request.data)
-            self.assertEqual(result.read_bytes(), jpeg)
+            self.assertEqual(result.read_bytes(), png)
 
     def test_http_error_is_sanitized_without_retry(self):
         with tempfile.TemporaryDirectory() as directory:

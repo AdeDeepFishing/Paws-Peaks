@@ -33,6 +33,7 @@ var drawing_shine: Control
 var controls: Label
 var modal: Control
 var surface: Control
+var generation_preview: Control
 var normal_hud: Control
 var drawing_overlay: Control
 var drawing_toolbar: PanelContainer
@@ -50,6 +51,7 @@ var book_key := "X/Square"
 
 func _ready() -> void:
 	_build_ui()
+	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
 	Input.joy_connection_changed.connect(_update_controller_hints)
 	_update_controller_hints()
 	audio = AudioStreamPlayer.new()
@@ -192,6 +194,7 @@ func _finish_generation(id: String) -> void:
 			presentation.reveal(generated_visual.position)
 		else:
 			presentation.cancel()
+			generation_preview.model_presented()
 		status_label.text = "That idea cannot support a crossing. Return to the riverbank and draw again."
 	_update_hud()
 
@@ -223,8 +226,9 @@ func _place_generated_model() -> bool:
 			if child.name.begins_with("Plank"):
 				child.hide()
 	else:
-		add_child(visual)
-		visual.position = Vector3(-4.8, 1.3, -5.0)
+		generated_visual = GeneratedModel.physics_body(visual, current_item.movable)
+		add_child(generated_visual)
+		generated_visual.position = Vector3(-4.8, 3.3 if current_item.movable else 1.3, -5.0)
 	return true
 
 func _clear_generated_model() -> void:
@@ -244,7 +248,7 @@ func near_crossing() -> bool:
 	return in_drawing_area
 
 func _supports_bridge() -> bool:
-	return current_item.get("type", "") == "BRIDGE"
+	return current_item.get("type", "") == "BRIDGE" and not current_item.get("movable", false)
 
 func can_build_bridge() -> bool:
 	return not bridge_built and request.state == "READY" and request.encounter_id == "E01" and _supports_bridge()

@@ -25,22 +25,29 @@ ITEM_PROPERTIES = {
     "name": {"type": "string", "minLength": 1, "maxLength": 40},
     "description": {"type": "string", "maxLength": 160},
     "type": {"type": "string", "enum": TYPES},
+    "movable": {"type": "boolean"},
 }
 SCHEMA = {
     "type": "object", "additionalProperties": False,
-    "required": ["status", "item"],
+    "required": ["item"],
     "properties": {
-        "status": {"type": "string", "enum": ["recognized", "uncertain"]},
-        "item": {"anyOf": [
-            {"type": "object", "additionalProperties": False,
-             "required": list(ITEM_PROPERTIES), "properties": ITEM_PROPERTIES},
-            {"type": "null"},
-        ]},
+        "item": {"type": "object", "additionalProperties": False,
+                 "required": list(ITEM_PROPERTIES), "properties": ITEM_PROPERTIES},
     },
 }
 PROMPT = """Interpret the main object in this image for Paws & Peaks, a warm storybook game.
-Accept rough sketches. Describe what is actually depicted and how the object might help with a game challenge.
-Pick one class from the given set of classes, only select the UNKNOWN class if it doesn't fit into anything else.
+Accept rough sketches. Perform these two steps in order within this one response:
+1. Identify the object from its visible strokes, silhouette, proportions, and parts.
+Make a best-effort guess of a reasonably common object even when confidence is low.
+Choose the most plausible common object suggested by the image. Do not let the game
+stage or its allowed classes influence the object's identity.
+2. Only after identifying the object, classify that object using the allowed classes.
+Use UNKNOWN if the identified object does not fit any named class. Do not change its
+identity to fit a class or solve the challenge.
+Also decide whether the identified object is movable: true for portable or loose
+objects such as food, toys, tools, or a freestanding chair; false for fixed structures
+such as a bridge or building. Base this on the object itself, not the stage class.
+Always return an item; do not return an uncertainty status or a null item.
 Write a short English name. In description, write one complete English sentence naming the object and its possible usefulness.
 Aim for 80-120 characters and never exceed 160. Shorten the wording to finish the sentence; never cut off a word or phrase.
 Describe a potential use, without claiming the player has already used it or solved the challenge.
@@ -49,23 +56,23 @@ Describe a potential use, without claiming the player has already used it or sol
 
 def schema_for(game_stage):
     schema = deepcopy(SCHEMA)
-    schema["properties"]["item"]["anyOf"][0]["properties"]["type"]["enum"] = list(classes_for(game_stage))
+    schema["properties"]["item"]["properties"]["type"]["enum"] = list(classes_for(game_stage))
     return schema
 
 
 def validate_interpretation(value, game_stage="river"):
     allowed_types = classes_for(game_stage)
     invalid = AppError("INVALID_MODEL_OUTPUT", "OpenAI returned an invalid item. Try again.")
-    if not isinstance(value, dict) or set(value) != {"status", "item"}:
+    if not isinstance(value, dict) or set(value) != {"item"}:
         raise invalid
-    if value["status"] == "uncertain" and value["item"] is None:
-        return value
     item = value["item"]
-    if value["status"] != "recognized" or not isinstance(item, dict) or set(item) != set(ITEM_PROPERTIES):
+    if not isinstance(item, dict) or set(item) != set(ITEM_PROPERTIES):
         raise invalid
     if not isinstance(item["name"], str) or not 1 <= len(item["name"].strip()) or len(item["name"]) > 40:
         raise invalid
     if not isinstance(item["description"], str) or len(item["description"]) > 160 or item["type"] not in allowed_types:
+        raise invalid
+    if type(item["movable"]) is not bool:
         raise invalid
     return value
 
@@ -92,10 +99,11 @@ def parse_response(response, game_stage="river"):
 def interpret(image, config, prompt=PROMPT, game_stage="river"):
     """Make one synchronous provider call. Run off the game main thread later."""
     allowed_types = classes_for(game_stage)
-    prompt += ("\nGame stage: " + game_stage + ". Allowed item classes: " + ", ".join(allowed_types)
-               + ". Classify only within this set; do not force a match.")
-    prompt += (" Use UNKNOWN for an identifiable object outside the named classes."
-               if "UNKNOWN" in allowed_types else " If no class fits, return uncertain with item null.")
+    if "UNKNOWN" not in allowed_types:
+        raise AppError("CONFIG_ERROR", "Stage classes must include UNKNOWN for unmatched objects.")
+    prompt += ("\nClassification context for step 2 only: game stage " + game_stage
+               + ". Allowed item classes: " + ", ".join(allowed_types)
+               + ". Use UNKNOWN if no named class fits the object identified in step 1.")
     key = config["OPENAI_API_KEY"]
     if not key or key.lower().startswith(("your_", "paste_")):
         raise AppError("CONFIG_ERROR", "Fill OPENAI_API_KEY in backend/.env, then run again.")
@@ -168,7 +176,7 @@ def main(argv=None):
             return 0
         result = interpret(image, config, game_stage=args.game_stage)
         print(json.dumps({**envelope, **result}, ensure_ascii=False, indent=2, allow_nan=False))
-        outcome = result["status"]
+        outcome = "SUCCEEDED"
         return 0
     except AppError as error:
         code, message = error.code, str(error)

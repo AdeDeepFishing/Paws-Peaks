@@ -92,6 +92,22 @@ func _process(delta: float) -> void:
 func consume_status(status: Dictionary) -> void:
 	if status.get("game_stage") != request.game_stage or status.get("schema_version") != 1 or status.get("encounter_id") != request.encounter_id or not _active(str(status.get("request_id", ""))):
 		return
+	# A terminal failure takes priority over retained partial item/image fields.
+	if status.get("status") == "FAILED":
+		var code := str(status.get("error", "GENERATION_FAILED"))
+		var messages := {
+			"STAGE_NOT_CONFIGURED": "Classification for this stage is not configured yet.",
+			"FIXTURE_NOT_AVAILABLE": "This stage has no offline sample yet.",
+			"INVALID_REQUEST": "The drawing request was not valid. Try another sketch.",
+			"CONFIG_ERROR": "Generation is not configured. Check the local backend setup.",
+			"INVALID_MODEL_OUTPUT": "The service returned an unusable result. Try another sketch.",
+			"SERVICE_UNAVAILABLE": "The drawing service could not finish. Try another sketch.",
+			"RATE_LIMITED": "The drawing service is busy. Try another sketch in a moment.",
+			"OPENAI_IMAGE_ERROR": "The reference image could not be created. Try another sketch.",
+			"POLL_TIMEOUT": "Generation timed out. You can submit another sketch; the previous job may still be running."
+		}
+		fail(messages.get(code, "Generation failed. Your drawing is saved. Try another sketch."), code)
+		return
 	var stage: String = str(status.get("stage", ""))
 	if stage != last_stage:
 		last_stage = stage
@@ -117,10 +133,7 @@ func consume_status(status: Dictionary) -> void:
 		reference_image_ready.emit(request_id, reference_path)
 	if not _active(str(status.get("request_id", ""))):
 		return
-	if status.get("status") == "FAILED":
-		var messages := {"STAGE_NOT_CONFIGURED": "Classification for this stage is not configured yet.", "FIXTURE_NOT_AVAILABLE": "This stage has no offline sample yet.", "INVALID_REQUEST": "The stage request was not valid.", "UNCERTAIN_SKETCH": "We could not recognize the drawing. Add detail and try again.", "CONFIG_ERROR": "Generation is not configured. Check the local backend setup.", "POLL_TIMEOUT": "Generation timed out; its provider job may still be running. Check it before submitting again."}
-		fail(messages.get(str(status.get("error", "")), "Generation failed. Your drawing and any submitted job IDs are saved."))
-	elif status.get("status") == "SUCCEEDED":
+	if status.get("status") == "SUCCEEDED":
 		var model_path: String = str(status.get("model_path", "")).simplify_path()
 		if not model_path.begins_with(job_dir + "/") or model_path.get_extension().to_lower() != "glb" or not FileAccess.file_exists(model_path):
 			fail("The returned model file was not valid.")
@@ -128,9 +141,9 @@ func consume_status(status: Dictionary) -> void:
 		finished = true
 		request.accept_response({"schema_version": 2, "request_id": request_id, "status": "recognized", "item": status.get("item"), "model_path": model_path})
 
-func fail(message: String) -> void:
+func fail(message: String, code: String = "GENERATION_FAILED") -> void:
 	_cancel_job()
-	request.fail_current(message)
+	request.fail_current(message, code)
 
 func _on_state(state: String) -> void:
 	if state in ["IDLE", "FAILED"]:

@@ -5,7 +5,7 @@ benchmarking, and backlog. Game-side integration stays in
 [Desktop Generation](../3d_game/DESKTOP_GENERATION.md); shared scope stays in [SPEC.md](../SPEC.md).
 
 - [Public sketch-to-model interface](#sketch-to-model-interface)
-- [Three API steps](#current-flow) and [folder layout](#feature-layout)
+- [Three-call flow](#three-call-flow), [current API steps](#current-flow), and [folder layout](#feature-layout)
 - [Setup and run](#setup-and-run)
 - [Stage classes and request contract](#current-multi-stage-request-contract)
 - [Internal implementation and recovery](#internal-implementation)
@@ -77,7 +77,7 @@ Stage 1 (River), live generation:
 | `request_id` | Unique string for this submission; 1–100 ASCII letters, digits, underscores, or hyphens |
 | `encounter_id` | `E01`–`E04`, matching the selected game stage |
 | `game_stage` | `river`, `dog`, `crows`, or `otter`; see [stage mapping](#approved-classes) |
-| `mode` | `live` runs the three paid generation steps; `fixture` returns saved sample assets without provider calls, currently only for Stage 1 |
+| `mode` | `live` runs the three paid generation steps; `fixture` returns saved sample assets without provider calls, available for River and Dog |
 | `request/input.png` | One drawing in the request directory, supplied separately from JSON; game-generated PNG, at most 1 MiB |
 
 `stage_number` is backend configuration, not a request field. The request contains
@@ -104,9 +104,10 @@ paths within the originating job directory; live generated assets are under its
   "item": {
     "name": "A little bridge",
     "description": "A sturdy little bridge ready to span the creek.",
-    "type": "BRIDGE"
+    "type": "BRIDGE",
+    "movable": false
   },
-  "reference_path": "/example/worker/E01-example/response/artifacts/reference.jpg",
+  "reference_path": "/example/worker/E01-example/response/artifacts/reference.png",
   "model_path": "/example/worker/E01-example/response/artifacts/model.glb",
   "preview_path": "/example/worker/E01-example/response/artifacts/model.png",
   "request_received_at": 1789257600.0,
@@ -155,7 +156,7 @@ Example failure before any item or generated asset becomes available:
   "input_path": "/example/worker/E01-example/request/input.png",
   "stage": "error",
   "status": "FAILED",
-  "error": "UNCERTAIN_SKETCH",
+  "error": "SERVICE_UNAVAILABLE",
   "request_received_at": 1789257600.0,
   "response_received_at": 1789257601.0,
   "updated_at": 1789257601.0
@@ -163,9 +164,18 @@ Example failure before any item or generated asset becomes available:
 ```
 
 Common failures include `INVALID_REQUEST`, `STAGE_NOT_CONFIGURED`,
-`FIXTURE_NOT_AVAILABLE`, `UNCERTAIN_SKETCH`, `CONFIG_ERROR`, `POLL_TIMEOUT`, and
-`CANCELED`. Failed snapshots may retain earlier successful fields. Do not
-resubmit automatically: remote generation may still exist after a timeout.
+`FIXTURE_NOT_AVAILABLE`, `SERVICE_UNAVAILABLE`, `RATE_LIMITED`, `OPENAI_IMAGE_ERROR`,
+`INVALID_MODEL_OUTPUT`, `GENERATION_FAILED`, `CONFIG_ERROR`, `POLL_TIMEOUT`, and
+`CANCELED`. Failed snapshots may retain earlier successful fields.
+
+`status: FAILED` with `error` and the originating `request_id` is the backend's
+terminal failure signal. The desktop adapter handles it before partial results,
+clears the failed result, and transitions `DrawingRequest` to `FAILED`. It emits
+`request_failed(request_id, error_code, message)` so game callers can react explicitly.
+The current encounter UI displays the message and allows drawing again; the saved
+sketch is retained. A new submission gets a fresh request ID, and late responses
+from the failed request are ignored. Do not resubmit automatically: remote generation
+may still exist after a timeout.
 
 ### Local command-line entry point
 
@@ -181,32 +191,65 @@ mailbox's version-1 envelope or accept `request.json`. Game callers use the mail
 contract above. The [stage runner](#validation) selects bundled samples and adds
 benchmark logs to this same operation.
 
+## Three-call flow
+
+Interpretation makes a best-effort guess of a reasonably common object, then
+classifies it in the same AI call. The response contains only `item`.
+The prompt requests this reasoning order; offline tests verify the contract and
+routing, not the model's actual reasoning or recognition quality.
+
+Repeated code-formatted names below denote the same data passed between calls:
+`SKETCH` is the original PNG/JPEG, `ITEM` is the interpretation result's `item`,
+`REFERENCE_IMAGE` is the generated transparent PNG, and `MODEL_TASK_ID` identifies the Meshy job.
+
+| AI call | Input | Output |
+|---|---|---|
+| **1. Interpret** | `SKETCH` + interpretation prompt + game stage's allowed classes | `{ "item": ITEM }`, where `ITEM` contains `name`, `description`, `type`, and `movable`; no `status` field |
+| **2. Image edit** | `SKETCH` + `ITEM.name` + `ITEM.description` + style instructions + image settings | `REFERENCE_IMAGE`: one reference PNG |
+| **3. 3D generation** | `REFERENCE_IMAGE` + Meshy T2 settings: target 1,000 faces, no textures, GLB format | `MODEL_TASK_ID`: task ID used to retrieve the model |
+
+Within the single interpretation call, first identify a reasonably common object
+from the sketch, making a best-effort guess even when confidence is low. The allowed
+classes must not influence that identity. Then classify the identified object using
+the game stage's allowed classes; use `UNKNOWN` if none fits. Ambiguity alone does
+not stop generation. Also classify mobility from the identified object: portable
+or loose objects use `movable: true`; fixed structures use `movable: false`.
+API failures and invalid responses remain errors.
+
+After the three AI calls, status polling takes `MODEL_TASK_ID` and returns task
+status/progress plus `MODEL_GLB_URL` on success. Downloading `MODEL_GLB_URL` returns
+the GLB bytes saved as `model.glb`. Polling and downloading are additional HTTP
+requests, not additional AI generation calls.
+
 ## Current flow
 
-**Interpret → Image edit → Model generation.**
+The pipeline runs interpretation, image editing, and Meshy submission sequentially.
+Interpretation requires a non-null `item` without a `status` field. A valid `UNKNOWN`
+item continues through generation. API failures and invalid responses still stop
+processing. See [item validation](#item-validation) for the implemented schema.
 
-`backend/sketch_to_model/run.py` orchestrates three generation API requests in order:
-
-| Step | Implementation | Input → response |
+| Call | Endpoint | Provider encoding |
 |---|---|---|
-| 1. Interpret | `backend/interpret/run.py` | Sketch → OpenAI structured item JSON |
-| 2. Image edit | `backend/image_edit/run.py` | Sketch + description + style → OpenAI reference image |
-| 3. Model generation | `backend/model_generation/run.py` | Reference image → Meshy task ID |
+| Interpret | `POST https://api.openai.com/v1/responses` | Sketch as an `input_image` data URI; strict `drawing_interpretation` JSON schema; `store: false`, `max_output_tokens: 800`, `detail: auto` |
+| Image edit | `POST https://api.openai.com/v1/images/edits` | Original sketch in multipart field `image`; response PNG in `data[0].b64_json` |
+| 3D generation | `POST https://api.meshy.ai/openapi/v1/image-to-3d` | Reference PNG data URI in `image_url`; response task ID in `result` |
 
-The third step then polls the existing task and downloads its GLB. These are
-additional HTTP requests, not additional generation submissions. The PNG preview
-is rendered locally by `backend/utils/render.py`.
+The interpreted item is available before image editing starts. The bridge publishes
+cumulative item, reference-image, model, and preview updates; see the
+[public interface](#sketch-to-model-interface). The River and Dog encounters display
+the early interpretation and reference image through their shared
+[generation overlay](../3d_game/DESKTOP_GENERATION.md#lifecycle-and-files).
+The final model preview is rendered locally.
 
-Pipeline interpretation instructions live in `backend/interpret/prompts.py`,
-building on the shared `PROMPT` in `interpret/run.py`. Image-edit instructions and
-reference-prompt formatting live in `backend/image_edit/prompts.py`.
+For model/image defaults and overrides, see [Setup and run](#setup-and-run).
+For polling, artifacts, and retry behavior, see [Outputs and recovery](#outputs-and-recovery).
+Prompt locations and adapter responsibilities are listed under
+[Code ownership](#code-ownership-and-cleanup).
 
-The backend consists of local Python 3.9+ command-line scripts using only the standard
-library. Use the shared `backend/.venv` and ignored `backend/.env`.
-A persistent Python listener starts with the desktop game and runs generation on
-demand through `backend/game_bridge/run.py --serve`; it publishes the interpretation,
-reference image and final model as cumulative progress. See [desktop integration](../3d_game/DESKTOP_GENERATION.md).
-A Web export cannot launch Python.
+The backend uses local Python 3.9+ scripts and the shared `backend/.venv` and ignored
+`backend/.env`. The desktop game starts the persistent listener with
+`backend/game_bridge/run.py --serve`; a Web export cannot launch Python. See
+[desktop integration](../3d_game/DESKTOP_GENERATION.md).
 
 ## Feature layout
 
@@ -275,13 +318,13 @@ backend/.venv/bin/python backend/sketch_to_model/run.py
 The default source is `tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png`.
 Use `--image path/to/sketch.png` for another input. Each live invocation makes one
 OpenAI interpretation request, one OpenAI image edit, and one Meshy creation after
-preceding stages succeed. Uncertain interpretation stops before either image or 3D
-generation. There are no creation retries.
+preceding stages succeed. Ambiguity is handled by a best-effort object guess;
+invalid responses and provider errors stop the pipeline. There are no creation retries.
 
 | Stage | Default settings |
 |---|---|
 | Interpretation | Configured `OPENAI_MODEL` (default/template: `gpt-4.1-mini`), strict item JSON schema |
-| Reference image | `gpt-image-2.5-flare`, **816 × 816**, low quality, JPEG compression 70, one image, opaque background |
+| Reference image | `gpt-image-2.5-flare`, **816 × 816**, low quality, PNG, one image, transparent background |
 | 3D | `meshy-t2`, Smart Topology, target **1,000 faces**, GLB, **textures disabled** |
 
 Options: `--style-prompt` replaces the reference-image instructions;
@@ -305,7 +348,7 @@ share the same generation pipeline. The game never supplies a class list.**
 
 These sets were confirmed on September 13, 2026. Class labels are case-sensitive.
 Each configuration entry also defines `stage_number` (1–4); the bridge uses this
-number to restrict fixture mode to Stage 1. Requests still send the named
+number to select the River or Dog fixture. Requests still send the named
 `game_stage`, which the backend resolves through this configuration.
 The executable source of truth is [`backend/stage_config.py`](../../backend/stage_config.py).
 
@@ -322,10 +365,9 @@ must classify within the selected stage's categories. It must not borrow a categ
 from another stage. The fifth-stage boss in the broader game specification has no
 backend classification configuration yet.
 
-`UNKNOWN` means an identifiable object outside the stage's named categories. It is
-a recognized item with the usual fields. If the drawing cannot be identified, the
-response is `{"status":"uncertain","item":null}` and generation stops before the
-image-edit and Meshy calls. A recognized `UNKNOWN` continues through generation.
+`UNKNOWN` means the identified or guessed object fits none of the stage's named
+categories. It has the usual item fields and continues through generation. Every
+stage must include this fallback. Low confidence alone does not stop generation.
 
 ### Request and routing
 
@@ -346,7 +388,7 @@ not require adding the same class names to Godot.
 
 ### Shared generation and results
 
-The interpretation result contains only `name`, `description`, and `type` across
+The interpretation result contains only `name`, `description`, `type`, and `movable` across
 all stages. Numeric stats and capability tags are not part of the item contract.
 
 As each result becomes available, the worker appends a cumulative record to
@@ -373,6 +415,7 @@ for worker lifetime, cancellation and scene integration.
 
 Being a valid class does not guarantee that an object solves the challenge. Gameplay
 rules are evaluated separately in Godot. River currently accepts `type: BRIDGE`
+with `movable: false`
 for its fixed crossing, with placement committed once per encounter. Recognizing `BOAT` does not
 implement boat movement. Later-stage gameplay effects and success rules remain design work.
 
@@ -398,21 +441,25 @@ fails with `FIXTURE_NOT_AVAILABLE`. No paid generation is automatically retried.
 
 ### Item validation
 
-Recognized items require exactly these fields; additional properties are rejected:
+Interpretation returns exactly `{ "item": { ... } }`, without `status` or a null
+item. Items require exactly these fields; additional properties are rejected:
 
 | Field | Validation |
 |---|---|
 | `name` | Nonempty string, at most 40 characters |
 | `description` | String, at most 160 characters |
 | `type` | One class allowed by the selected stage |
+| `movable` | Boolean: `true` for loose/portable objects, `false` for fixed structures |
 
 `attack_power`, `range`, `speed`, `durability`, and `tags` are removed from the
 schema and are no longer requested from OpenAI. The game validates the same
-three-field object. Saved historical results may contain the old fields; the
+four-field object. Saved historical results may contain the old fields; the
 fixture adapter projects its retained sample onto the current contract.
 
-The standalone interpretation CLI wraps its result in the version-2 envelope;
-the Meshy task manifest uses version 1. Neither is interchangeable with the
+The standalone interpretation CLI adds `schema_version: 2` and `request_id` to the
+item-only result. The desktop adapter separately supplies `status: recognized` to
+the existing Godot drawing-request interface; worker progress statuses such as
+`PENDING` and `SUCCEEDED` remain unchanged. The Meshy task manifest uses version 1. Neither is interchangeable with the
 worker's cumulative progress records. Preserve the originating request identity.
 
 ## Internal implementation
@@ -423,7 +470,7 @@ Python functions and maintenance CLIs are not separate game-facing interfaces.
 | Step | Internal function | Responsibility |
 |---|---|---|
 | Interpret | `interpret.run.interpret()` | One OpenAI Responses request, followed by item validation |
-| Image edit | `image_edit.run.generate()` | One OpenAI multipart image-edit request, followed by JPEG validation |
+| Image edit | `image_edit.run.generate()` | One OpenAI multipart image-edit request, followed by PNG validation |
 | Model generation | `model_generation.run.create_job()` | One Meshy submission with durable task identity |
 
 Interpretation has a 15-second socket timeout; image editing has 180 seconds;
@@ -459,9 +506,9 @@ The standalone pipeline and stage runner retain their own output layout below;
 they do not submit through the game mailbox.
 
 Outputs are saved under ignored `backend/output/sketch_to_model/<run-id>/`:
-`input.png` (or `input.jpg` for JPEG sources), `description.json`, `reference_prompt.txt`, `image_edit_settings.json`, `reference.jpg`,
-`model_job.json`, `model.glb`, and `model.png` (a 512 × 512 rendered model preview). The edited JPEG enters T2 as a data URI. Local
-PNG/JPEG input and the generated JPEG must fit the existing 1 MiB image limit.
+`input.png` (or `input.jpg` for JPEG sources), `description.json`, `reference_prompt.txt`, `image_edit_settings.json`, `reference.png`,
+`model_job.json`, `model.glb`, and `model.png` (a 512 × 512 rendered model preview). The edited PNG enters T2 as a data URI. Local
+PNG/JPEG input and the generated transparent PNG must fit the existing 1 MiB image limit.
 
 Stage results and local paths print as JSON lines on stdout. Diagnostics and profiles
 go to stderr; profiles also save under `backend/output/profiles/`. Credentials and
@@ -474,7 +521,12 @@ local image/model paths. The listener checks completed thread-pool jobs against 
 final status and records `pool_checked`/`pool_return_code`; crashes and missing final
 results are logged as failures without retries.
 
-Meshy status is polled every three seconds for up to ten minutes. OpenAI image editing
+Meshy status polling calls `GET /openapi/v1/image-to-3d/{task_id}` immediately after
+submission, then sleeps 0.1 seconds after each unfinished response. Request starts
+are separated by the preceding request's duration plus 0.1 seconds. The loop has a
+600-second deadline; an in-flight request can run past it. A successful response
+provides the download URL in `model_urls.glb`; `FAILED` or `CANCELED` stops the loop.
+OpenAI image editing
 has a 180-second socket timeout, not a guaranteed completion deadline. Restarting
 the pipeline creates new paid work. On failure, inspect existing outputs and recover
 the Meshy task using the [internal recovery tooling](#model-generation-and-recovery) instead of
@@ -507,15 +559,16 @@ morph targets, sparse accessors and required extensions are unsupported.
 backend/.venv/bin/python -m unittest discover -s backend/tests -v
 ```
 
-Stage classification cases live in `backend/tests/stage1/` (River), `stage2/`
-(Dog), `stage3/` (Crows), and `stage4/` (Otter). Each covers encounter identity,
-provider schema, accepted classes, and uncertain drawings
-using mocked provider responses. Shared assertions live in `stage_cases.py`;
-shared configuration and feature tests remain at the test root.
-Run one stage with, for example:
+The offline suite contains 20 focused tests covering the interpretation contract,
+image editing, model jobs/downloads, game handoff, failure propagation, credential
+transport, sample routing, profiling, and preview rendering. Per-stage duplicate
+checks and peripheral edge-case tests have been removed. Stage sample images remain
+under `backend/tests/stage1/` through `stage4/` for the manual runner below.
+
+Run only the pipeline checks during focused flow work:
 
 ```sh
-backend/.venv/bin/python -m unittest discover -s backend/tests/stage2 -v
+backend/.venv/bin/python -m unittest discover -s backend/tests -p test_sketch_to_model.py -v
 ```
 
 Each stage folder contains an input image for the manual pipeline runner:
@@ -550,7 +603,7 @@ Latest backend verification: 71 tests passed after removing the per-stage reject
 The preceding backend refactor passed these Godot checks on main:
 desktop-generation, river, encounter-flow, dog-encounter, woodland-exit,
 hero, and wind-hill smoke tests passed. The dog check covers FOOD and TOY using
-the three-field item response, including retry and duplicate-offer protection.
+the four-field item response, including retry and duplicate-offer protection.
 All four stage dry-runs passed. The authorized Stage 2 live run completed in
 16.024 seconds; its response and assets are in [generated examples](GENERATED_EXAMPLES.md#stage-2--dog).
 The initial Stage 3 umbrella run completed in 18.263 seconds as `UNKNOWN` before
@@ -661,8 +714,9 @@ in `backend/stage_config.py`. Avoid new dependencies without a concrete need.
   See [stage routing](../3d_game/DESKTOP_GENERATION.md#game-stage-routing).
 
 - Keep stdout machine-readable JSON. Send human diagnostics and optional profiling to stderr.
-- Preserve the narrative version-2 envelope and original `request_id`; match the validator
-  in `3d_game/scripts/river/drawing_request.gd`. Unsupported values must fail validation.
+- Preserve request identity and the desktop adapter's version-2 game envelope;
+  match the validator in `3d_game/scripts/river/drawing_request.gd`. The provider's
+  item-only response is separate from this game envelope. Unsupported values must fail validation.
 - Keep the model-job version-1 manifest separate from the narrative response. Persist the
   provider task ID immediately and retain request identity through status/download.
 - Never automatically retry paid task creation. Network failure can leave the provider

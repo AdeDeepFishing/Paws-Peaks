@@ -61,6 +61,26 @@ static func load_visual(path: String, span: float, crossing: bool) -> Node3D:
 		child.position += offset
 	return result
 
+static func physics_body(visual: Node3D, movable: bool) -> PhysicsBody3D:
+	var body: PhysicsBody3D
+	if movable:
+		var dynamic := RigidBody3D.new()
+		dynamic.continuous_cd = true
+		body = dynamic
+	else:
+		body = StaticBody3D.new()
+	body.collision_layer = 1
+	body.collision_mask = 1
+	body.add_child(visual)
+	var bounds := _bounds(visual)
+	var collider := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = bounds.size.max(Vector3.ONE * 0.05)
+	collider.shape = shape
+	collider.position = bounds.get_center()
+	body.add_child(collider)
+	return body
+
 static func _copy_meshes(node: Node, inherited: Transform3D, target: Node3D) -> void:
 	var transform := inherited
 	if node is Node3D:

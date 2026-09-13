@@ -106,15 +106,29 @@ func clear() -> void:
 func has_drawing() -> bool:
 	return not strokes.is_empty()
 
-func snapshot_png() -> PackedByteArray:
+func _snapshot_bounds() -> Rect2:
 	if not has_drawing():
-		return PackedByteArray()
+		return Rect2()
 	var bounds := Rect2(strokes[0][0], Vector2.ZERO)
 	for stroke in strokes:
 		for point in stroke:
 			bounds = bounds.expand(point)
 	bounds = bounds.grow(BRUSH_RADIUS)
 	bounds = bounds.grow(maxf(12.0, maxf(bounds.size.x, bounds.size.y) * 0.06))
+	return bounds
+
+func snapshot_screen_rect() -> Rect2:
+	if not has_drawing():
+		return Rect2()
+	var bounds := _snapshot_bounds()
+	var side := maxf(bounds.size.x, bounds.size.y)
+	var square := Rect2(bounds.get_center() - Vector2.ONE * side * 0.5, Vector2.ONE * side)
+	return Rect2(global_position + _to_screen(square.position), square.size * _scale_factor())
+
+func snapshot_png() -> PackedByteArray:
+	if not has_drawing():
+		return PackedByteArray()
+	var bounds := _snapshot_bounds()
 	var fit := float(IMAGE_SIZE - 1) / maxf(bounds.size.x, bounds.size.y)
 	var padding := (Vector2.ONE * (IMAGE_SIZE - 1) - bounds.size * fit) * 0.5
 	var bitmap := Image.create(IMAGE_SIZE, IMAGE_SIZE, false, Image.FORMAT_RGBA8)

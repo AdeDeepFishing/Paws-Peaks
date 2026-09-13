@@ -28,7 +28,11 @@ The upper-right mode selector has three choices:
   runs paid provider requests. The game never receives API keys.
 
 At the riverbank, draw over the scene and submit. Generation progress appears in the
-HUD while movement resumes. Successful output appears directly in the scene.
+HUD while movement resumes. The River and Dog encounters display the interpreted
+name and description before the model is ready. A translucent copy of the submitted
+sketch remains over the scene, then the generated reference image replaces it at
+the same screen position and size. Each visual replaces the previous stage: sketch →
+reference image → model. No sketch sprite is attached to the completed model.
 The mode cannot change while a request is pending.
 
 ## Lifecycle and files
@@ -60,7 +64,7 @@ and status. Completed stages add fields retained through later stages and errors
 
 | Available after | Field | Godot signal on DesktopGeneration |
 |---|---|---|
-| Interpretation | `item` (validated name, description, type) | `interpretation_ready(request_id, item)` |
+| Interpretation | `item` (validated name, description, type, movable) | `interpretation_ready(request_id, item)` |
 | Reference image | `reference_path` (local image file) | `reference_image_ready(request_id, path)` |
 | Model and preview | `model_path` (local GLB), `preview_path` (sibling `model.png`) | DrawingRequest changes to `READY` |
 
@@ -68,7 +72,20 @@ Godot polls every 0.2 seconds, validates request identity and emits each early-r
 signal once per request. `partial_item` and `reference_path` also expose the latest
 intermediate values. These signals let game code use the first two results while
 DrawingRequest remains `PENDING`; they do not place the final object or complete the
-encounter. The existing gameplay presentation still waits for the GLB. Cumulative
+encounter. `generation_preview.gd` consumes both signals in River and Dog: the
+interpretation card on the right shows name/description, and the reference PNG replaces the
+sketch texture. `drawing_surface.gd` exposes the same padded square bounds used for
+PNG export, so the overlay maps back to the submitted drawing area. Placement is
+captured at submission. River keeps its screen-space overlay and authored bridge
+anchor. In Dog, the sketch's bottom-center is raycast onto ground, excluding the
+player and dog. If no ground is hit, the canvas stays open and asks the player to
+draw over ground. Both the overlay and model use this saved world anchor. The overlay
+tracks camera movement and perspective scale, rather than staying fixed on the
+screen. The dog approaches this anchor instead of a hard-coded offering position. Live image editing requests a transparent-background PNG so scenery remains visible
+around the object. Historical offline fixtures retain their original opaque backgrounds.
+The reference image clears as soon as generation completes (`READY`), even if
+placement is delayed. The interpretation card ignores mouse input and clears when the model is presented in the scene,
+or on failure, cancel, restart, or scene removal. Encounter completion still waits for the GLB. Cumulative
 fields ensure a fast stage cannot disappear between polls. The offline fixture
 publishes the same stages using its checked-in description, image and model.
 After the GLB is saved, a local `preview` stage renders a 512 × 512 PNG of its
@@ -86,6 +103,25 @@ game after correcting setup. Startup never replays work from previous sessions.
 Live artifacts and durable provider job IDs stay under each job's `response/artifacts/`.
 Only local allowed fields enter the game status; API keys and signed URLs remain
 private. The overall game waiting deadline remains 25 minutes.
+
+## Object mobility
+
+The interpretation's `movable` boolean controls generated model placement.
+`true` creates a `RigidBody3D` two world units above the placement anchor and lets
+gravity drop it. `false` creates a `StaticBody3D` at the anchor. A box fitted to the
+model bounds provides collision; this is an approximation, not generated mesh
+collision. Stage 2 uses the sketch ground anchor for both modes. River's fixed
+`BRIDGE` uses its existing authored deck collision; other river objects use the
+same fixed/falling body behavior at the existing display position. A movable
+`BRIDGE` does not enable the fixed river crossing.
+
+The Stage 1 backend fixture projects its historical ladder onto the current item
+contract as `type: BRIDGE, movable: false`. Stage 2's **Sample bone · No AI** mode returns `Dog Bone`, `FOOD`, `movable: true`,
+using `docs/test-artifacts/stage2-2026-09-13/reference.jpg` and `model.glb`. It emits
+interpretation, reference, and completion updates without calling providers.
+Its separate **Mock outcomes · No AI** mode also displays this saved bone GLB for
+successful outcomes. Every offline drawing gets the saved asset regardless of its
+strokes. Live model loading never substitutes a dummy if its supplied GLB fails.
 
 ## Game stage routing
 
