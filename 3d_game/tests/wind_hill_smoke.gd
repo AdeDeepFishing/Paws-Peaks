@@ -21,6 +21,7 @@ func run():
 	current_scene = woodland
 	await frames(60)
 	check(current_scene == woodland, "Woodland spawn does not trigger the exit")
+	woodland.dog.solved = true
 	woodland.player.respawn(Vector3(6.5, 3, -26.5))
 	await frames(60)
 	check(current_scene == woodland and woodland.player.is_on_floor(), "Player can stop before the lakeside exit")

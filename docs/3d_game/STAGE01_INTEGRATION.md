@@ -1,6 +1,6 @@
 # Stage 01: storybook creek integration
 
-Updated: 2026-09-12. The temporary otter preview has been removed. This scene
+Updated: 2026-09-13. The temporary otter preview has been removed. This scene
 replacement is a review integration, not a claim of final art approval or Web readiness.
 
 ## Source
@@ -16,11 +16,14 @@ Source authorship and license details have not been supplied.
 
 The team has superseded mouse orbit with a fixed composition for each stage.
 E01 uses an overhead orthographic view based on the supplied camera, widened from
-16 to 22 vertical units to show the player and both banks beneath the HUD.
+16 to 22 vertical units in the initial integration. Issue #37 now uses 18.6 units
+for approximately 18% closer framing.
 `StageCamera` in `scenes/river/river_crossing.tscn` owns position, rotation,
 projection and size. Designers can adjust that node directly; future levels can
 supply their own Camera3D and composition without modifying the player controller.
-The current camera stays in place while walking, jumping, drawing and restarting.
+The camera preserves its overhead angle, follows at the screen edges during
+exploration, and holds the construction view until generation completes. See
+[the current encounter flow](ENCOUNTER_FLOW.md).
 
 WASD or arrow keys follow the active camera's horizontal axes. Space jumps; Shift sprints.
 The pointer stays visible and never controls the camera. E or the pen prompt starts transparent scene drawing
@@ -39,9 +42,9 @@ movement and jumping and hides the regular HUD. See [Scene drawing](SCENE_DRAWIN
 - The delivered `Creek_HandDrawn` animation plays and loops; the MP4 is not used.
 - Player spawn follows the delivered marker at `(-6.3, 1.5, -6.3)` in Godot coordinates.
   Drawing is available at the left shore, and the temporary bridge spans the creek
-  along X. Completion is on the right bank. Coins are repositioned on both sides.
+  along X. Completion is on the right bank. The bridgehead stone moves aside in #37; coin pickups are removed.
 - Invisible outer boundaries keep this prototype's play area bounded. Falling into
-  water returns to spawn while preserving drawings, requests and collected coins.
+  water returns to spawn while preserving drawings and requests.
 - The hiker now uses the delivered animated [Moonlit Wanderer](HERO_INTEGRATION.md).
   Bridge appearance depends on the selected generation mode. No later encounter is implemented.
 
@@ -57,7 +60,7 @@ godot --path 3d_game --script res://tests/river_smoke.gd -- --visual
 The smoke test checks imported ground collision, fixed camera under mouse input
 and movement, visible-pointer movement, jumping, diagonal speed, painted materials,
 water animation playback, drawing input locks and PNG export, request lifecycle,
-coin persistence, physical bridge crossing, completion and restart.
+physical bridge crossing, completion and restart.
 
 Runtime screenshots are captured with Godot 4.7.2 Forward+ / Metal on Apple M1.
 Web export, browser performance, final prop collision simplification and LOD budgets

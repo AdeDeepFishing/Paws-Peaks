@@ -17,6 +17,15 @@ func run():
 		root.add_child(level)
 		current_scene = level
 		level.player.set_physics_process(false)
+		level.player.position = Vector3(x, 3, -28.25)
+		await frames(3)
+		if current_scene != level:
+			failed = true
+			push_error("Unsolved dog must gate the entire exit")
+			quit(1)
+			return
+		# The encounter smoke test exercises collection; this test isolates the exit.
+		level.dog.solved = true
 		level.player.position = Vector3(x, 3, -27.5)
 		await frames(3)
 		if current_scene != level:

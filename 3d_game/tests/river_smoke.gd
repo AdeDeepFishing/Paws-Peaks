@@ -129,12 +129,12 @@ func run() -> void:
 	check(not level.request.submit(png, "E01"), "A second request cannot replace a pending request")
 	var id: String = level.request.active_id
 	check(not level.request.accept_response(response("old-request")), "Late responses for another request are ignored")
-	level.player.position = level.get_node("Coins/Coin01").position - Vector3.UP * 0.6
+	level.player.position = Vector3(-8, 1.5, -6.3)
 	await frames(8)
-	check(level.collected.size() == 1, "Coins can be collected while a request is pending")
+	check(not level.has_node("Coins"), "No coin pickups remain while a request is pending")
 	level.player.position.y = -3
 	await frames(8)
-	check(level.collected.size() == 1 and level.request.active_id == id, "Fall recovery preserves coins and request identity")
+	check(level.request.active_id == id, "Fall recovery preserves request identity")
 	var waiting_position: Vector3 = level.player.position
 	level.request.accept_response(response(id))
 	check(level.request.state == "READY" and not level.modal.visible and not level.drawing_overlay.visible, "Ready response does not reopen a canvas or result modal")
@@ -163,7 +163,7 @@ func run() -> void:
 	check(level.completed, "Walking across the physical bridge reaches the stage ending")
 	await screenshot("complete")
 	level.restart()
-	check(not level.bridge_built and level.collected.is_empty() and not level.completed, "Restart clears the stage and coins")
+	check(not level.bridge_built and not level.completed and not level.has_node("Coins"), "Restart clears progress without restoring coins")
 	check(level.request.state == "IDLE" and not canvas.has_drawing(), "Restart clears request and draft")
 	check(not level.request.accept_response(response(id)), "A pre-restart response cannot change the new session")
 	level.request.submit(png, "E01")
@@ -328,7 +328,7 @@ func overlay_checks() -> void:
 	check(level.panel_mode == "" and canvas.strokes == saved, "Toolbar Cancel exits without drawing or discarding the draft")
 	level.player.respawn(level.SPAWN)
 	await frames(30)
-	check(not level.book.visible and not level.near_crossing(), "Leaving the river removes the drawing entry")
+	check(level.book.visible and level.book.disabled and not level.near_crossing(), "Leaving the river keeps the drawing entry visible but inactive")
 	level._open_book()
 	check(not level.drawing_overlay.visible, "Revisiting a discovered stage cannot open drawing outside its area")
 	level.player.respawn(Vector3(-4.6, 1.5, -6.3))

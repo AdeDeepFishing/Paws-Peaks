@@ -1,25 +1,28 @@
 # Construction, rewards, and accessible crossing
 
-## Agreed flow
+## Agreed flow (issue #37, September 13)
 
-Submitting a drawing starts generation immediately. The drawing's screen-space bounds
-are projected onto the encounter plane to place a temporary construction cloth.
-The camera keeps its orientation, moves toward that position and zooms from the
-normal size to 12 units (0.55 seconds), holds for 0.7 seconds, then returns (0.55
-seconds). Input and the regular HUD pause only during these short presentations.
+Submitting a drawing starts generation immediately. The construction cloth now
+appears at the authored bridge location, so the waiting and final crossing shots
+share a focus. The camera keeps its overhead orientation and eases from normal
+size 18.6 to size 12 over two seconds. It holds that framing for the entire request;
+it no longer returns to exploration framing while the object is unfinished.
+After the opening move, normal controls and the Stop waiting action are available,
+but camera following remains suspended until the result or cancellation.
 
-Eight coins drop onto random clear ground on the near bank after the opening shot
-returns. Sampling covers x=-15..-6.2, z=-16..1, with at least 3.2 units between
-coins and 2.8 units from the player. Downward terrain rays and standing-capsule
-checks reject water, tree/rock tops, steep ground, and cramped positions. There are no
-coins at initial spawn. Coins give the player something to do while generation runs;
-collecting them neither gates completion nor guarantees that the provider is ready.
-Retrying cannot duplicate rewards. Restart resets them. Hidden coins cannot be collected.
+Once the result is ready, the cloth is removed and the object is revealed. The
+finished object stays in closeup for two full seconds, followed by a one-second
+return to the captured normal framing. Fast results wait for the opening camera
+move before being revealed. An unsuitable generated object can be shown at its
+placement location before returning; an unsuitable mock result returns immediately.
+Failures and cancellation restore the camera and input and remove the cloth.
+Escape also cancels during the opening shot or the held wait. Restart invalidates
+old camera continuations and resets the 18.6-unit overview.
 
-Once a valid result is ready, a second shot focuses on the placed object, removes the
-cloth and reveals the result, holds for 0.9 seconds, and returns control. A fast result
-waits for the opening sequence. Failure or cancellation restores the camera and input,
-removes the cloth, and prevents canceled animations from releasing coins later.
+Coins have been removed from active gameplay globally: no pickup nodes, release
+animations, collection logic, counters, or pickup sounds remain. The old eight-coin
+reward sequence and sampling rules are superseded, not hidden for later release.
+The reference dungeon assets remain separate from the active game.
 
 ## Movement
 
@@ -44,14 +47,38 @@ contract. The current default is OpenAI 816px image editing followed by Meshy T2
 The teammate's documented comparison measured 26.664s versus 19.700s for one pair
 of runs; this is not a latency guarantee. No paid generation was needed for this change.
 
+## Bridgehead and framing update (#37)
+
+The supplied `Lavender_boulder_06` intersected the far end of the bridge: its world
+bounds covered x=3.84..6.84, z=-7.76..-4.32. Its mesh and `..._dry_brush` overlay
+are independent and have no animation tracks. Both move by world `(5, 0, -5)`
+before collision is generated. The original GLB remains unchanged; the stone
+retains its painted surface and solid collision at its new position beside the
+far-bank vegetation, away from the bridge and onward path.
+
+The normal orthographic size changes from 22 to 18.6, making the view approximately
+18.3% larger. The Stage 1 protagonist uses `appearance_scale = 2.0`; its shared
+controller and collision dimensions are preserved. Other stages retain their
+existing character sizes. Camera following also continues on the far bank so the
+closer framing does not hide the route toward Stage 2.
+
+![Cleared bridgehead and updated framing](../assets/stage01/bridge-clearance.png)
+
 ## Verification
 
-- 44 offline Python tests after the PR #17 merge.
-- `river_smoke.gd`: drawing, immutable PNG transport, request lifecycle, and crossing.
-- `desktop_generation_smoke.gd`: a real fixture worker, returned GLB placement, single-key
-  crossing, cancellation/stale results, and missing-backend errors.
-- `encounter_flow_smoke.gd`: construction/reveal camera shots, fast-result ordering,
-  reward timing/standing room, stop/reverse/cross input, cancel/failure recovery,
-  reset, and the formerly blocked meadow route.
+Godot 4.7.2, Apple M1, offline checks:
 
-These are local changes pending playtesting. Web generation remains separate.
+- `encounter_flow_smoke.gd`: moved rock/paint/collision, bridgehead clearance,
+  zoom and visual scale, held slow requests, fast-result ordering, two-second
+  finished-object hold, stop/reverse/cross input, cancel/failure recovery,
+  restart, no coin nodes, and the formerly blocked meadow route.
+- `river_smoke.gd`: drawing, immutable PNG transport, request lifecycle, removal
+  of pickups, recovery, and crossing.
+- `stage_transition_smoke.gd`: crossing and onward travel to Stage 2.
+- `hero_smoke.gd`: shared animation/movement and doubled Stage 1 visual.
+- `desktop_generation_smoke.gd`: the offline Python worker, actual fixture GLB,
+  request routing, stale/canceled responses and physical crossing.
+- Desktop construction/wait/completion renders inspected, including stone
+  placement and the normal closer framing.
+
+No paid generation calls were made. Web generation remains separate.

@@ -21,7 +21,6 @@ var bridge_built := false
 var completed := false
 var transitioning := false
 @export var auto_advance := true
-var collected: Dictionary = {}
 var current_item: Dictionary = {}
 var current_png := PackedByteArray()
 var panel_mode := ""
@@ -30,9 +29,9 @@ var muted := false
 var hud: CanvasLayer
 var title: Label
 var objective: Label
-var coins_label: Label
 var status_label: Label
 var book: Button
+var drawing_shine: Control
 var controls: Label
 var modal: Control
 var surface: Control
@@ -57,26 +56,21 @@ func _ready() -> void:
 	_update_controller_hints()
 	audio = AudioStreamPlayer.new()
 	add_child(audio)
-	for cue in ["coin", "ready", "bridge", "submit"]:
+	for cue in ["ready", "bridge", "submit"]:
 		tones[cue] = _tone(cue)
 	$DrawingArea.body_entered.connect(_on_drawing_area)
 	$DrawingArea.body_exited.connect(_on_leaving_drawing_area)
 	presentation.settled.connect(_update_hud)
 	request.state_changed.connect(_on_request_state)
 	generation.progress_changed.connect(func(message: String): status_label.text = message)
-	for coin in $Coins.get_children():
-		coin.body_entered.connect(_on_coin.bind(coin))
 	_update_hud()
 
 func _process(delta: float) -> void:
 	presentation.follow_player(delta)
 	_update_drawing_entry()
-	for coin in $Coins.get_children():
-		if coin.visible:
-			coin.get_node("Visual").rotate_y(delta * 1.4)
 	if player.position.y < 0.35:
 		player.respawn(SPAWN)
-		status_label.text = "Back on dry land. Your drawing and coins are safe."
+		status_label.text = "Back on dry land. Your drawing is safe."
 	if bridge_built and not completed and not presentation.busy and player.position.x > 5.8 and player.is_on_floor():
 		_finish()
 	if completed and auto_advance and not transitioning and player.position.x >= 18.0 and player.position.z >= -8.5 and player.position.z <= -3.5 and player.is_on_floor():
@@ -88,6 +82,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_close_panel(true)
 		else:
 			_open_book()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel") and request.state == "PENDING":
+		request.cancel()
+		status_label.text = "Stopped waiting. Your drawing is safe."
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel") and panel_mode != "" and not completed:
 		_close_panel(false)
@@ -108,17 +106,11 @@ func _on_leaving_drawing_area(body: Node3D) -> void:
 		_update_drawing_entry()
 
 func _update_drawing_entry() -> void:
-	book.visible = not presentation.busy and in_drawing_area and not completed and not bridge_built and request.state != "PENDING"
+	book.visible = true
+	book.disabled = presentation.busy or not in_drawing_area or completed or bridge_built or request.state == "PENDING"
+	drawing_shine.set_active(not book.disabled)
 	book.text = "E / %s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
 	cancel_button.visible = not presentation.busy and request.state == "PENDING" and not completed
-
-func _on_coin(body: Node3D, coin: Area3D) -> void:
-	if body != player or not coin.visible or collected.has(coin.name):
-		return
-	collected[coin.name] = true
-	coin.hide()
-	_play("coin")
-	_update_hud()
 
 func _open_book() -> void:
 	if presentation.busy or completed or bridge_built or request.state == "PENDING":
@@ -168,7 +160,7 @@ func _submit() -> void:
 		status_label.text = "Drawing submitted, but the local PNG could not be saved."
 	_play("submit")
 	if request.state == "PENDING":
-		presentation.begin(_drawing_anchor())
+		presentation.begin(bridge.position)
 
 func _save_drawing(png: PackedByteArray) -> String:
 	if DirAccess.make_dir_recursive_absolute(drawing_export_directory) != OK:
@@ -208,23 +200,6 @@ func _on_request_state(state: String) -> void:
 			presentation.cancel()
 	_update_hud()
 
-func _drawing_anchor() -> Vector3:
-	var bounds := Rect2()
-	var started := false
-	for stroke in surface.strokes:
-		for point in stroke:
-			var screen: Vector2 = surface._to_screen(point)
-			if not started:
-				bounds = Rect2(screen, Vector2.ZERO)
-				started = true
-			else:
-				bounds = bounds.expand(screen)
-	if not started: return bridge.position
-	var camera: Camera3D = $StageCamera
-	var center := bounds.get_center()
-	var hit = Plane(Vector3.UP, bridge.position.y).intersects_ray(camera.project_ray_origin(center), camera.project_ray_normal(center))
-	return hit if hit is Vector3 else bridge.position
-
 func _finish_generation(id: String) -> void:
 	if presentation.busy:
 		await presentation.settled
@@ -243,7 +218,7 @@ func _finish_generation(id: String) -> void:
 			generated_visual.hide()
 			presentation.reveal(generated_visual.position)
 		else:
-			presentation.remove_cover()
+			presentation.cancel()
 		status_label.text = "That idea cannot support a crossing. Return to the riverbank and draw again."
 	_update_hud()
 
@@ -331,13 +306,12 @@ func _enter_woodland() -> void:
 
 func restart() -> void:
 	request.reset()
-	presentation.reset_coins()
-	$StageCamera.position = Vector3(8, 32, 8)
+	$StageCamera.transform = presentation.overview
+	$StageCamera.size = presentation.overview_size
 	_clear_generated_model()
 	surface.clear()
 	current_item = {}
 	current_png = PackedByteArray()
-	collected.clear()
 	unlocked = false
 	in_drawing_area = false
 	completed = false
@@ -351,7 +325,6 @@ func restart() -> void:
 	_update_hud()
 
 func _update_hud() -> void:
-	coins_label.text = "COINS  %02d / %02d" % [collected.size(), $Coins.get_child_count()]
 	_update_drawing_entry()
 	generation_modes.disabled = presentation.busy or request.state == "PENDING"
 	objective.text = "Follow the path into the woodland." if completed else ("Walk across your bridge." if bridge_built else "Find a way across the river.")
@@ -417,13 +390,6 @@ func _build_ui() -> void:
 	_label(title_stack, "PAWS & PEAKS   /   CHAPTER 01", 14)
 	title = _label(title_stack, "Across the River", 30)
 	objective = _label(title_stack, "Find a way across the river.", 17)
-	coins_label = _label(root, "", 18)
-	coins_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	coins_label.offset_left = -240
-	coins_label.offset_right = -28
-	coins_label.offset_top = 36
-	coins_label.offset_bottom = 64
-	coins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	generation_modes = OptionButton.new()
 	root.add_child(generation_modes)
 	for label in ["Mock bridge · No AI", "Sample model · No AI", "Live AI · Uses credits"]:
@@ -432,16 +398,13 @@ func _build_ui() -> void:
 	generation_modes.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	generation_modes.offset_left = -275
 	generation_modes.offset_right = -28
-	generation_modes.offset_top = 70
-	generation_modes.offset_bottom = 100
+	generation_modes.offset_top = 28
+	generation_modes.offset_bottom = 58
 	generation_modes.item_selected.connect(func(index: int):
 		generation.configure(index)
 		submit_button.text = "Generate · Uses credits" if index == 2 else "Submit drawing"
 		status_label.text = "Live generation selected." if index == 2 else "Offline preview selected."
 	)
-	coins_label.add_theme_color_override("font_color", Color("fff9ed"))
-	coins_label.add_theme_color_override("font_outline_color", Color("273d36"))
-	coins_label.add_theme_constant_override("outline_size", 4)
 	var sound_button := _button(root, "Sound: on", func():
 		muted = not muted
 	)
@@ -450,8 +413,8 @@ func _build_ui() -> void:
 	sound_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	sound_button.offset_left = -180
 	sound_button.offset_right = -28
-	sound_button.offset_top = 128
-	sound_button.offset_bottom = 172
+	sound_button.offset_top = 86
+	sound_button.offset_bottom = 130
 	status_label = _label(root, "Follow the pink path to the river.", 19)
 	status_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status_label.position += Vector2(28, -154)
@@ -476,6 +439,7 @@ func _build_ui() -> void:
 	book.offset_top = -92
 	book.offset_bottom = -28
 	book.add_theme_font_size_override("font_size", 20)
+	drawing_shine = preload("res://ui/drawing_shine.gd").attach(book)
 	cancel_button = _button(root, "Stop waiting", func():
 		request.cancel()
 		status_label.text = "Stopped waiting. Your drawing is saved." + (" The provider job may still be running." if generation.mode == 2 else "")
@@ -484,8 +448,8 @@ func _build_ui() -> void:
 	cancel_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	cancel_button.offset_left = -240
 	cancel_button.offset_right = -28
-	cancel_button.offset_top = -92
-	cancel_button.offset_bottom = -28
+	cancel_button.offset_top = -150
+	cancel_button.offset_bottom = -102
 	modal = Control.new()
 	modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_root.add_child(modal)
@@ -584,7 +548,7 @@ func _tone(cue: String) -> AudioStreamWAV:
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = 22050
-	var notes: Array = {"coin": [784.0, 1046.5], "ready": [523.25, 659.25, 784.0], "bridge": [392.0, 523.25, 659.25, 784.0], "submit": [440.0, 523.25]}[cue]
+	var notes: Array = {"ready": [523.25, 659.25, 784.0], "bridge": [392.0, 523.25, 659.25, 784.0], "submit": [440.0, 523.25]}[cue]
 	var samples := PackedByteArray()
 	var note_samples := 2646
 	samples.resize(note_samples * notes.size() * 2)

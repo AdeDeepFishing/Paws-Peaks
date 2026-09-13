@@ -1,8 +1,9 @@
 # Stage 02: woodland path integration
 
-Updated: 2026-09-12. This is a playable environment preview. The E02 dog confrontation,
-accepted drawing actions, combat rules and gameplay progression to E03 are still unspecified
-or unimplemented; this scene does not claim those mechanics are complete.
+Updated: 2026-09-13. Stage 2 now includes the drawing-driven dog distraction encounter
+for issue #38. FOOD and TOY make the dog collect the offering and open the path. See
+[DOG_ENCOUNTER.md](DOG_ENCOUNTER.md) for current behavior and verification. The
+environment and earlier static-dog notes below record the original integrations.
 
 ## Source and project ownership
 
@@ -97,3 +98,11 @@ the GLBs; runtime does not depend on Downloads.
 Verification: `woodland_smoke.gd` passes, including a swept player collision against
 this dog's body. `woodland_exit_smoke.gd` passes for the existing full-width exit.
 Desktop renders verify the dog's visibility, facing and scale in the woodland.
+
+## Current dog behavior: issue #38
+
+The static-body implementation above has been replaced by the supplied
+`Scene2_warewolf` rig with Idle, Idle Alert, Jump, Walk, Run and Rest Pose. The
+full-width exit is now conditional on successful food/toy collection. Players
+cannot bypass the dog by sprinting, jumping or walking around it. See
+[DOG_ENCOUNTER.md](DOG_ENCOUNTER.md) for the complete current integration.

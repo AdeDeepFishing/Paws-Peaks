@@ -1,6 +1,6 @@
 # Paws & Peaks — Game Jam Specification
 
-> Version: 0.7 | Updated: 2026-09-12 | Status: Working draft
+> Version: 0.8 | Updated: 2026-09-13 | Status: Working draft
 >
 > Team: Four Otters — two designers and two developers, all new to Godot.
 > Production: September 12–15, 2026 (Asia/Tokyo, JST, UTC+09:00). September 12 is Day 1; production and asset generation may begin now, as confirmed by the team.
@@ -48,16 +48,16 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 2. Keep the player's artwork visible. The resulting object retains the original drawing in its card and use sequence.
 3. Support multiple reasonable solutions. The working target remains at least two supported routes per stage; specific routes and thresholds require team agreement and are not established solely by the concept illustration.
 4. Explain the outcome. Success and unsuccessful attempts communicate why the object did or did not help.
-5. Keep trying inexpensive. Coins reward exploration; a lack of coins or an exhausted item must never block the next essential drawing.
+5. Keep trying inexpensive. Essential drawings stay free, and an exhausted item must never block the next attempt.
 6. Combine open expression with finite mechanics. The player draws freely; the game executes a small set of implemented effects.
 7. Let the player explore. Walking through the world and approaching problems are part of the experience.
 8. Make music, sound effects, English narration, and dialogue part of the experience.
-9. Keep AI processing non-blocking. Players can explore and collect coins while a submitted drawing is being analyzed.
+9. Keep AI processing non-blocking. Players can explore while a submitted drawing is being analyzed; E01 holds its construction camera as specified in #37.
 
 ### Audience and session
 
 - First-time judges and casual players; no drawing or game expertise required.
-- Target main-path playthrough: approximately 5–10 minutes; optional coin exploration may extend this. Check both with actual playtests.
+- Target main-path playthrough: approximately 5–10 minutes; optional exploration may extend this. Check both with actual playtests.
 - Primary target: desktop browser, keyboard and mouse or trackpad.
 - No player account, personal API key, or installation required for the intended Web release.
 - Mobile controls, pen pressure, and full keyboard-only drawing are outside the baseline unless competition rules require them. Controller traversal and panel navigation are an explicitly requested extension; drawing still uses a mouse or trackpad.
@@ -80,8 +80,8 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 | World presentation | Original direction; implementation proposal below | Small 3D storybook environment, potentially using flat illustrated characters and props |
 | Movement abilities | Requested | Walking, jumping, sprinting, physics pushing, and climbing; bounded implementations in Section 4 |
 | Camera and input details | First-stage prototype confirmed | Fixed camera per stage; E01 uses an overhead orthographic view. WASD or arrow keys follow camera yaw; Space, Shift; E/click opens transparent scene drawing at designated locations; drawing locks movement and hides the normal HUD. Later camera compositions follow designer deliveries. Push/climb remain later work |
-| Coins and AI waiting | Requested | Collect along routes and in nearby activity areas while AI runs in the background |
-| Coin spending | Open | Default proposal: collection count and an ending reward; essential drawings stay free |
+| Coins and AI waiting | Updated September 13, #37 | Coins removed globally; E01 camera holds the construction view while processing |
+| Coin spending | Removed, #37 | No coin economy or tally; essential drawings stay free |
 | Language | Confirmed | English throughout the game and repository |
 | Audio mood | Confirmed | Warm, comforting, and slightly playful |
 | Background music and SFX | Confirmed | Required, with player volume controls |
@@ -102,7 +102,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
 - The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
-- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, collectible coins, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E02–E05 gameplay, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
+- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E03–E05 gameplay, and Web deployment remain incomplete. E02 now implements the food/toy distraction encounter described below. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 - Character integration update (2026-09-12): both playable scenes now use the supplied
   Moonlit Wanderer skinned model with idle, walk and run clips. Jumping retains a
@@ -130,7 +130,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 | F11 | Web delivery | Hosted build supports movement, drawing, requests, sound, and a complete playthrough |
 | F12 | Readability | Legible text, clear interaction prompts, and visual/text equivalents for necessary audio information |
 | F13 | Submission package | Required playable URL and gameplay video, plus instructions, credits/notices, known limitations, and recorded submission confirmation |
-| F14 | Coins | Route and nearby activity pickups, session counter, one-time collection, and ending tally |
+| F14 | Retired: coins (#37) | No coin pickups, counters, spending, or ending tally in the active game |
 | F15 | Background interpretation | Move and collect during processing; receive a non-modal ready/error notification and inspect when safe |
 
 ### P1 — Only after P0 works end to end
@@ -147,21 +147,21 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Arbitrary sketch-to-3D mesh generation, rigging, generated collision, or unique generated mechanics.
 - A large open world, unrestricted wall climbing, advanced parkour, swimming controls, moving-platform puzzles, or arbitrary physics construction. Basic jump/sprint, fixed stage views, designated climbing, and bounded crate pushing are included.
 - A general-purpose real-time combat framework, equipment progression, or deep weapon balancing. The dog confrontation and final boss are required, but their approved mechanics may be compact authored actions; do not assume they can be omitted or require a full combat engine.
-- Mandatory paid drawing attempts, a full shop/trading system, and a crafting economy. Collectible coins are included; optional spending remains a separate decision.
+- Mandatory paid drawing attempts, a full shop/trading system, and a crafting economy. Coin pickups, spending and tallies are removed by #37.
 - Multiplayer, accounts, leaderboards, cloud saves, and mandatory persistent progress.
 - Free-form NPC chat, player voice input, runtime music generation, and mandatory runtime speech synthesis of every generated item. Pre-generated narration and key NPC dialogue are included.
 - Pet progression, a general companion navigation system, or dynamically simulated bridges and water.
 
 ## 4. Exploration, traversal, camera, and coins
 
-**Free exploration, coin collection, and something to do during AI processing are baseline requirements.** The requested traversal abilities are included as small, testable implementations rather than an unrestricted parkour system.
+**Free exploration and recoverable AI processing remain baseline requirements. Coins are removed globally by #37.** The requested traversal abilities are included as small, testable implementations rather than an unrestricted parkour system.
 
 ### World layout
 
 - One compact 3D route with five ordered stage zones: river, large dog, crows, otter, and final boss. Previously opened areas remain accessible; the exact ending location is still a story decision.
-- Place coins along the route between encounters and in optional pockets near each drawing interaction.
-- Each processing area offers a short loop: a few ground coins, a low jump ledge, or a reusable traversal toy. Players can start exploring immediately after submission.
-- Place at least one small pushable crate and one marked climb route in the game. These are optional coin detours, so controller problems cannot block the main drawing path.
+- Keep routes and waiting areas traversable without collectible-coin detours.
+- Each processing area offers a short loop: a low jump ledge or a reusable traversal toy. Players can start exploring immediately after submission.
+- Place at least one small pushable crate and one marked climb route in the game. These are optional traversal detours, so controller problems cannot block the main drawing path.
 - Keep the main route readable through landmarks, NPC placement, and visible gates; do not require a minimap.
 - Keep main-route travel short, initially about 10–20 seconds between encounters. Optional detours should be nearby, not lengthy distractions from the result.
 - Route gates must remain effective against sprint-jumps and crate-assisted jumps. Validate maximum reach when setting their geometry.
@@ -192,25 +192,21 @@ WASD or arrow keys move the character; mouse input controls interactions and dra
 - The cursor stays visible during exploration and drawing. Neither mouse motion nor movement changes the stage camera. Drawing suspends player movement; closing or submitting restores it. Verify input focus separately in the browser.
 - Pushable crates have limited mass/force, simple collision, and a bounded area. Reset displaced crates to an authored position when needed; prevent launches, gate bypasses, and permanent blockage.
 - Climbing means designated ladders/vines with safe entry and exit. Arbitrary mountain-wall climbing is not assumed and remains a question for the user.
-- Falling or becoming stuck returns the player to a safe checkpoint, preserving collected coins, solved encounters, and the active AI request. Do not reload the entire scene or restart the network call.
+- Falling or becoming stuck returns the player to a safe checkpoint, preserving solved encounters and the active AI request. Do not reload the entire scene or restart the network call.
 - The otter can appear at scripted locations; a companion navigation system is not required.
 
-### Coin rules
+### Coins removed (#37)
 
-- Working name: Coins. Use original artwork/audio or properly licensed assets; Mario is a reference for the collection feel, not an asset source.
-- Each coin has a stable ID and can be collected once per session. Pickup increments a visible counter and triggers brief visual and audio feedback.
-- Keep a small total coin budget and distribute it across the five-stage route, including safe activity pockets near drawing interactions. Replan counts after grayboxing; the previous three-zone allocation is retired, and no new fixed total is confirmed.
-- Coins are present regardless of whether AI is processing. Do not spawn rewards only after submitting or respawn them when a request retries.
-- Default proposal pending user feedback: use coins for a completion tally and an ending badge/message. No mandatory drawing fee, no loss on failed recognition, no lives system, and no hard coin gate.
-- If spending is later chosen, basic drawings remain free; spending may buy optional cosmetic or bonus opportunities. That economy requires an explicit update before implementation.
-- Canceling, timing out, receiving a result, and respawning do not erase collected coins. Full New Game resets them.
-- Once nearby coins are collected, players can still traverse or revisit the crate/climb interaction. Coins are a pleasant activity, not a substitute for latency reduction or failure recovery.
-- Never delay an already-ready AI result to make the player finish collecting coins. Coin detours remain available afterward.
+The September 13 direction removes coins from all active stages. Do not spawn
+pickups, show a counter or ending tally, play coin pickup sounds, or use a coin
+economy to gate drawing. The earlier coin/reward proposals are superseded.
+The existing collectible implementation was in E01; later active stages have no
+coin pickups. Original dungeon reference assets are separate from this gameplay.
 
 ## 5. Player flow and asynchronous state
 
 ```text
-Start -> Narration -> Explore / collect -> Approach stage target -> Observe / dialogue -> Draw
+Start -> Narration -> Explore -> Approach stage target -> Observe / dialogue -> Draw
                                                                          |
                                                                        Submit
                                                                          |
@@ -235,12 +231,12 @@ The previous blocking INTERPRETING game state is removed. **A pending network re
 
 | Player/UI state | Behavior |
 |---|---|
-| EXPLORING | Walk, jump, sprint, collect, push, climb, and inspect scenery |
+| EXPLORING | Walk, jump, sprint, push, climb, and inspect scenery |
 | DIALOGUE / OBSERVING | Read/listen to encounter dialogue; open drawing or return |
 | DRAWING | Edit a draft; movement and camera input are suspended |
 | ITEM_VIEW | Read artwork, interpretation, and stats; close, redraw, or use if near the correct target |
 | RESOLVING | Watch a short authored result; player movement is temporarily suspended |
-| ENDING | Read/listen to conclusion, see coin tally, view credits, or restart |
+| ENDING | Read/listen to conclusion, view credits, or restart |
 
 | Request state | Behavior |
 |---|---|
@@ -264,7 +260,7 @@ The previous blocking INTERPRETING game state is removed. **A pending network re
 - Cancel/restart invalidates old results. Check the session/request identity on every completion. A local fall/respawn preserves the same identity.
 - A valid new item replaces the old item only for the same active encounter. Failed requests do not delete an existing usable item.
 - Closing and reopening the drawing panel preserves its draft. Canceling a UI panel is distinct from canceling a submitted request.
-- Solved encounters and coin IDs persist throughout the session. Full restart resets progress, items, drafts, coins, pending context, and one-shot dialogue flags.
+- Solved encounters persist throughout the session. Full restart resets progress, items, drafts, pending context, and one-shot dialogue flags.
 - Keep an upper bound on waiting even while the player is occupied. Re-evaluate deadlines when the browser regains focus; hidden-tab suspension must not leave a request pending indefinitely.
 - No required persistent save in this release. Refresh may restart the session; record that limitation in the README.
 
@@ -279,7 +275,7 @@ The image's Japanese writing is reference material only. All shipped titles, nar
 | ID | Working English title | Confirmed content | Still to decide |
 |---|---|---|---|
 | E01 | Across the River | The player needs to reach the far bank of a river too wide to cross unaided; draw something useful | Supported crossing objects, alternative routes, trigger and reach/size rules |
-| E02 | The Large Dog | A large growling dog blocks the path; the player must deal with the confrontation | Exact weapon/action interaction, whether alternatives are supported, damage/retreat conditions, retries |
+| E02 | The Large Dog | Draw food or a toy to distract the dog and clear its guarded path (#38) | Live recognition playtesting and final audio |
 | E03 | The Crows | A flock descends and blocks or harasses the player; draw an object to deal with them | How shielding/repelling works, accepted alternatives, duration and success condition |
 | E04 | Meeting the Otter | The player meets an otter in the fourth stage | What it needs, how the player helps or interacts, and any later help/reward |
 | E05 | Final Boss | The fifth stage is the final boss encounter | Final identity/presentation, phases or actions, winning strategy, failure/retry rules, and ending |
@@ -287,6 +283,17 @@ The image's Japanese writing is reference material only. All shipped titles, nar
 E01–E05 now have these meanings in scene configuration, prompt context, fixtures, scripts, and voice manifests. The former otter-bag tutorial, stolen-sign crow scenario, and final broken crossing are superseded; do not implement them as additional levels.
 
 ### E01 — Across the River
+
+- **Confirmed September 13, #37:** move the bridgehead stone and its painted overlay
+  away from the crossing while retaining collision at the new position. Bring the
+  normal view approximately 18% closer and double the Stage 1 character visual.
+- **Generation camera:** slowly focus the construction site over two seconds; hold
+  that view throughout processing; reveal the finished object for two seconds,
+  then ease back to normal over one second. Fast results wait for the opening
+  move. Cancellation/failure restores the normal view. Exploration and cancellation
+  remain available after the initial camera move, while camera following pauses.
+- **Coins:** removed globally, including pickups, HUD counters and release effects.
+  See [current implementation and validation](3d_game/ENCOUNTER_FLOW.md).
 
 - **Confirmed classification (September 13):** backend classes are BRIDGE, BOAT, UNKNOWN. This changes recognition categories; it does not implement the deferred boat/raft traversal route.
 
@@ -297,20 +304,36 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - Use authored crossing positions and a safe endpoint instead of simulating water or arbitrary bridge construction. Prevent normal jumps or crate-assisted jumps from bypassing the intended crossing.
 - While analysis runs, the player may explore and collect in a safe near-bank pocket. Returning a ready result must not start the crossing automatically.
 - **Completion:** using an accepted object gets the player safely to the far bank and opens E02.
-- **Acceptance:** the player learns draw -> submit -> explore while waiting -> inspect -> use; approved crossing routes work; failures permit retry without losing coins.
+- **Acceptance:** the player learns draw -> submit -> explore while waiting -> inspect -> use; approved crossing routes work; failures preserve the draft and permit retry.
 
 ### E02 — The Large Dog
 
-- **Confirmed classification (September 13):** backend classes are FOOD, TOY, WEAPON, UNKNOWN. These are recognition categories; their gameplay effects and success rules remain to be defined.
-
-- **Confirmed premise:** a large growling dog stands in the player's way.
-- **Reference example:** the image shows the player with a drawn sword. A drawn weapon confronting the dog is the reference direction; exact attack and victory rules have not been specified in the meeting.
-- **Implementation proposal:** start with one bounded, pre-authored confrontation action rather than building a general combat engine. The team must decide whether it is a click-to-use sequence, timed action, or short real-time exchange.
-- Define which types/tags can trigger the action, how accepted attack_power/range/speed/durability affect it, and how the dog yields, retreats, or is otherwise overcome. Do not invent fixed health values or a final damage formula in this document.
-- Food, distraction, intimidation, or other alternatives may be discussed, but none is confirmed merely because the previous spec had FOOD or SOUND tags.
-- Provide a safe processing pocket; retries and recognition delays must not expose the player to unavoidable harm.
-- **Completion:** the approved resolution clears the dog obstruction and unlocks E03.
-- **Acceptance:** the intended drawn object visibly participates in the confrontation; the approved success and failure rules are observable and cannot soft-lock the route.
+- **Confirmed September 13, issue #38:** this is a drawing-driven distraction encounter.
+  It supersedes the earlier sword/confrontation proposal. The dog normally plays Idle,
+  plays Idle Alert when the protagonist approaches, and walks or runs across the path
+  to intercept attempts to pass. There is no damage or combat requirement.
+- Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
+  TOY (for example a toy bone) with positive durability are the supported solutions.
+  WEAPON and UNKNOWN give a contextual retry; they never open the route.
+- A successful object appears at the authored roadside offering spot with the original
+  sketch visible. The dog jumps once, runs toward it, slows to a walk, then collects
+  it and displays a heart and “Thank you!” while remaining off the path.
+- The forward boundary is blocked at every lateral position and jump height until
+  collection finishes. The E03 exit also checks encounter completion independently.
+  Once cleared, the full-width z=-28 exit works as before.
+- One accepted offering consumes one durability. Attack, range and speed remain item
+  metadata; dog travel speed and the offering position are authored. No damage formula
+  or item-stat combat thresholds are introduced.
+- Drawing pauses protagonist input and dog pursuit. Processing restores exploration;
+  it cannot unlock passage. Failed, unclear and canceled results preserve the draft
+  for retry, and stale/duplicate results cannot replay the resolution.
+- The drawing button stays visible during exploration and glows near an available
+  challenge. The normal HUD is hidden while drawing. E02 allows drafting away from
+  the dog, but submission/offer requires returning within interaction range.
+- **Completion:** the dog collects FOOD or TOY, leaves the main path clear, and unlocks E03.
+- **Verification status:** desktop/offline integration and recovery are covered in
+  [the implementation note](3d_game/DOG_ENCOUNTER.md). This does not assert paid live
+  recognition accuracy or Web backend availability.
 
 ### E03 — The Crows
 
@@ -355,7 +378,7 @@ The type/stat JSON contract remains required. Effect tags below are a working vo
 | FLOATS | Functions as a flotation aid | Raft or flotation ring; candidate for E01 |
 | STURDY | Provides firm support | Solid board; candidate for a crossing solution |
 | PROTECTS | Provides cover or shielding | Shield or umbrella; proposed addition for E03, subject to rule confirmation |
-| FOOD | Something an animal may consider food | Available vocabulary; no E02/E04 feeding solution is finalized |
+| FOOD | Something an animal may consider food | E02 accepts FOOD to distract the dog; E04 feeding is not established |
 | SOUND | Produces noticeable sound | Available vocabulary; deterrent effectiveness must be agreed per stage |
 | OTHER | No supported effect applies | Unrelated object |
 
@@ -486,7 +509,7 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - Godot checks the same contract and displays only the accepted numbers. No raw model output directly changes the game.
 - UNKNOWN is an item type; OTHER is an exclusive effect tag. They are different fields. Uncertain recognition still returns `item: null` rather than inventing an item.
 - Type is not a winning-answer lookup. Keep effect tags because category alone does not determine whether an object solves the encounter.
-- P0 includes all stats in real AI output, validation, and the item card. Finalize their concrete use in the E02 dog confrontation and E05 boss rule sheets; any E01 span/reach threshold remains a candidate rather than the former bag-retrieval rule. `speed` can scale an approved use sequence; `durability` decrements only after a successful use commits once.
+- P0 includes all stats in real AI output, validation, and the item card. E02 consumes one durability on an accepted offering; finalize remaining stat use in the E05 boss rule sheet; any E01 span/reach threshold remains a candidate rather than the former bag-retrieval rule. `speed` can scale an approved use sequence; `durability` decrements only after a successful use commits once.
 - Failed attempts, inspection, drawing, network errors, and canceled actions never spend durability. An exhausted item can always be replaced with a free basic drawing; no progression soft-lock.
 - Define whether and how `attack_power` affects the approved dog/boss actions before implementing those stages. It remains informational for unrelated actions. Do not apply arbitrary model numbers directly to health or invent a full combat engine merely to consume the field.
 - Do not derive an overall Power Score yet. Keep each field interpretable and avoid rewarding unrealistic text written into the sketch.
@@ -500,7 +523,7 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - Disable repeated submission while waiting, not player movement. Ignore canceled/obsolete replies while preserving valid replies received after ordinary exploration.
 - Client cancellation does not guarantee the provider stopped processing or charging.
 - Manual mode allows players to select a supported purpose and uses the same encounter rules. Label it “Manual mode” or equivalent; never imply AI recognized the image.
-- Fallback must allow completion, but it cannot count as proof that the real AI integration works. Do not artificially extend processing to match a coin route or a voice clip.
+- Fallback must allow completion, but it cannot count as proof that the real AI integration works. Do not artificially extend processing to match a traversal route or a voice clip.
 
 ### Credentials, spending, and images
 
@@ -525,12 +548,12 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 ### Required interface
 
 - Title: game name, Start, controls preview, sound control, and Credits.
-- World: proximity prompt, current objective, coin counter, non-modal AI pending/ready/error status, and sound control.
+- World: proximity prompt, current objective, non-modal AI pending/ready/error status, and sound control.
 - Encounter panel: problem, Draw, current item if available, and Back.
 - Canvas: drawing area, Undo, Clear, Submit, and Back/Cancel.
 - Item card: sketch, name, interpretation, five required item fields, Use, and Draw again.
 - Feedback: outcome and the next available action.
-- Ending: narrated completion, coin tally, Restart, and Credits.
+- Ending: narrated completion, Restart, and Credits.
 - Sound panel: Music, SFX, and Voice sliders, plus global mute; retain values during the session. English subtitles remain available when Voice is muted.
 
 ### Asset requirements
@@ -584,7 +607,6 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 | `sfx_item_use` | P0 | Apply an item | Shared sound is sufficient initially |
 | `sfx_success` | P0 | Encounter success or ending | Matches the visual outcome |
 | `sfx_try_again` | P0 | Unsuitable object or recoverable input | Gentle and brief |
-| `sfx_coin_pickup` | P0 | First collection of a coin ID | Responsive; rapid pickups have bounded voices/volume |
 | `sfx_jump_land` | P0 | Takeoff/landing | No ground-contact jitter retrigger; reuse a suitable sound if needed |
 | `sfx_ai_ready` | P0 | Background analysis completes | One restrained cue; does not interrupt Voice |
 | `ambience_nature` | P1 | Wind, water, birds | Quiet and consistent with mute controls |
@@ -612,7 +634,7 @@ Minimum delivery: **one BGM track, ten SFX event categories, and the agreed narr
 - Godot 4.7.2 Standard and GDScript, with a shared engine version across the team.
 - Compatibility rendering and an initial single-threaded Web export.
 - A small 3D world with bounded jump/sprint, fixed stage camera, a small pushable crate, and a designated climb route; drawing remains a separate 2D UI.
-- Reuse one suitable CharacterBody3D-based controller/starter after a compatibility spike. Validate movement, coins, camera, and respawn in a graybox; do not combine several complete controller frameworks.
+- Reuse one suitable CharacterBody3D-based controller/starter after a compatibility spike. Validate movement, camera, and respawn in a graybox; do not combine several complete controller frameworks.
 - Godot owns the game. A lightweight server endpoint owns the model call.
 - Vercel is a deployment candidate; verify hosting configuration, function limits, payload sizes, timeouts, and credits before choosing it.
 - Keep exported builds and `.godot/` cache out of source commits.
@@ -629,7 +651,6 @@ Minimum delivery: **one BGM track, ten SFX event categories, and the agreed narr
 | EncounterController | Tag rules, result sequence, route unlocking | Generated code execution |
 | ItemCard | Original artwork, text, Use and Redraw actions | Credentials |
 | AudioManager | Music, SFX, Voice, mixing, volume, mute | Gameplay success |
-| CoinManager | Collected IDs, counter, session reset, ending tally | AI retries or drawing permission |
 | DialogueController | Line IDs, subtitles, recorded clips, Next/Skip and replay policy | Provider credentials or invented live speech |
 
 Suggested folders, to create only when needed:
@@ -666,7 +687,7 @@ Decide the server code location after selecting the hosting approach. Fixed resp
 - Open it on another team member's device to expose local-path or developer-session dependencies.
 - Initial primary acceptance browser: desktop Chrome. Perform a basic Safari smoke check and record differences.
 - If the competition mandates a browser or embedded player, test that exact environment as well.
-- Verify movement/jump/sprint, fixed camera, push/climb, focus changes, canvas coordinates, route gates, and coin collection while a real request is pending.
+- Verify movement/jump/sprint, fixed camera, push/climb, focus changes, canvas coordinates, route gates, and recovery while a real request is pending.
 - Confirm endpoint origin and cross-origin configuration for the final URL.
 - Confirm Music/SFX/Voice after Start, subtitles/Skip, independent volumes, mute/unmute, long looping, pickups, and tab changes.
 - Keep test modes, internal errors, and secrets out of the public player experience.
@@ -680,7 +701,7 @@ Decide the server code location after selecting the hosting approach. Fixed resp
 |---|---|---|
 | Yanwen (Developer A) | Movement, camera, drawing canvas and PNG output, first river stage, client-side interaction/integration | Explore, open the sketchbook, draw, submit PNG, and use a returned idea to cross a placeholder bridge |
 | Beichun (Developer B) | AI interface, backend requests, image interpretation, validated JSON response | Accept Yanwen's PNG request and return real structured results without blocking exploration |
-| Designer A | Art direction, player/NPC assets, compact level and coin-route layout | One readable zone with an optional nearby coin pocket |
+| Designer A | Art direction, player/NPC assets, compact level and waiting-area layout | One readable zone with an optional nearby activity pocket |
 | Designer B | Encounter rules/stat budgets, English script, ElevenLabs voice production, music/SFX, playtests | Solution/stat matrix, short script manifest, and audio samples |
 
 - The developer split above is confirmed by the Day 1 task sheet. Designer responsibilities remain proposals. Assign final dialogue/voice wiring and Web deployment ownership explicitly; those are not implemented by the river prototype.
@@ -715,9 +736,9 @@ The five-stage route is now the baseline. E04 and E05 have reserved places but i
 
 | Day / date | Main work | Exit condition |
 |---|---|---|
-| Day 1 — Sat, Sep 12 | Reuse/Web spike; controls and coins; drawing and real JSON; E01 river prototype; refine E02/E03 rules; discuss E04/E05 | Hosted E01 drawing-to-crossing loop works with exploration during processing; E02/E03 have concrete next tasks; unresolved E04/E05 choices have named discussion owners |
+| Day 1 — Sat, Sep 12 | Reuse/Web spike; controls; drawing and real JSON; E01 river prototype; refine E02/E03 rules; discuss E04/E05 | Hosted E01 drawing-to-crossing loop works with exploration during processing; E02/E03 have concrete next tasks; unresolved E04/E05 choices have named discussion owners |
 | Day 2 — Sun, Sep 13 | Complete E01–E03 interactions, safe async handling, traversal, dialogue controls; build E04/E05 from approved rules | First three stages are playable in order; E04/E05 rules are recorded and integrated or explicitly flagged as incomplete, not silently replaced by old scenarios |
-| Day 3 — Mon, Sep 14 | Complete all five stages and ending; integrate art/voice; test full route; prepare gameplay recording | Beginning-to-ending five-stage build works; final content, narrated beats, coin tally, and principal blockers are addressed |
+| Day 3 — Mon, Sep 14 | Complete all five stages and ending; integrate art/voice; test full route; prepare gameplay recording | Beginning-to-ending five-stage build works; final content, narrated beats and principal blockers are addressed |
 | Day 4 — Tue, Sep 15 | Feature freeze; browser regression; final video; license/credits check; submit and verify | Both required deliverables are submitted before 21:00 JST if possible; yanwen takes over any missing submission at 21:00; hard cutoff 23:59 JST |
 
 ### Decision gates
@@ -731,7 +752,7 @@ The five-stage route is now the baseline. E04 and E05 have reserved places but i
 
 ### Cut order and limits
 
-Reduce extra voices, second music, ambience, elaborate scenery, additional coin detours, and optional effects before removing a confirmed stage.
+Reduce extra voices, second music, ambience, elaborate scenery, additional traversal detours, and optional effects before removing a confirmed stage.
 
 The river, dog, crows, otter, and final boss are the agreed sequence. Reducing the stage count requires an explicit team decision and corresponding spec update; do not silently revert to the earlier three-stage plan.
 
@@ -748,9 +769,9 @@ These are proposed tasks, not issues already created on GitHub.
 | T03 | P0 | Walk/jump/sprint, fixed stage camera, interaction, checkpoint | Dev A | T02 | Grounded controls work; safe reset preserves session state |
 | T04 | P0 | Canvas, snapshot, undo/clear | Dev B | T01 | Valid PNG submission; no empty calls or cursor conflicts |
 | T05 | P0 | AI type/stats/tags contract and server bounds | Dev B + Designer B | T04 | All five requested fields returned and validated; malformed data is recoverable |
-| T06 | P0 | Coin IDs, route pickups, counter and tally | Dev A + Designer A | T03 | Each coin counts once; fall/retry does not reset or duplicate it |
+| T06 | Retired (#37) | Coin pickups, counter and tally removed | Dev A | None | Active scenes contain no coin pickups or counter |
 | T07 | P0 | Background request and non-modal ready/error lifecycle | Dev B | T03–T06 | Move/collect while pending; late reply, respawn, cancel and restart handled correctly |
-| T08 | P0 | E01 river crossing and original-art stat card | Both devs | T05, T07 | Real drawing enables an approved safe crossing after a coin detour; narrator guides the first drawing |
+| T08 | P0 | E01 river crossing and original-art stat card | Both devs | T05, T07 | Real drawing enables an approved safe crossing after the generation presentation; narrator guides the first drawing |
 | T09 | P0 | Bounded crate pushing and designated climb route | Dev A | T03, T06 | Safe optional traversal, no gate bypass or permanent blockage |
 | T10 | P0 | Finalize E01–E03 solution rules and implement dog/crow interactions | Designer B + Dev A | T08 | Confirmed river/dog/crow premises implemented; accepted alternatives, stat use, gates and retry rules documented |
 | T11 | P0 | English script and ElevenLabs production | Designer B | T10; T17/T18 for later-stage lines | Narrator covers E01 tutorial; E04/E05 voice is based on approved designs, with matching subtitles |
@@ -775,19 +796,18 @@ These are proposed tasks, not issues already created on GitHub.
 | Approach/leave an NPC | One relevant prompt appears and clears at the right range |
 | Open/close panels while holding movement | Character stops during panels and does not resume from stale input |
 | First real drawing | Original artwork plus all five required typed/bounded fields and tags become an item |
-| Submit and continue playing | Canvas closes; walk/jump/sprint/collect work while the request stays pending |
+| Submit and continue playing | Canvas closes; walk/jump/sprint work while the request stays pending |
 | AI returns during jumping, climbing, or dialogue | Non-modal notification persists; no camera theft, teleport, or speech interruption |
 | Leave origin area and revisit solved ground while pending | Result stays bound to the original encounter and can be inspected later |
-| Fall/respawn while pending | Request, coin IDs, solved states and narration flags remain valid |
-| Coins on path and near station | Collection works without a pending request; retry/timeout does not create extra coins |
-| All nearby coins collected or AI finishes immediately | No forced wait; progression and optional traversal remain available |
+| Fall/respawn while pending | Request, solved states and narration flags remain valid |
+| E01 generation timing | Camera stays in construction view until completion; finished object holds two seconds, then normal framing returns |
 | Empty drawing | No network call; useful feedback |
 | Release pointer outside canvas | Stroke ends correctly; other controls remain usable |
 | Undo, clear, and reopen canvas | Draft behavior matches Section 7; progress is unchanged |
 | Confirmed stage order | River -> large dog -> crows -> otter -> final boss; no extra old scenario or skipped stage |
 | Approved solution routes | Every finalized route is tested; two per stage remains the design target, not evidence of implemented routes |
 | E01 river crossing | Approved drawing enables safe bank-to-bank traversal and opens E02 |
-| E02 large dog | Approved weapon/action visibly resolves the confrontation and opens E03 |
+| E02 large dog | FOOD/TOY visibly distracts the dog; collection opens E03; bypasses and unrelated drawings remain blocked |
 | E03 crows | Approved protection/repelling effect resolves the flock and opens E04; no stolen-sign objective |
 | E04 otter | Matches the task/outcome the team eventually records; a placeholder does not pass |
 | E05 boss | Approved strategy, retry and victory rules work; not marked done while design remains open |
@@ -800,13 +820,13 @@ These are proposed tasks, not issues already created on GitHub.
 | Rapid Submit or Use clicks | One pending request and one resolution; no duplicate effects |
 | Revisit solved encounter | Progress stays solved; rewards/sequences do not repeat |
 | E01 crossings and E05 ending transition | Crossing endpoints are safe; boss resolution reaches the approved ending without requiring an invented bridge or otter-help condition |
-| Ending and restart | Narrated ending and coin tally; full restart resets world/items/draft/coins/request generation and story flags |
+| Ending and restart | Narrated ending; full restart resets world/items/draft/request generation and story flags |
 | Muted playthrough | All required information remains understandable; SOUND tags still work |
 | Two BGM loops, sustained drawing, rapid clicks | No obvious seam, duplicate music, clipping from piled-up sounds, or SFX spam |
 | Walk, stop, push against wall, open panel | Footsteps reflect actual movement and stop correctly |
 | Music/SFX/Voice volumes and mute/unmute | Independent levels and chosen values respected; English subtitles remain available |
 | Dialogue Next/Skip, missing voice, repeat trigger | No duplicate progression or stuck panel; subtitle remains accurate; one-shot clips do not spam |
-| Voice plus coin/AI-ready cues | Dialogue remains intelligible; no overlapping spoken lines; music returns to its chosen volume |
+| Voice plus AI-ready cues | Dialogue remains intelligible; no overlapping spoken lines; music returns to its chosen volume |
 | Hide tab, return, and restart | No duplicate music or unwanted unmuting; no stuck movement |
 | Two target window sizes | Readable text, accessible controls, correct drawing coordinates |
 | Final URL on teammate device | Movement, drawing, AI, audio, and all five stages through the ending work |
@@ -823,10 +843,10 @@ Test with at least two people who did not build the game. Let them begin without
 - Do they recognize their artwork in the object and its use?
 - Is a reasonable drawing rejected without a satisfying explanation?
 - Does at least one outcome create a moment of surprise or delight?
-- Are traversal and coins enjoyable during a deliberately slow test response? Do players notice readiness and know how to return to their encounter?
-- Does the wait remain acceptable when local coins are already gone, and can the player recover from failure without coaching?
-- Are narration/dialogue understandable and skippable? Are music, footsteps, pencil and coin sounds comfortable, and are Voice/mute controls easy to find?
-- Does the main path roughly fit 5–10 minutes, with optional coin exploration extending it naturally?
+- Is traversal enjoyable during a deliberately slow test response? Do players notice readiness and know how to return to their encounter?
+- Does the held construction view remain understandable during a long request, and can the player recover from failure without coaching?
+- Are narration/dialogue understandable and skippable? Are music, footsteps and pencil sounds comfortable, and are Voice/mute controls easy to find?
+- Does the main path roughly fit 5–10 minutes, with optional exploration extending it naturally?
 
 These are design targets. Record actual results and never mark untested behavior as passed.
 
@@ -844,16 +864,16 @@ Already settled: production has begun on September 12; five-stage order and the 
 |---|---|---|
 | E04 otter task and outcome | Meeting the otter is confirmed; what to do, accepted drawings, reward and later help are open | Proposed target: end of Day 1, before dependent implementation/assets |
 | E05 boss and winning strategy | Final boss is confirmed; identity/twist, actions, phases, stat use, retry and ending are open | Proposed target: end of Day 1, before dependent implementation/assets |
-| E01–E03 exact solution rules | Premises confirmed; raft/sword/shield-umbrella are reference examples, not a complete ruleset | Day 1 design/integration |
+| Remaining E01/E03 solution rules | E02 food/toy distraction is confirmed in #38; E01 alternatives and E03 action rules still need definition | Design/integration |
 | Submission portal and video details | URL and gameplay video required; video duration, format/hosting and portal fields not supplied | Before recording/final submission |
 | Judge browser/network and remaining asset/code rules | Web delivery planned; exact constraints and reuse/disclosure details still to verify | Early Day 1 |
 | Camera feel and player appearance | Fixed views per stage; E01 overhead orthographic. Later framing follows designers; illustrated or low-detail character | During controller spike |
-| Coin purpose | Count and ending reward proposed; optional spending undecided | Before economy/UI implementation |
+| Coin purpose | Removed globally by #37 | Settled September 13 |
 | Climbing scope | Marked ladder/vine and small crates proposed; not arbitrary walls | Before traversal implementation |
 | Final setting and ending presentation | Storybook trail; paper/story boss and narrator connection are visual-reference proposals | E05 design decision, before final art/voice |
 | Narrator/otter voices and exact English script | Pre-generated ElevenLabs clips and subtitles; later-stage lines await design | Before voice generation |
 | Audio sources | Instrumental BGM, SFX and scripted voices | Before final audio selection |
-| Item stat budgets and action coverage | Five fields required; dog/boss action rules determine their approved use | E02/E05 rules and integration |
+| Item stat budgets and action coverage | Five fields required; E02 uses one durability per offering; E05 stat effects remain open | E05 rules and integration |
 | AI provider/model, account owner, spending cap | Not selected | Before real integration/public access |
 | Named implementation owners | Role split remains a proposal; submission fallback already assigned to yanwen | Team task assignment |
 
@@ -871,7 +891,7 @@ See [REUSE_RESEARCH.md](3d_game/REUSE_RESEARCH.md) for source links, version pin
 1. Choose a specific commit/release; retain the code license and check bundled art/audio separately.
 2. Test in an isolated copy using our exact Godot version and Compatibility renderer.
 3. Verify Web export, mouse/UI switching, jump/sprint, pickup persistence, and checkpoint respawn.
-4. Keep request and coin state outside reloadable scenes. Replace any starter's whole-scene reload on falling.
+4. Keep request state outside reloadable scenes. Replace any starter's whole-scene reload on falling.
 5. Add bounded push/climb only where missing; do not assume the chosen starter includes them.
 6. Verify drawing snapshot/undo and prerecorded voice needs separately. A platformer base does not supply sketch interpretation.
 7. Record adopted upstream pins, local changes, licenses and required notices. Import no whole repository solely because it appears mature or popular.
@@ -891,6 +911,7 @@ This file is the shared scope reference and may be updated by teammates as decis
 
 | Version | Date | Change |
 |---|---|---|
+| 0.8 | 2026-09-13 | Confirmed #37 river framing, stone relocation, generation hold and global coin removal; #38 dog distraction and iridescent drawing prompt |
 | 0.7 | 2026-09-12 | Confirmed issue #12: location-gated full-viewport transparent drawing, hidden normal HUD, and cropped white-background black-ink PNG handoff |
 | 0.6 | 2026-09-12 | Fixed per-stage camera supersedes mouse orbit; E01 uses stag01 creek art and overhead orthographic framing; temporary otter trial removed |
 | 0.5 | 2026-09-12 | Team decision supersedes first-person with third-person: captured mouse orbit, camera-relative movement, independent visual facing, placeholder hiker, camera collision, and retained drawing input locks (issue #1) |
@@ -913,8 +934,8 @@ terrain/prop collision. See [implementation and verification](3d_game/ENCOUNTER_
 The supplied woodland environment is now available as a playable scene preview
 with its reference camera, wind/shadow animation and player movement. Stage 1
 now transitions into it when the player keeps walking along the far bank,
-without a completion modal. E02 dog confrontation and success rules remain open;
-this asset integration does not resolve those design decisions. See
+without a completion modal. This original environment integration did not settle
+E02 encounter rules; the September 13 issue #38 update below supersedes that status. See
 [Stage 02 integration](3d_game/STAGE02_INTEGRATION.md).
 
 ## September 12 asset update: Stage 3 Wind Hill
@@ -943,3 +964,20 @@ painted materials and exported animation, with native water and sky motion and
 live planar water reflections.
 E04 otter gameplay and Stage 5 remain open. See
 [Stage 04 integration](3d_game/STAGE04_INTEGRATION.md) for checks and visual limits.
+
+## September 13: Stage 2 dog interaction (#38)
+
+The approved E02 distraction rules above replace the earlier environment-only dog
+status and unrestricted Stage 2 exit. Six supplied animations are integrated into
+one model. The drawing button remains visible in the river and shared later-stage
+previews, with a glow when an implemented challenge is available. Preview stages
+without an implemented encounter keep the button inactive. See
+[Dog encounter implementation](3d_game/DOG_ENCOUNTER.md).
+
+## September 13: Stage 1 update (#37)
+
+The E01 rules above supersede the earlier construction/coin sequence: the far-bank
+stone is moved, the normal camera is closer, the hero visual is doubled, the camera
+holds until generation finishes plus a two-second result display, and coins are
+removed across active gameplay. Historical September 12 coin notes are retained
+only as change history. See [the current encounter flow](3d_game/ENCOUNTER_FLOW.md).

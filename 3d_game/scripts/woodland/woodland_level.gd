@@ -15,6 +15,10 @@ extends Node3D
 var spawn := Vector3(0, 2, 5)
 var reference: Transform3D
 var status: Label
+var objective: Label
+var hud_root: Control
+var draw_button: Button
+var drawing_shine: Control
 
 func _ready() -> void:
 	var art := get_node(art_path)
@@ -50,6 +54,7 @@ func _build_ui() -> void:
 	var hud := CanvasLayer.new()
 	add_child(hud)
 	var root := Control.new()
+	hud_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(root)
@@ -68,7 +73,7 @@ func _build_ui() -> void:
 	card.add_child(stack)
 	_label(stack, "PAWS & PEAKS  /  CHAPTER " + chapter, 14)
 	_label(stack, stage_title, 28)
-	_label(stack, "Explore the path · Scene preview", 16)
+	objective = _label(stack, "Explore the path · Scene preview", 16)
 	status = _label(root, "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint", 16)
 	status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status.position += Vector2(28,-52)
@@ -83,6 +88,21 @@ func _build_ui() -> void:
 	navigation.add_theme_constant_override("separation", 10)
 	root.add_child(navigation)
 	_navigation_button(navigation, "BackButton", return_label, return_scene, paper)
+	draw_button = Button.new()
+	draw_button.text = "E · Draw"
+	draw_button.icon = load("res://ui/pen.svg")
+	draw_button.disabled = true
+	draw_button.tooltip_text = "There is no drawing challenge in this preview yet."
+	root.add_child(draw_button)
+	draw_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	draw_button.offset_left = -240
+	draw_button.offset_right = -28
+	draw_button.offset_top = -108
+	draw_button.offset_bottom = -52
+	draw_button.add_theme_stylebox_override("normal", paper)
+	draw_button.add_theme_font_size_override("font_size", 20)
+	draw_button.add_theme_color_override("font_color", Color("273d36"))
+	drawing_shine = preload("res://ui/drawing_shine.gd").attach(draw_button)
 
 func _navigation_button(parent: Node, node_name: String, text: String, scene: String, paper: StyleBoxFlat) -> void:
 	var button := Button.new()

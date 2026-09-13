@@ -48,6 +48,8 @@ func _physics_process(delta: float) -> void:
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	move_and_slide()
+	if get_parent().has_method("constrain_player"):
+		get_parent().constrain_player(self)
 	var travel := Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	var moving := travel > 0.1 and direction.length_squared() > 0.001 and input_enabled and window_focused
 	moving_seconds = moving_seconds + delta if moving and is_on_floor() else 0.0
