@@ -1,0 +1,17 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3]
+
+[ext_resource type="Shader" path="res://shaders/overworld/palette_cutout.gdshader" id="1"]
+[ext_resource type="Texture2D" path="res://models/overworld/textures/1e973d3b195eb2e89526.png" id="2"]
+[ext_resource type="Texture2D" path="res://models/overworld/textures/5f23b43d2f701b40af8b.png" id="3"]
+[ext_resource type="Texture2D" path="res://models/overworld/textures/160df3ea722170d31355.png" id="4"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/day_pigment = ExtResource("2")
+shader_parameter/day_color = Vector4(0.8227857543924378, 0.9301108583738498, 0.8468732315065057, 1)
+shader_parameter/sunset_pigment = ExtResource("3")
+shader_parameter/sunset_color = Vector4(1, 1, 1, 1)
+shader_parameter/night_pigment = ExtResource("4")
+shader_parameter/night_color = Vector4(1, 1, 1, 1)
+shader_parameter/cutoff = 0.3
+shader_parameter/nocturnal = false

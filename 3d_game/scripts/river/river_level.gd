@@ -279,7 +279,7 @@ func _finish() -> void:
 func _enter_woodland() -> void:
 	transitioning = true
 	get_tree().current_scene = self
-	var error := get_tree().change_scene_to_file("res://scenes/woodland/woodland_path.tscn")
+	var error: Error = get_node("/root/Journey").travel_to("res://scenes/woodland/woodland_path.tscn")
 	if error != OK:
 		transitioning = false
 		status_label.text = "The woodland could not be opened. Keep exploring and try again."

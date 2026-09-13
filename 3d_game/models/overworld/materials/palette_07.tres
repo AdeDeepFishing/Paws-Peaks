@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3]
+
+[ext_resource type="Shader" path="res://shaders/overworld/palette_opaque.gdshader" id="1"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/day_color = Vector4(0.02217388478862708, 0.04970656597728775, 0.061246054224174035, 1)
+shader_parameter/sunset_color = Vector4(0.035601314869097636, 0.02955683443236377, 0.04970656597728775, 1)
+shader_parameter/night_color = Vector4(0.0036765073221525194, 0.0069954101845983935, 0.02121901037134225, 1)
+shader_parameter/cutoff = 0.0
+shader_parameter/nocturnal = false

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 const FOREST := "res://scenes/moonlit_forest/moonlit_forest.tscn"
 var failed := false
 var visual := "--visual" in OS.get_cmdline_user_args()
@@ -28,6 +30,7 @@ func forest() -> Node:
 	return level
 
 func run() -> void:
+	JourneyTest.fast(self)
 	var worker := root.get_node("GenerationWorker")
 	var level = forest()
 	await frames(45)
@@ -88,7 +91,8 @@ func run() -> void:
 	check(current_scene.name == "DawnForest", "Boss completion hook reaches the ending once")
 	current_scene.find_child("RestartButton", true, false).pressed.emit()
 	await frames(45)
-	check(current_scene.name == "RiverCrossing", "Play again opens the first stage")
+	await JourneyTest.complete(self)
+	check(current_scene.name == "RiverCrossing", "Play again opens the first stage through the map intro")
 	check(not current_scene.completed and not current_scene.bridge_built and current_scene.current_item.is_empty(), "Play again starts with fresh encounter and item state")
 	check(current_scene.current_png.is_empty() and current_scene.request.state != "PENDING", "Play again clears drawing and pending request state")
 	check(root.get_node("GenerationWorker") == worker, "Navigation retains the persistent worker without submitting a request")

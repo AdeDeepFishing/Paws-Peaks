@@ -115,7 +115,10 @@ func _navigation_button(parent: Node, node_name: String, text: String, scene: St
 	parent.add_child(button)
 	button.pressed.connect(func():
 		get_tree().current_scene = self
-		get_tree().change_scene_to_file(scene)
+		if node_name == "RestartButton":
+			get_node("/root/Journey").start_intro()
+		else:
+			get_tree().change_scene_to_file(scene)
 	)
 
 func _label(parent: Node, text: String, size: int) -> Label:

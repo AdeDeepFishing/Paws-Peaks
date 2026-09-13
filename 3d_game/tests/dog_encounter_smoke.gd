@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 const Level = preload("res://scenes/woodland/woodland_path.tscn")
 var failed := false
 var seen_states: Array[String] = []
@@ -52,6 +54,7 @@ func draw(level, outcome: int):
 	await frames(12)
 
 func run():
+	JourneyTest.fast(self)
 	var level = Level.instantiate()
 	root.add_child(level)
 	current_scene = level
@@ -221,6 +224,7 @@ func run():
 	check(level.player.position.z < level.GUARD_Z, "Solved encounter permits passage")
 	level.player.position = Vector3(59, 5, -30)
 	await frames(8)
+	await JourneyTest.complete(self)
 	check(current_scene != null and current_scene.name == "WindHill", "Solved exit still supports full-width airborne crossing")
 	current_scene.queue_free()
 	await frames(3)

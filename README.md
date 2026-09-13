@@ -20,7 +20,7 @@ root as the project entry point; [AGENTS.md](AGENTS.md) stays here for coding-as
 ## Open and run
 
 1. In Godot's Project Manager, click **Import** and select `3d_game/project.godot`.
-2. Open the project and press **F5** (or click Run Project) to launch the **Across the River** prototype.
+2. Open the project and press **F5** (or click Run Project) to launch the **world map intro**, which turns into **Across the River**.
 3. The repository root is for documentation and Git; the Godot project lives in `3d_game/`.
 
 Use **Godot 4.7.2 Standard**. The project uses built-in **GodotPhysics3D**; the bundled
@@ -36,7 +36,8 @@ Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 ## What's here
 
 - `3d_game/project.godot`: the active Godot project settings.
-- `3d_game/scenes/river/river_crossing.tscn`: the first-stage prototype and startup scene.
+- `3d_game/scenes/overworld/overworld.tscn`: the opening map and chapter transitions.
+- `3d_game/scenes/river/river_crossing.tscn`: the first-stage prototype.
 - `3d_game/scripts/river/`: drawing UI, third-person controls, encounter logic, and the AI handoff boundary.
 - `3d_game/scenes/river/river_player.tscn`: shared animated protagonist and capsule collision.
 - `3d_game/main.tscn`: the original Brackeys dungeon demo, retained as a reference.
@@ -53,6 +54,17 @@ pushing/climbing, later encounter mechanics, and Web deployment are still outsta
 Stage 2 includes the [dog distraction encounter](docs/3d_game/DOG_ENCOUNTER.md).
 Issue #37 removes coin pickups/counters from active gameplay, clears the far-bank
 bridgehead, doubles the Stage 1 character visual, and brings its normal camera about 18% closer.
+
+## World map and chapter turns
+
+After each forward exit in Chapters 1–4, the page turns back to the map and the
+protagonist walks to the next chapter. The map changes to sunset before Chapter
+3 and night before Chapter 5. On arrival, inspect the map with the wheel,
+trackpad, zoom slider, **Full map**, or **My location**; press **Next page** when
+ready to enter. The opening enters Chapter 1 automatically. **Play again** at
+the dawn ending replays the daylight intro. See
+[Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for controls,
+source assets and verification.
 
 ## Try the first stage
 
