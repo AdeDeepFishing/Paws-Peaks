@@ -2,6 +2,7 @@ shader_type canvas_item;
 render_mode unshaded;
 
 uniform float progress : hint_range(0.0, 1.0) = 0.0;
+uniform bool previous_page = false;
 uniform vec4 paper_tint : source_color = vec4(0.96, 0.925, 0.83, 1.0);
 
 float outside_page(vec2 point, float aspect) {
@@ -9,10 +10,11 @@ float outside_page(vec2 point, float aspect) {
 }
 
 void fragment() {
-	// Every scene uses the same bottom-right corner and physical fold angle.
+	// Previous-page navigation lifts the left corner; forward turns lift the right.
 	// Work in height units so resizing cannot rotate or stretch the crease.
 	float aspect = SCREEN_PIXEL_SIZE.y / SCREEN_PIXEL_SIZE.x;
-	vec2 point = UV * vec2(aspect, 1.0);
+	vec2 fold_uv = vec2(previous_page ? 1.0 - UV.x : UV.x, UV.y);
+	vec2 point = fold_uv * vec2(aspect, 1.0);
 	vec2 normal = normalize(vec2(0.92, 0.62));
 	float axis = mix(dot(vec2(aspect, 1.0), normal) + 0.015, -0.22, progress);
 	float distance_to_fold = dot(point, normal) - axis;

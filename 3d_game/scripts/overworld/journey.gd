@@ -127,7 +127,7 @@ func _browse_map(source: Node3D) -> void:
 	get_tree().current_scene = map
 	map.configure(stage, stage)
 	await get_tree().process_frame
-	await _turn_page(true)
+	await _turn_page(true, 0.95, false, true)
 	phase = "start"
 	input_blocker.hide()
 	await map.await_start(stage, true)
@@ -168,8 +168,9 @@ func _capture_page() -> void:
 	page_material.set_shader_parameter("progress", 0.0)
 	page.show()
 
-func _turn_page(returning_to_map: bool, seconds: float = 0.95, final_page: bool = false) -> void:
+func _turn_page(returning_to_map: bool, seconds: float = 0.95, final_page: bool = false, previous_page: bool = false) -> void:
 	phase = "page_to_ending" if final_page else ("page_to_map" if returning_to_map else "page_to_stage")
+	page_material.set_shader_parameter("previous_page", previous_page)
 	page_material.set_shader_parameter("paper_tint", Color("aab3b0") if final_page else Color("f5ecd4"))
 	var tween := create_tween()
 	tween.tween_method(func(value: float): page_material.set_shader_parameter("progress", value), 0.0, 1.0, seconds * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

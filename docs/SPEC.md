@@ -1073,9 +1073,10 @@ player confirms. While waiting, allow smooth bounded zoom between the current
 chapter closeup and full-map view. Keep the opening **Start the journey** CTA.
 Existing encounter gates still decide when the player can leave.
 
-All page turns lift the bottom-right corner toward the upper-left at one fixed
-physical angle, following the user’s paper reference. Never mirror the turn
-when returning from a scene to the map. Use the same corner for the ending.
+Forward progression lifts the bottom-right corner toward the upper-left at
+one fixed physical angle, following the user’s paper reference. This includes
+chapter-completion map journeys and the ending. The later **Back to map**
+button revision below is previous-page navigation and uses the left corner.
 
 Blend daylight into sunset during the Chapter 2-to-3 map journey, and sunset
 into night during Chapter 4-to-5. Keep all other map legs in their current time.
@@ -1111,6 +1112,7 @@ page** reopens it. Retain **Back to forest** while exploring. See
 Add **Back to map** below the River's Sound button. This is a current-chapter
 map visit, not a restart or an unlocked next chapter. Retain the current scene,
 player position, drawing and encounter state while browsing. Allow bounded map
-zoom and show **Return to chapter →** to resume. Use the same bottom-right page
-turn for both directions. Disable this action while a drawing panel, generation,
+zoom and show **Return to chapter →** to resume. **Back to map** turns from
+the bottom-left toward the upper-right, as returning to the previous page.
+**Return to chapter** turns forward from the bottom-right again. Disable this action while a drawing panel, generation,
 model presentation or chapter-exit transition is active.

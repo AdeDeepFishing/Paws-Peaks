@@ -19,9 +19,11 @@ between the current chapter closeup and full-map view. The slider and buttons
 retain keyboard/controller focus navigation. Zoom cannot exceed either bound.
 
 This September 14 revision supersedes the temporary automatic-entry behavior.
-Every page lifts from the bottom-right toward the upper-left. Scene-to-map,
-map-to-scene and ending turns share one shader and one physical fold angle;
-there is no mirrored return direction. The reflected page bounds create a
+Forward progression lifts the bottom-right corner toward the upper-left.
+Chapter-completion map journeys, map-to-scene entry and the ending share this
+angle. The explicit **Back to map** button instead turns to the previous page
+from the bottom-left toward the upper-right; **Return to chapter** goes forward
+from the right again. Only the fold geometry mirrors, never the scene image. The reflected page bounds create a
 lifting corner with a shaded paper underside and a soft cast shadow.
 
 | Journey | Map appearance |
@@ -60,9 +62,9 @@ presenting a model or already leaving the chapter. The persistent worker is
 unchanged and map browsing submits no AI requests.
 
 `map_return_smoke.gd` checks repeated visits, same-scene/state preservation,
-position/HUD restoration, map cleanup, duplicate-entry guards and the pending
-request guard. Append `-- --visual` with the native renderer to capture the
-button and the current-chapter map.
+position/HUD restoration, map cleanup, duplicate-entry guards, the pending
+request guard, and the left-to-map/right-to-chapter turn directions. Append
+`-- --visual` with the native renderer to capture the button and current-chapter map.
 
 ![Back to map in Chapter 1](assets/overworld/back-to-map.png)
 
@@ -157,8 +159,9 @@ Validation uses Godot 4.7.2 Standard. All generation checks use offline fixtures
   CTAs and full-map browsing. Append `-- --preview` to leave the second
   chapter’s map CTA open for a manual playtest.
 - `page_corner_smoke.gd`: native rendered-pixel checks for map entry, map return
-  and the ending; the bottom-right reveals first while the left and top-right
-  remain on the outgoing page. This check requires a graphical renderer.
+  and the ending; forward turns reveal the bottom-right first. It also checks
+  that **Back to map** reveals the bottom-left first, then the following forward
+  turn resets to the right. This check requires a graphical renderer.
 
 The original integration passed nine flow/encounter/exit suites. The current CTA revision rechecks all five chapter confirmations and zoom
 bounds, ending restart, native map interactions and the rendered turn corner

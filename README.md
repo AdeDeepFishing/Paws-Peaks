@@ -65,8 +65,9 @@ After each forward exit in Chapters 1–4, the page turns back to the map, the
 protagonist walks to the next chapter, and the camera zooms in. **Next page →**
 waits for your confirmation. Before entering, use the scroll wheel, trackpad
 pinch, slider or **You / Map** controls to browse between the chapter closeup
-and full map. Every page lifts from the bottom-right toward the upper-left,
-including returns to the map and the ending. The map changes to sunset before Chapter 3 and night before
+and full map. Forward chapter turns lift from the bottom-right toward the
+upper-left, including chapter-completion map journeys and the ending. The
+**Back to map** button turns to the previous page from the left instead. The map changes to sunset before Chapter 3 and night before
 Chapter 5. **Begin a new journey** returns to the daylight map and **Start the journey**. See
 [Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for source assets
 and verification.

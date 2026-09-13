@@ -39,6 +39,7 @@ func run() -> void:
 		check(current_scene.name == "Overworld" and is_instance_valid(river), "Map browsing retains the existing chapter")
 		check(not river.visible and not river.hud.visible and river.process_mode == Node.PROCESS_MODE_DISABLED, "The retained chapter is hidden and paused")
 		check(current_scene.start_button.text == "Return to chapter  →" and current_scene.zoom_controls.visible, "Map offers return and zoom even in Chapter 1")
+		check(journey.page_material.get_shader_parameter("previous_page") == true, "Back to map turns to the previous page from the left")
 		var map := current_scene
 		map.zoom_slider.value = 1.0
 		await frames(60)
@@ -48,6 +49,7 @@ func run() -> void:
 			root.get_texture().get_image().save_png("/private/tmp/map53-return-map.png")
 		map.start_button.pressed.emit()
 		await JourneyTest.complete(self)
+		check(journey.page_material.get_shader_parameter("previous_page") == false, "Return to chapter restores the forward page direction")
 		check(current_scene == river and not is_instance_valid(map), "Return restores the exact chapter and releases the map")
 		check(river.current_item.name == "Saved bridge" and river.current_png == PackedByteArray([1, 2, 3]) and river.unlocked, "Drawing and encounter state survive")
 		check(river.visible and river.hud.visible and river.player.position.distance_to(position) < 0.01, "Return restores HUD and player position")
