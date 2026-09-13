@@ -20,7 +20,7 @@ func capture_preview() -> void:
 
 func run() -> void:
 	var palette = preload("res://scripts/river/material_palette.gd")
-	check(palette.entries().size() == 16, "Sixteen reusable material keys are available")
+	check(palette.entries().size() == 15, "Fifteen reusable material keys are available")
 	for key in palette.entries():
 		var material = palette.material(key, "#FFFFFF")
 		check(material != null and material.albedo_texture.get_size() == Vector2(128, 128), "Palette tile loads at lightweight size: " + key)
@@ -67,6 +67,7 @@ func run() -> void:
 	if level.presentation.busy:
 		await level.presentation.settled
 	check(not level.generation_preview.visible, "Preview clears when model is presented")
+	check(not level.surface.has_drawing(), "Presented model clears the old sketch from the canvas")
 	check(level.bridge_built, "Returned model automatically enables crossing")
 	check(is_instance_valid(level.generated_visual), "Actual GLB appears in scene")
 	check(not level.get_node("Bridge/Deck/Visual").visible, "Placeholder is hidden")

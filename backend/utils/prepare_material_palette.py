@@ -36,14 +36,15 @@ def main():
     args = parser.parse_args()
     entries = json.loads((PALETTE / 'palette.json').read_text())
     atlas = Image.open(args.atlas).convert('L')
-    if atlas.size != (1024, 1024) or len(entries) != 16:
-        raise ValueError('Expected a 1024-pixel atlas and 16 palette entries')
+    if atlas.size != (1024, 1024) or len(entries) != 15:
+        raise ValueError('Expected a 1024-pixel atlas and 15 palette entries')
     preview = Image.new('RGB', (768, 864), '#f3eddf')
     labels = ImageDraw.Draw(preview)
-    tints = ['#D9D0BA', '#B88755', '#79604A', '#A2ABB3', '#BB7D68', '#A5BDA0', '#C5A2AB', '#8A6656',
+    tints = ['#B88755', '#79604A', '#A2ABB3', '#BB7D68', '#A5BDA0', '#C5A2AB', '#8A6656',
              '#A1AFB9', '#91B5BE', '#707B85', '#D7C6A3', '#E8D9B7', '#B7A18B', '#8AAE97', '#D5B680']
     total = 0
-    for index, (key, tint) in enumerate(zip(entries, tints)):
+    # The original atlas begins with an unused plain cell; preserve the other cell positions.
+    for index, (key, tint) in enumerate(zip(entries, tints), start=1):
         x, y = (index % 4) * 256, (index // 4) * 256
         tile = ImageOps.autocontrast(atlas.crop((x + 2, y + 2, x + 254, y + 254))).resize((128, 128), Image.Resampling.LANCZOS)
         tile = repeating(tile)

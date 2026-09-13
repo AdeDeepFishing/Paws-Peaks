@@ -1,7 +1,8 @@
 # Stage 04: Sunset Cove integration
 
-Updated: 2026-09-13. Implements the environment and transition requested in
-issue #31. E04 otter interaction and drawing rules remain separate work.
+Updated: 2026-09-14. Implements the environment and transition requested in
+issue #31. Stage 4 also includes the otter greeting described below; nearby sketch submission is enabled. AI-selected animation reactions are implemented;
+progression rules remain separate work.
 The Stage 5 environment and cave exit are added by #32.
 
 ## Route and controls
@@ -21,7 +22,7 @@ The Stage 5 environment and cave exit are added by #32.
   The delivered 53-degree camera keeps its orientation and pulls back three units
   to frame the character. It follows ground movement without mouse orbit.
 - **Back to Wind Hill** returns to a fresh Stage 3 preview. Scene changes preserve
-  the existing GenerationWorker autoload; no AI request is made by these previews.
+  the existing GenerationWorker autoload; AI requests are made only when the player submits a drawing.
 - Continue right to the cave approach at world x>=5.5 to enter Moonlit Forest.
   The boundary covers all Z positions and heights, including the surrounding
   grass; no jump or narrow tunnel entry is required. See
@@ -120,3 +121,68 @@ The headless sandbox emits macOS certificate and log/editor-settings permission
 messages. These are separate from gameplay assertions. Web export, browser
 performance and final collision optimization have not been verified. The 64 MiB
 GLB and roughly 1.20 million triangles require a separate Web budget pass.
+
+## Otter greeting
+
+One textured otter stands on solid sand at world X=2, Z=4, just in front of the water.
+It turns toward the player and repeats `Big_Wave_Hello` whenever the player is
+more than 2.5 horizontal world units away. Approaching within that distance
+blends to `Idle_11`; stepping away resumes waving. Confused waiting and selected
+reactions take priority over this distance behavior. After a reaction, the otter
+resumes waving or idle according to the player's distance.
+
+`3d_game/models/otter/otter.scn` contains one model, skeleton and texture set.
+`animations.res` contains all 13 full clips; `animations.json` contains the short
+selection descriptions. The same skeleton plays every clip through one
+AnimationPlayer. Idle, walking and swim-idle loop; other clips are one-shots.
+The 0.03-second companion clips are omitted.
+
+The user supplied the 13 Meshy imports. Their skeleton hierarchy, bone names and
+rest transforms matched during extraction. Original imports are preserved only
+in ignored local `backend/output/otter-source-imports/`; the runtime resources
+have no dependency on them. The asset package is approximately 13 MB, replacing
+241 MB of duplicated model and extracted texture files.
+
+To rebuild from the local originals:
+
+```sh
+Godot --headless --path 3d_game --script res://tools/extract_otter_animations.gd -- /absolute/path/to/otter-source-imports
+```
+
+The focused `otter_greeting_smoke.gd` checks grounded placement, facing,
+proximity transitions and repeated waving. Use `-- --visual` to capture the wave and idle in Stage 4.
+
+## Drawing and animation options
+
+Within 2.5 world units of the otter, while grounded, press **E** or **Draw** to
+open the sketch overlay. Submission saves the original PNG and uses the shared
+desktop generation flow with `encounter_id: "E04"` and `game_stage: "otter"`.
+Each request includes `animation_options`, a map of animation keys to the short
+English descriptions in `3d_game/models/otter/animations.json`. The desktop
+mailbox retains this map alongside the request identity. Other stages omit it.
+
+The first AI call guesses the object as usual, then chooses one suitable otter
+reaction using the supplied descriptions. Stage 4 does not classify the object:
+the response is `{ "item": { "name", "description", "movable", "texture_key", "color" },
+"reaction": "Shrug" }` (field names shown schematically). `reaction` is an exact
+animation key, validated by both backend and game. Selection adds no AI call.
+
+The otter repeats `Confused_Scratch` while waiting for the model to render,
+including after the interpretation arrives. Once the object appears,
+`Otter.play_option(reaction)` plays the selected clip and returns to idle after
+one duration. A failed or canceled request stops the confused animation and
+returns to idle. Invalid animation keys fail the request instead of guessing a
+local reaction. Stale responses cannot interrupt a newer request.
+
+The interpretation card and reference overlay use the shared preview. The model
+appears at the sketch's ground position; a successful reveal clears the sketch
+and reference. **Draw again** opens a fresh canvas after each success, with no
+limit on repeats. Each submission has its own request ID and reaction; the previous
+object remains until the next model successfully loads and replaces it.
+Drawing is disabled while a request is pending; Stop waiting or
+Escape cancels, preserving the draft. Failures allow another submission. Live
+submission uses credits; Stage 4 has no offline model fixture yet.
+
+The existing otter smoke test also checks proximity gating, E04 request labels, animation options in the desktop mailbox, and retained
+drafts after cancellation, confused looping, and the transition from a rendered
+model to the selected reaction. Provider outputs are simulated, with no paid calls.

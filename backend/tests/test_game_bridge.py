@@ -94,3 +94,15 @@ class GameBridgeTests(unittest.TestCase):
             self.assertEqual(run.execute(self.folder, 'bad-stage', 'E01', 'live', 'dog'), 1)
             provider.assert_not_called()
         self.assertEqual(self.status()['error'], 'INVALID_REQUEST')
+
+    def test_otter_options_and_reaction_cross_the_bridge(self):
+        options = {"Shrug": "Raises both palms in uncertainty, as if unsure what to do."}
+        def pipeline(argv, *, output_folder, on_event, animation_options):
+            self.assertEqual(animation_options, options)
+            self.assertEqual(argv[-1], "otter")
+            on_event({"stage": "reference_image", "status": "PENDING", "reaction": "Shrug"})
+            on_event({"stage": "complete", "status": "SUCCEEDED"})
+            return 0
+        with patch.object(run.pipeline, "main", side_effect=pipeline):
+            self.assertEqual(run.execute(self.folder, "otter-test", "E04", "live", "otter", animation_options=options), 0)
+        self.assertEqual(self.status()["reaction"], "Shrug")

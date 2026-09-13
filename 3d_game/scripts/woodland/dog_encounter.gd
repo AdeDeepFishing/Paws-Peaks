@@ -45,13 +45,14 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	super._process(delta)
 	var near := near_dog()
-	draw_button.disabled = dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor()
+	draw_button.disabled = entering or dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor()
 	draw_button.text = "Path is clear" if dog.solved else ("E · Offer drawing" if request.state == "READY" and not is_instance_valid(offered) and not dog.distracted else "E · Draw")
 	drawing_shine.set_active(not drawing and near and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
 	modes.disabled = request.state == "PENDING" or dog.distracted or presentation.active
 
 func _unhandled_input(event: InputEvent) -> void:
+	if entering: return
 	if event.is_action_pressed("sketchbook"):
 		if drawing:
 			_close_drawing()
@@ -82,6 +83,7 @@ func near_dog() -> bool:
 	return Vector2(player.position.x - dog.home.x, player.position.z - dog.home.z).length() <= DRAW_RADIUS
 
 func _open_drawing() -> void:
+	if entering: return
 	if dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor():
 		return
 	if request.state == "READY" and not item.is_empty() and not is_instance_valid(offered):
@@ -154,9 +156,6 @@ func _on_request_state(state: String) -> void:
 			status.text = request.message + " Your sketch is safe; try again."
 		"READY":
 			item = request.result.duplicate(true)
-			if item.get("type") not in ["FOOD", "TOY", "UNKNOWN"]:
-				request.fail_current("The dog wants food or a toy. That idea will not distract it.")
-				return
 			if near_dog() and player.is_on_floor():
 				_offer_item()
 			else:
@@ -190,7 +189,7 @@ func _settle_offering(_ground: Node, body: RigidBody3D) -> void:
 	body.set_deferred("linear_velocity", Vector3.ZERO)
 
 func _offer_item() -> void:
-	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY", "UNKNOWN"]:
+	if request.state != "READY" or dog.distracted or is_instance_valid(offered):
 		return
 	if not near_dog():
 		status.text = "Return to the dog to offer your drawing."

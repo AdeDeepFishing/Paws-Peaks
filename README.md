@@ -158,7 +158,7 @@ without API calls. The flow uses separate OpenAI interpretation and low-quality 
 requests producing an object reference, then untextured Meshy T2 (~500 faces) and
 a local clay PNG preview. Interpretation also selects a reusable material key and
 color; Godot applies and tints the bundled texture with triplanar mapping. See the
-[16-material palette](docs/3d_game/MATERIAL_PALETTE.md). Outputs and timings are saved locally.
+[15-material palette](docs/3d_game/MATERIAL_PALETTE.md). Outputs and timings are saved locally.
 See the [three API steps and data flow](docs/backend/BACKEND.md#current-flow) for
 request inputs, outputs, and how interpretation becomes available while generation continues.
 See the [test report](docs/backend/BACKEND.md#historical-benchmarks) for results and limitations.

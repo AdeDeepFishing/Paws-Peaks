@@ -13,7 +13,7 @@ func frames(n: int):
 		await physics_frame
 		await process_frame
 func ready_response() -> Dictionary:
-	return {"schema_version":2,"request_id":level.request.active_id,"status":"recognized","item":{"name":"Bridge","description":"A crossing.","type":"BRIDGE","movable":false, "texture_key": "plain", "color": "#D9C6A0"}}
+	return {"schema_version":2,"request_id":level.request.active_id,"status":"recognized","item":{"name":"Bridge","description":"A crossing.","type":"BRIDGE","movable":false, "texture_key": "wood", "color": "#D9C6A0"}}
 func prepare_draw():
 	# Let the physics overlap cache observe leaving the area after a restart.
 	level.player.respawn(level.SPAWN)

@@ -18,6 +18,7 @@ func _physics_process(_delta: float) -> void:
 
 ## Explicit encounter completion can use the same guarded transition as walking.
 func activate() -> void:
+	if get_parent().get("entering") == true: return
 	if transitioning:
 		return
 	transitioning = true

@@ -37,7 +37,7 @@ def wait_for_task(fetch):
     raise AppError("POLL_TIMEOUT", "Task may still be running; check the saved task ID instead of resubmitting.")
 
 
-def main(argv=None, *, output_folder=None, on_event=None, on_response=None):
+def main(argv=None, *, output_folder=None, on_event=None, on_response=None, animation_options=None):
     def api_call(operation, call):
         started = time.perf_counter()
         status = "FAILED"
@@ -91,11 +91,12 @@ def main(argv=None, *, output_folder=None, on_event=None, on_response=None):
         emit({"stage": "description", "status": "PENDING"})
         with measure("description_stage"):
             description = api_call("openai_interpretation", lambda: interpret.interpret(
-                image, config, prompt=SKETCH_PROMPT, game_stage=args.game_stage))
+                image, config, prompt=SKETCH_PROMPT, game_stage=args.game_stage,
+                **({"animation_options": animation_options} if args.game_stage == "otter" else {})))
         model_generation.save_job(folder / "description.json", description)
         print(json.dumps({"stage": "description", "result": description}), flush=True)
         # 2. Image edit: one reference image using the selected material and color.
-        emit({"stage": "reference_image", "status": "PENDING", "item": description["item"]})
+        emit({"stage": "reference_image", "status": "PENDING", **description})
         prompt = reference_prompt(description["item"], args.style_prompt)
         (folder / "reference_prompt.txt").write_text(prompt)
         with measure("reference_image_stage"):
@@ -119,7 +120,7 @@ def main(argv=None, *, output_folder=None, on_event=None, on_response=None):
         with measure("preview_stage"):
             preview = preview_result(model_path)
         print(json.dumps({"stage": "preview", **preview}), flush=True)
-        emit({"stage": "complete", "status": "SUCCEEDED", "item": description["item"], "model_path": str(model_path), **preview})
+        emit({"stage": "complete", "status": "SUCCEEDED", **description, "model_path": str(model_path), **preview})
         outcome = "SUCCEEDED"
         return 0
     except AppError as error:

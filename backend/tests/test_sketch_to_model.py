@@ -13,7 +13,7 @@ from utils.common import AppError
 
 
 class PipelineTests(unittest.TestCase):
-    def run_mock_pipeline(self, description, edit_error=None, preview_error=False, interpretation_error=None):
+    def run_mock_pipeline(self, description, edit_error=None, preview_error=False, interpretation_error=None, game_stage="river", animation_options=None):
         with tempfile.TemporaryDirectory() as folder, contextlib.ExitStack() as stack:
             stack.enter_context(patch.object(run, "ROOT", Path(folder)))
             stack.enter_context(patch.object(run, "load_config", return_value={}))
@@ -41,8 +41,8 @@ class PipelineTests(unittest.TestCase):
             output_folder = Path(folder) / 'output/sketch_to_model/test-run'
             output_folder.mkdir(parents=True)
             (output_folder / 'benchmark.jsonl').write_text('')
-            code = run.main([], output_folder=output_folder, on_event=self.events.append, on_response=self.responses.append)
-            interpretation.assert_called_once_with(data_uri, {}, prompt=run.SKETCH_PROMPT, game_stage="river")
+            code = run.main(["--game-stage", game_stage], output_folder=output_folder, on_event=self.events.append, on_response=self.responses.append, animation_options=animation_options)
+            interpretation.assert_called_once_with(data_uri, {}, prompt=run.SKETCH_PROMPT, game_stage=game_stage, **({"animation_options": animation_options} if game_stage == "otter" else {}))
             saved = list(Path(folder).glob("output/sketch_to_model/*/input.png"))
             self.assertEqual(len(saved), 1)
             self.assertEqual(saved[0].read_bytes(), original)
@@ -69,7 +69,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(self.responses[-1]['status'], 'FAILED')
 
     def test_unknown_item_flows_through_image_edit_and_untextured_t2(self):
-        item = {"name": "Chair", "description": "A chair could provide a place to rest.", "type": "UNKNOWN", "movable": True, "texture_key": "plain", "color": "#D9C6A0"}
+        item = {"name": "Chair", "description": "A chair could provide a place to rest.", "type": "UNKNOWN", "movable": True, "texture_key": "wood", "color": "#D9C6A0"}
         code, reference, create = self.run_mock_pipeline({"item": item})
         self.assertEqual(code, 0)
         reference.assert_called_once()
@@ -102,3 +102,10 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(payload["target_formats"], ["glb"])
         for key in ("texture_prompt", "texture_resolution", "enable_pbr", "texture_image_url"):
             self.assertNotIn(key, payload)
+
+    def test_otter_reaction_survives_generation(self):
+        description = {"item": {"name": "Flower", "description": "A flower to enjoy.", "movable": True, "texture_key": "fabric", "color": "#CC8877"}, "reaction": "Cheer_with_Both_Hands"}
+        code, _, _ = self.run_mock_pipeline(description, game_stage="otter", animation_options={"Cheer_with_Both_Hands": "Raises both hands overhead in celebration."})
+        self.assertEqual(code, 0)
+        self.assertEqual(self.events[1]["reaction"], description["reaction"])
+        self.assertEqual(self.events[-1]["reaction"], description["reaction"])

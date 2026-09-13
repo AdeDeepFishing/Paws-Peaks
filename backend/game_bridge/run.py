@@ -62,7 +62,7 @@ def collect_results(pending):
         write_status(job_dir, status)
 
 
-def generate(job_dir, mode, emit, game_stage):
+def generate(job_dir, mode, emit, game_stage, animation_options=None):
     response_dir = job_dir / "response"
     if mode == "fixture":
         stage_number = STAGES[game_stage]["stage_number"]
@@ -98,12 +98,12 @@ def generate(job_dir, mode, emit, game_stage):
     # Provider keys are read only by Python. No keys or signed URLs enter Godot.
     with open(os.devnull, "w") as sink, contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
         code = pipeline.main(["--image", str(job_dir / "request/input.png"), "--game-stage", game_stage],
-                             output_folder=response_dir / "artifacts", on_event=emit)
+                             output_folder=response_dir / "artifacts", on_event=emit, **({"animation_options": animation_options} if game_stage == "otter" else {}))
     return code
 
 
 
-def execute(job_dir, request_id, encounter_id, mode, game_stage="river", *, request_received_at=None):
+def execute(job_dir, request_id, encounter_id, mode, game_stage="river", *, request_received_at=None, animation_options=None):
     job_dir = Path(job_dir).resolve()
     # The caller creates a unique job directory and its immutable request/input.png.
     try:
@@ -122,7 +122,7 @@ def execute(job_dir, request_id, encounter_id, mode, game_stage="river", *, requ
         if (job_dir / "cancel").exists() and event.get("status") != "FAILED":
             raise AppError("CANCELED", "Local request canceled.")
         # Only the explicitly allowed fields enter the game's status channel.
-        allowed = {key: event[key] for key in ("stage", "status", "item", "reference_path", "model_path", "preview_path", "preview_error", "error") if key in event}
+        allowed = {key: event[key] for key in ("stage", "status", "item", "reaction", "reference_path", "model_path", "preview_path", "preview_error", "error") if key in event}
         progress.update(allowed)
         if event.get("status") in ("SUCCEEDED", "FAILED") or any(
                 key in allowed for key in ("item", "reference_path", "model_path", "preview_path", "preview_error")):
@@ -136,7 +136,7 @@ def execute(job_dir, request_id, encounter_id, mode, game_stage="river", *, requ
         if game_stage not in STAGES or encounter_id != expected_encounter or mode not in ("fixture", "live"):
             raise AppError("INVALID_REQUEST", "Invalid stage, encounter or mode.")
         classes_for(game_stage)
-        code = generate(job_dir, mode, emit, game_stage)
+        code = generate(job_dir, mode, emit, game_stage, **({"animation_options": animation_options} if game_stage == "otter" else {}))
         if code and progress.get("status") != "FAILED":
             emit({"stage": "error", "status": "FAILED", "error": "PIPELINE_FAILED"})
         return code
@@ -186,7 +186,8 @@ def serve(worker_dir):
                                            "input_path": str(job_dir / "request/input.png"),
                                            "response_received_at": None})
                     future = executor.submit(execute, job_dir, request_id, value.get("encounter_id"),
-                                             value["mode"], value["game_stage"], request_received_at=request_received_at)
+                                             value["mode"], value["game_stage"], request_received_at=request_received_at,
+                                             animation_options=value.get("animation_options"))
                     pending[future] = (job_dir, identity)
                 except (OSError, ValueError, KeyError, TypeError):
                     write_status(job_dir, {

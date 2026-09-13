@@ -163,6 +163,8 @@ func _layout_card() -> void:
 	card.position = Vector2(viewport.x - card.size.x - 28, maxf(155, viewport.y - 180 - card.size.y))
 
 func model_presented() -> void:
+	if request.state == "READY":
+		surface.clear()
 	_clear()
 
 func _on_state(state: String) -> void:

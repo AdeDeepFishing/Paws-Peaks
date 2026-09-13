@@ -5,6 +5,7 @@ signal interpretation_ready(request_id: String, item: Dictionary)
 signal reference_image_ready(request_id: String, path: String)
 
 var partial_item: Dictionary = {}
+var reaction := ""
 var reference_path := ""
 
 @export_enum("Mock bridge", "Offline model", "Live AI") var mode := 1
@@ -35,6 +36,7 @@ func _start(payload: Dictionary) -> void:
 		return
 	finished = false
 	partial_item = {}
+	reaction = ""
 	reference_path = ""
 	last_stage = ""
 	job_dir = ""
@@ -58,7 +60,10 @@ func _start(payload: Dictionary) -> void:
 	if mailbox == null:
 		fail("Could not submit the generation request.")
 		return
-	mailbox.store_string(JSON.stringify({"request_id": request_id, "encounter_id": payload.encounter_id, "game_stage": payload.game_stage, "mode": "live" if mode == 2 else "fixture"}))
+	var envelope := {"request_id": request_id, "encounter_id": payload.encounter_id, "game_stage": payload.game_stage, "mode": "live" if mode == 2 else "fixture"}
+	if payload.has("animation_options"):
+		envelope["animation_options"] = payload.animation_options.duplicate(true)
+	mailbox.store_string(JSON.stringify(envelope))
 	mailbox.close()
 	if DirAccess.rename_absolute(request_dir.path_join("request.tmp"), request_dir.path_join("request.json")) != OK:
 		fail("Could not submit the generation request.")
@@ -117,9 +122,14 @@ func consume_status(status: Dictionary) -> void:
 		return
 	# Cumulative snapshots retain early results even if polling skips a stage.
 	if partial_item.is_empty() and status.has("item"):
-		if not request.valid_item(status.item):
+		if not request.valid_item(status.item, request.game_stage):
 			fail("The interpretation response was not valid.")
 			return
+		if request.game_stage == "otter":
+			if not status.get("reaction") is String or not request.animation_options.has(status.get("reaction")):
+				fail("The otter reaction was not valid.", "INVALID_MODEL_OUTPUT")
+				return
+			reaction = status.reaction
 		partial_item = status.item.duplicate(true)
 		interpretation_ready.emit(request_id, partial_item.duplicate(true))
 	if not _active(str(status.get("request_id", ""))):
@@ -139,7 +149,7 @@ func consume_status(status: Dictionary) -> void:
 			fail("The returned model file was not valid.")
 			return
 		finished = true
-		request.accept_response({"schema_version": 2, "request_id": request_id, "status": "recognized", "item": status.get("item"), "model_path": model_path})
+		request.accept_response({"schema_version": 2, "request_id": request_id, "status": "recognized", "item": status.get("item"), "model_path": model_path, "reaction": reaction})
 
 func fail(message: String, code: String = "GENERATION_FAILED") -> void:
 	_cancel_job()

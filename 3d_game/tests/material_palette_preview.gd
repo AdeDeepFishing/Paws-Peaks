@@ -5,8 +5,8 @@ func _initialize(): call_deferred("run")
 
 func run():
 	var args := OS.get_cmdline_user_args()
-	if args.size() != 3:
-		push_error("Provide a saved Stage 2 result folder, texture key and #RRGGBB color")
+	if args.size() not in [3, 4]:
+		push_error("Provide a saved Stage 2 result folder, texture key, #RRGGBB color and optional class override")
 		quit(1)
 		return
 	var folder: String = args[0].simplify_path()
@@ -15,6 +15,7 @@ func run():
 	var summary = JSON.parse_string(FileAccess.get_file_as_string(summary_path))
 	summary.item["texture_key"] = args[1]
 	summary.item["color"] = args[2]
+	if args.size() == 4: summary.item["type"] = args[3]
 	root.size = Vector2i(1280, 800)
 	var level = load("res://scenes/woodland/woodland_path.tscn").instantiate()
 	root.add_child(level)
@@ -70,16 +71,16 @@ func run():
 	root.get_texture().get_image().save_png(preview_dir.path_join("in-game-" + args[1] + ".png"))
 	print("STAGE 2 PALETTE RENDER: PASS")
 	await create_timer(4.0).timeout
-	if summary.item.type == "UNKNOWN":
+	if summary.item.type not in ["FOOD", "TOY"]:
 		while level.presentation.active: await process_frame
 		if level.dog.distracted or level.can_exit():
-			push_error("UNKNOWN object must not advance the encounter")
+			push_error("An object without a gameplay effect must not advance the encounter")
 			quit(1)
 			return
 		level._open_drawing()
 		if not level.drawing or not is_instance_valid(level.offered):
-			push_error("UNKNOWN object must allow another sketch")
+			push_error("An object without a gameplay effect must allow another sketch")
 			quit(1)
 			return
-		print("UNKNOWN RENDER AND RETRY: PASS")
+		print(summary.item.type + " RENDER AND RETRY: PASS")
 	quit()

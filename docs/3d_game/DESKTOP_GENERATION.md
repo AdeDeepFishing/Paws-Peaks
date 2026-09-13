@@ -79,7 +79,7 @@ and status. Completed stages add fields retained through later stages and errors
 
 | Available after | Field | Godot signal on DesktopGeneration |
 |---|---|---|
-| Interpretation | `item` (validated name, description, type, movable) | `interpretation_ready(request_id, item)` |
+| Interpretation | `item` (validated object and material fields), plus `reaction` in Stage 4 | `interpretation_ready(request_id, item)` |
 | Reference image | `reference_path` (local image file) | `reference_image_ready(request_id, path)` |
 | Model and preview | `model_path` (local GLB), `preview_path` (sibling `model.png`) | DrawingRequest changes to `READY` |
 
@@ -87,7 +87,7 @@ Godot polls every 0.2 seconds, validates request identity and emits each early-r
 signal once per request. `partial_item` and `reference_path` also expose the latest
 intermediate values. These signals let game code use the first two results while
 DrawingRequest remains `PENDING`; they do not place the final object or complete the
-encounter. `generation_preview.gd` consumes both signals in River and Dog: the
+encounter. `generation_preview.gd` consumes both signals in Stages 1–4: the
 interpretation card on the right shows name/description, and the reference PNG replaces the
 sketch texture. `drawing_surface.gd` exposes the same padded square bounds used for
 PNG export, so the overlay maps back to the submitted drawing area. Placement is
@@ -144,13 +144,6 @@ See [Sketch-to-model stage classes](../backend/BACKEND.md#current-multi-stage-re
 
 Every game request includes a `game_stage` label alongside its `encounter_id`:
 
-| Game stage | Encounter | Allowed classes |
-|---|---|---|
-| `river` | `E01` | BRIDGE, BOAT, UNKNOWN |
-| `dog` | `E02` | FOOD, TOY, WEAPON, UNKNOWN |
-| `crows` | `E03` | BOW, MAGIC, DEFENCE, UNKNOWN |
-| `otter` | `E04` | GIFT, TOOL, UNKNOWN |
-
 For example, the river scene writes:
 
 ```json
@@ -163,9 +156,12 @@ selects the classification set and rejects mismatched labels before provider cal
 updates echo `game_stage`; Godot ignores responses for a different game stage.
 The existing `stage` field describes pipeline progress (`description`, `model`, etc.).
 
-This extends request routing to four stages, not gameplay implementation. The existing
-river scene still submits E01; later scenes must wire their own encounters. All configured stages share the generation steps, with stage-specific classes.
-Only river has an offline fixture.
+All four scenes submit their own encounter label. Stage 4 includes
+`animation_options` in the request; the first call returns a five-field item
+(without `type`) and a separate `reaction` animation key. The otter looks confused
+until the model appears, then plays that reaction. See [Stage 4 integration](STAGE04_INTEGRATION.md).
+River and Dog have offline model fixtures; Crows and Otter require live generation
+or simulated responses in tests.
 The fifth-stage boss in the broader spec remains outside this four-stage API change.
 
 ## Placement limits
@@ -196,7 +192,7 @@ closeups, result reveals, and assisted crossing.
 
 ### Reusable material and color
 
-The six-field item includes `texture_key` and `color`, validated before loading the
+The item (six fields in Stages 1–3, five in Stage 4) includes `texture_key` and `color`, validated before loading the
 model. See [Material palette](MATERIAL_PALETTE.md) for the shared reference color,
 whole-object rendering and asset catalog. Stage 1's fixture uses brown wood;
 Stage 2's uses ivory bone. Material selection is independent of mobility and class.
