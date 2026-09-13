@@ -939,6 +939,7 @@ progresses horizontally to the right: reaching the large rock's near edge at
 world x>=9.5 enters Stage 4, with no restriction on Z position or jump height.
 This follows the user's requested vertical screen boundary and requires no jump
 onto the rock. Stage 4 includes the delivered terrain, camera, shared protagonist,
-painted materials and exported animation, with native water and sky motion.
+painted materials and exported animation, with native water and sky motion and
+live planar water reflections.
 E04 otter gameplay and Stage 5 remain open. See
 [Stage 04 integration](3d_game/STAGE04_INTEGRATION.md) for checks and visual limits.

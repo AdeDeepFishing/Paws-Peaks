@@ -181,7 +181,8 @@ In Stage 3, walk right toward the large rock beside the tree. Reaching its near
 edge automatically enters Stage 4, including when walking beside the path or
 jumping; climbing onto the rock is unnecessary. You can also run
 `3d_game/scenes/sunset_cove/sunset_cove.tscn` directly. Sunset Cove includes the
-painted beach and cave, collision, the shared protagonist, wind and water motion.
+painted beach and cave, collision, the shared protagonist, wind and water motion,
+and live water reflections of the sunset, scenery and character.
 **Back to Wind Hill** returns to Stage 3. Otter encounter gameplay remains open.
 See [Stage 04 integration](docs/3d_game/STAGE04_INTEGRATION.md) for verification and
 differences from the source HTML renderer.

@@ -56,11 +56,25 @@ and source files.
   sides of the sphere and drifts the painted clouds gently.
 - Water blends two continuously advancing samples of the delivered painted texture
   at 0.48 and 0.69 world units per second. This is a native Godot approximation.
+- A live planar reflection mirrors the gameplay camera across the water at
+  y=-0.07. A SubViewport shares the existing World3D, including the protagonist,
+  animated foliage and painted sky. Water and its overlays, plus the background
+  ground underlay, use visual layer 20 and are excluded from the reflection camera
+  to prevent feedback and underlay occlusion. The gameplay camera still sees them.
+  The water mixes the reflection with its painted color at 29–51% depending on
+  viewing angle, with small moving UV ripples adapted from the source renderer.
+- Reflection updates run after camera follow. The render target preserves the
+  gameplay aspect ratio on resize and is capped at 1280 by 720 pixels. A local
+  camera-axis flip keeps a valid camera basis; the shader reverses the image flip.
+  The scene owns its water material and viewport, which are freed on exit. This
+  adds a second scenery render pass; it does not duplicate geometry or physics.
+  See Godot's [viewport documentation](https://docs.godotengine.org/en/stable/tutorials/rendering/viewports.html)
+  for shared worlds and camera cull masks.
 - The imported `Handpainted_Breeze_And_Water` clip plays on a 16-second loop,
   retaining the source's 12 fps node animation. Godot consumes the `_Loop` suffix
   as an import hint. Leaves, grass, tree branches and exported water details animate.
-- The browser-only live planar reflections, dynamic painted shadows, extra surface
-  glazes and expanding contact-ripple shader are not ported. Contact waterlines
+- The browser-only dynamic painted shadows, extra surface glazes and expanding
+  contact-ripple shader are not ported. Contact waterlines
   retain their exported appearance. The Godot preview does not claim exact visual
   parity with the original HTML renderer.
 
@@ -78,11 +92,19 @@ sides of the +X boundary. The existing `woodland_exit_smoke.gd`,
 earlier scenes and unchanged -Z boundary. Scene-count assertions now count 3D
 worlds while allowing the GenerationWorker added by PR #30 to persist.
 
+`water_reflection_smoke.gd` checks shared-world rendering, water/underlay exclusion,
+camera projection after movement, resize aspect ratio and resolution cap, viewport
+cleanup and scene re-entry. Its rendered mode uses a live magenta probe over open
+water, checks the reflection camera's projected pixel, and verifies that enabling
+reflection changes the corresponding water pixel. It also captures the gameplay
+view and resized view for visual inspection.
+
 Run from the repository root:
 
 ```sh
 godot --headless --path 3d_game --script res://tests/sunset_cove_smoke.gd
 godot --headless --path 3d_game --script res://tests/wind_hill_exit_smoke.gd
+godot --path 3d_game --script res://tests/water_reflection_smoke.gd -- --visual
 ```
 
 Add `-- --visual` to the first command, and omit `--headless`, to capture Stage 3's
