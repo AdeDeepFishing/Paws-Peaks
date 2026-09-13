@@ -2,6 +2,7 @@ extends "res://scripts/woodland/woodland_level.gd"
 
 const DrawingSurface = preload("res://scripts/river/drawing_surface.gd")
 const GeneratedModel = preload("res://scripts/river/generated_model.gd")
+const Presentation = preload("res://scripts/woodland/dog_presentation.gd")
 const GUARD_Z := -4.8
 const DRAW_RADIUS := 16.0
 const OFFER_POSITION := Vector3(-2.8, 0.15, 0)
@@ -20,6 +21,7 @@ var cancel_request: Button
 var drawing := false
 var item: Dictionary = {}
 var offered: Node3D
+var presentation: Node
 
 func _ready() -> void:
 	super._ready()
@@ -30,16 +32,20 @@ func _ready() -> void:
 	draw_button.tooltip_text = "Draw food or a toy to lead the dog off the path."
 	objective.text = "Draw a distraction for the dog."
 	_build_drawing()
+	presentation = Presentation.new()
+	presentation.name = "DogPresentation"
+	add_child(presentation)
+	presentation.finished.connect(_react_to_offering)
 	status.text = "The dog guards this path. Try drawing food or a toy."
 
 func _process(delta: float) -> void:
 	super._process(delta)
 	var near := near_dog()
-	draw_button.disabled = dog.distracted or request.state == "PENDING" or not player.is_on_floor()
+	draw_button.disabled = dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor()
 	draw_button.text = "Path is clear" if dog.solved else ("E · Offer drawing" if request.state == "READY" and not dog.distracted else "E · Draw")
 	drawing_shine.set_active(not drawing and near and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
-	modes.disabled = request.state == "PENDING" or dog.distracted
+	modes.disabled = request.state == "PENDING" or dog.distracted or presentation.active
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("sketchbook"):
@@ -50,6 +56,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel") and drawing:
 		_close_drawing()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel") and request.state == "PENDING":
+		request.cancel()
 		get_viewport().set_input_as_handled()
 
 func can_exit() -> bool:
@@ -65,10 +74,11 @@ func constrain_player(body: CharacterBody3D) -> void:
 			status.text = "The dog keeps blocking the way. Draw food or a toy to distract it."
 
 func near_dog() -> bool:
-	return Vector2(player.position.x - dog.position.x, player.position.z - dog.position.z).length() <= DRAW_RADIUS
+	# Patrol must not move the interaction boundary away from a stationary player.
+	return Vector2(player.position.x - dog.home.x, player.position.z - dog.home.z).length() <= DRAW_RADIUS
 
 func _open_drawing() -> void:
-	if dog.distracted or request.state == "PENDING" or not player.is_on_floor():
+	if dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor():
 		return
 	if request.state == "READY" and not item.is_empty():
 		_offer_item()
@@ -86,11 +96,11 @@ func _open_drawing() -> void:
 func _close_drawing() -> void:
 	drawing = false
 	surface.drawing = false
-	dog.paused = false
+	dog.paused = presentation.busy
 	overlay.hide()
-	hud_root.show()
+	hud_root.visible = not presentation.busy
 	player.set_drawing_active(false)
-	player.set_input_enabled(true)
+	player.set_input_enabled(not presentation.busy)
 
 func _submit() -> void:
 	if not drawing or dog.distracted:
@@ -107,8 +117,11 @@ func _on_request_state(state: String) -> void:
 	match state:
 		"PENDING":
 			status.text = "Preparing your drawing. You can keep exploring."
+			presentation.begin(_offering_position())
+		"IDLE":
+			_clear_presentation()
 		"FAILED":
-			item = {}
+			_clear_presentation()
 			status.text = request.message + " Your sketch is safe; try again."
 		"READY":
 			item = request.result.duplicate(true)
@@ -118,10 +131,25 @@ func _on_request_state(state: String) -> void:
 			if near_dog() and player.is_on_floor():
 				_offer_item()
 			else:
+				presentation.cancel()
 				status.text = "Your drawing is ready. Return to the dog and press E to offer it."
 
+func _clear_presentation() -> void:
+	presentation.cancel()
+	item = {}
+	if is_instance_valid(offered):
+		offered.queue_free()
+	offered = null
+
+func _offering_position() -> Vector3:
+	var at := OFFER_POSITION
+	var probe := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 3, at + Vector3.DOWN * 3, dog.GROUND_MASK)
+	var ground := get_world_3d().direct_space_state.intersect_ray(probe)
+	if not ground.is_empty(): at.y = ground.position.y + 0.03
+	return at
+
 func _offer_item() -> void:
-	if request.state != "READY" or dog.distracted or item.get("type") not in ["FOOD", "TOY"]:
+	if request.state != "READY" or dog.distracted or is_instance_valid(offered) or item.get("type") not in ["FOOD", "TOY"]:
 		return
 	if not near_dog():
 		status.text = "Return to the dog to offer your drawing."
@@ -134,31 +162,28 @@ func _offer_item() -> void:
 			return
 	offered = Node3D.new()
 	offered.name = "OfferedDrawing"
+	offered.hide()
 	add_child(offered)
-	offered.position = OFFER_POSITION
-	var probe := PhysicsRayQueryParameters3D.create(offered.global_position + Vector3.UP * 3, offered.global_position + Vector3.DOWN * 3, dog.GROUND_MASK)
-	var ground := get_world_3d().direct_space_state.intersect_ray(probe)
-	if not ground.is_empty():
-		offered.global_position.y = ground.position.y + 0.03
+	offered.position = _offering_position()
 	if visual:
 		offered.add_child(visual)
-	var image := Image.new()
-	image.load_png_from_buffer(request.snapshot)
-	var sketch := Sprite3D.new()
-	sketch.texture = ImageTexture.create_from_image(image)
-	sketch.pixel_size = 0.004
-	sketch.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sketch.no_depth_test = true
-	sketch.position.y = 1.3 if visual == null else 2.5
-	offered.add_child(sketch)
-	var label := Label3D.new()
-	label.text = item.name
-	label.font_size = 42
-	label.pixel_size = 0.009
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.position.y = sketch.position.y + 1.3
-	offered.add_child(label)
+	else:
+		# Explicit offline playtest uses a simple 3D stand-in, never a drawing overlay.
+		var sample := MeshInstance3D.new()
+		var shape := SphereMesh.new()
+		shape.radius = 0.6
+		shape.height = 1.2
+		sample.mesh = shape
+		sample.position.y = 0.6
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color("cf6659") if item.type == "FOOD" else Color("83b9c3")
+		material.roughness = 1.0
+		sample.material_override = material
+		offered.add_child(sample)
+	presentation.reveal(offered)
+
+func _react_to_offering() -> void:
+	if request.state != "READY" or not is_instance_valid(offered) or dog.distracted: return
 	# Stop with the muzzle by the offering and the body clear of the main path.
 	if dog.distract(offered.global_position + COLLECTION_OFFSET, offered.global_position):
 		status.text = "You caught the dog's attention!"

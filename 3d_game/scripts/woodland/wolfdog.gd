@@ -26,6 +26,7 @@ var paused := false:
 			animator.speed_scale = 0.0 if value else 1.0
 var animator: AnimationPlayer
 var player: Node3D
+var reaction_heart: Label3D
 @onready var character: Node3D = $Character
 
 func _ready() -> void:
@@ -62,12 +63,14 @@ func _physics_process(delta: float) -> void:
 		return
 	if distracted:
 		if state == "jump":
+			_face(offering_position - global_position, delta)
 			if state_time >= animator.get_animation("encounter/jump").length:
 				_set_state("fetch_run", "run")
 			return
 		var remaining := _flat_distance(global_position, target)
 		if remaining < 0.12:
 			solved = true
+			if is_instance_valid(reaction_heart): reaction_heart.queue_free()
 			_set_state("content", "idle")
 			collected.emit()
 			return
@@ -121,6 +124,18 @@ func distract(at: Vector3, offering: Vector3) -> bool:
 	offering_position = offering
 	distracted = true
 	_set_state("jump", "jump")
+	reaction_heart = Label3D.new()
+	reaction_heart.name = "ReactionHeart"
+	reaction_heart.text = "♥"
+	reaction_heart.font_size = 64
+	reaction_heart.pixel_size = 0.012
+	reaction_heart.modulate = Color("ffb4b4")
+	reaction_heart.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	reaction_heart.no_depth_test = true
+	reaction_heart.position = Vector3.UP * 5.3
+	add_child(reaction_heart)
+	reaction_heart.scale = Vector3.ONE * 0.2
+	create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).tween_property(reaction_heart, "scale", Vector3.ONE, 0.3)
 	return true
 
 func _set_state(next: String, clip: String) -> void:

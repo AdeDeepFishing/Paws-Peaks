@@ -325,15 +325,19 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
   TOY (for example a toy bone) are the supported solutions.
   WEAPON and UNKNOWN give a contextual retry; they never open the route.
-- A successful object appears on clear road surface, away from the roadside plants, with the original
-  sketch visible. The dog jumps once, runs toward it, slows to a walk, then collects
-  it and displays a heart and “Thank you!” while remaining off the path.
+- Submission places a small cloth cover on clear road surface, away from the plants.
+  The camera slowly focuses on it and holds until generation finishes. Reveal only
+  the 3D object, hold for two seconds, then restore the normal camera. The original
+  sketch stays in the canvas, not as an overlay beside the finished model.
+  Only after zoom-out does the dog show a heart, jump once, run toward it, slow to a
+  walk and collect it. It then displays “Thank you!” while remaining off the path.
 - The forward boundary is blocked at every lateral position and jump height until
   collection finishes. The E03 exit also checks encounter completion independently.
   Once cleared, the full-width z=-28 exit works as before.
 - One accepted offering starts the distraction once. Dog travel speed and the offering
   position are authored; no numeric item stats are required or consumed.
-- Drawing pauses protagonist input and dog pursuit. Processing restores exploration;
+- Drawing pauses protagonist input and dog pursuit. Processing restores exploration
+  after the initial camera movement;
   it cannot unlock passage. Failed, unclear and canceled results preserve the draft
   for retry, and stale/duplicate results cannot replay the resolution.
 - The drawing button stays visible during exploration and glows near an available

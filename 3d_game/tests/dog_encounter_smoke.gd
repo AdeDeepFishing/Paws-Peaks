@@ -31,7 +31,7 @@ func draw(level, outcome: int):
 	check(not level.submit_button.disabled, "Adding ink enables the offer button")
 	level.choices.selected = outcome
 	level._submit()
-	check(not level.drawing and level.player.input_enabled, "Submit restores exploration")
+	check(not level.drawing, "Submit closes the drawing canvas")
 	await frames(12)
 
 func run():
@@ -39,6 +39,7 @@ func run():
 	root.add_child(level)
 	current_scene = level
 	level.generation.configure(0)
+	level.presentation.duration_scale = 0.01
 	level.modes.select(1)
 	level.request.mock_delay = 0.05
 	level.dog.state_changed.connect(func(state: String): seen_states.append(state))
@@ -58,6 +59,7 @@ func run():
 		maximum = maximum.max(level.dog.position)
 		check(level.dog._flat_distance(previous, level.dog.position) <= level.dog.WALK_SPEED / 60.0 + 0.01, "Patrol walks smoothly without teleporting")
 		check(level.dog.position.z <= level.dog.home.z + 0.01, "Patrol remains behind the guard boundary")
+		check(level.near_dog(), "Circling cannot move the interaction range away from the entry position")
 		check(absf(level.dog.position.y - level.dog.home.y) < 0.5, "Circling under the oak stays on the path, not the overhead branches")
 		previous = level.dog.position
 	check(completed_loop and maximum.x - minimum.x > 6 and maximum.z - minimum.z > 3, "Stationary player sees a complete circuit across both sides of the path")
@@ -169,6 +171,7 @@ func run():
 	root.add_child(level)
 	current_scene = level
 	level.generation.configure(0)
+	level.presentation.duration_scale = 0.01
 	level.request.mock_delay = 0.05
 	await frames(60)
 	check(not level.can_exit() and level.offered == null, "Fresh stage resets encounter progress")

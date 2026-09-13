@@ -16,24 +16,30 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
 - Press E / the mapped sketchbook controller button, or click **Draw**. Draw on
   the transparent scene canvas; Undo, Clear and Back preserve the familiar river
   controls. Back retains the current draft. Drafting can start away from the dog;
-  offering requires being within 16 horizontal world units of it.
+  offering requires being within 16 horizontal world units of the fixed guard post,
+  so circling does not move the interaction boundary away from a stationary player.
 - **AI drawing · Uses credits** uses the existing E02 / `dog` backend contract.
   Nothing is submitted until the player draws and explicitly offers it. The game
   passes the actual PNG to the persistent worker; FOOD and TOY are accepted.
 - **Offline playtest · No AI** exposes explicit sample outcomes: Food, Toy,
   Unclear, Service failure, Unsuitable. It does not recognize the drawing or
-  generate a mesh. It displays the actual sketch as the offered object.
+  generate a mesh. It uses a simple colored 3D stand-in for the offering.
 - While the canvas is open, protagonist input, dog movement and its walking clip are paused.
-  Submitting restores exploration; the forward route stays guarded while waiting.
+  Exploration resumes after the initial camera movement; the forward route stays guarded while waiting.
   A result received far away waits for the player to return and press E.
-- FOOD or TOY appears on clear pavement on the left side of the road, alongside the original
-  sketch. In AI mode the returned GLB is also displayed. The dog jumps once, runs
-  over, slows to a walk, and collects it. The three-field item response needs no
+- Submission places a small cream cloth cover on the road and focuses the camera
+  over two seconds. Exploration and Stop waiting return after the initial movement;
+  the close-up stays on the cover until generation finishes. The cover lifts away,
+  revealing only the 3D offering. The result holds for two seconds, then the camera
+  returns over one second. Only afterward does the dog show a heart, jump once and run
+  over, slow to a walk, and collect it. The three-field item response needs no
   durability; the dog state prevents repeated offerings. The dog stays off the path with a heart and **Thank you!**.
   The offering is at world x=-2.8, z=0, with its base just above the terrain,
   clear of the roadside plants. The dog stops to its left at x=-5.6, z=-0.6,
   faces the offering and leaves the road
-  center open. This applies to all accepted generated objects and offline sketches.
+  center open. The original drawing and name are not floating scene overlays;
+  the draft remains in the canvas for retries. This applies to all accepted generated
+  objects and offline stand-ins.
 - Unclear, unrelated, timeout, cancellation and invalid-model outcomes preserve
   the sketch and permit retry. Weapons are not a solution. Repeated submissions,
   duplicate offers and late canceled results cannot repeat the resolution.
@@ -113,6 +119,10 @@ Godot 4.7.2, Apple M1, desktop Forward+:
   distant completion, invalid model recovery, single-use offering, both food
   and toy routes, jump/run/walk, thank-you, collection-only unlock, real scene
   transition and fresh-scene reset.
+- `dog_presentation_smoke.gd`: real-time camera focus and result hold, covered
+  waiting with exploration, model-only reveal, heart/jump after zoom-out, fast
+  completion, cancellation during focus and reveal, timeout, invalid model and
+  scene removal. Desktop captures cover waiting, model reveal, reaction and collection.
 - `woodland_exit_smoke.gd`: guarded and solved exits at x=-59, 0, 6.5, 25, 59.
 - `woodland_smoke.gd`: terrain, collision, movement, framing, wind and shadows.
 - `river_smoke.gd`: existing river/drawing/request/crossing regression and the
