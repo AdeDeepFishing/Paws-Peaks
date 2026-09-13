@@ -1,7 +1,8 @@
 # Stage 04: Sunset Cove integration
 
 Updated: 2026-09-13. Implements the environment and transition requested in
-issue #31. E04 otter interaction, drawing rules and Stage 5 remain separate work.
+issue #31. E04 otter interaction and drawing rules remain separate work.
+The Stage 5 environment and cave exit are added by #32.
 
 ## Route and controls
 
@@ -21,6 +22,10 @@ issue #31. E04 otter interaction, drawing rules and Stage 5 remain separate work
   to frame the character. It follows ground movement without mouse orbit.
 - **Back to Wind Hill** returns to a fresh Stage 3 preview. Scene changes preserve
   the existing GenerationWorker autoload; no AI request is made by these previews.
+- Continue right to the cave approach at world x>=5.5 to enter Moonlit Forest.
+  The boundary covers all Z positions and heights, including the surrounding
+  grass; no jump or narrow tunnel entry is required. See
+  [Stage 05 integration](STAGE05_INTEGRATION.md).
 - Sand, river banks, cave surfaces, solid rocks and main trunks have collision.
   Water, distant scenery, painted foliage and the background ground underlay do not.
   Falling below y=-4 returns to the beach. Water is not a walkable floor.

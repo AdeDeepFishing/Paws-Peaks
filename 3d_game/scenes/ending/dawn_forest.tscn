@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ending/ending_level.gd" id="1"]
+[ext_resource type="PackedScene" path="res://models/ending/dawn_forest.glb" id="2"]
+[ext_resource type="Script" path="res://scripts/moonlit_forest/moonlit_forest_art.gd" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/river/river_player.tscn" id="4"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.7, 0.79, 0.88, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.86, 0.88, 0.94, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 3
+tonemap_exposure = 1.0
+glow_enabled = true
+glow_intensity = 0.45
+glow_bloom = 0.08
+fog_enabled = true
+fog_light_color = Color(0.75, 0.79, 0.86, 1)
+fog_light_energy = 0.6
+fog_density = 0.003
+
+[node name="DawnForest" type="Node3D"]
+script = ExtResource("1")
+art_path = NodePath("DawnArt")
+authored_camera_name = "Reference_Camera"
+stage_title = "A New Dawn"
+fallback_spawn = Vector3(0, 2, 4)
+camera_pullback = 3.0
+return_scene = "res://scenes/moonlit_forest/moonlit_forest.tscn"
+return_label = "Back to forest"
+
+[node name="DawnArt" parent="." instance=ExtResource("2")]
+script = ExtResource("3")
+animation_name = "Forest_dawn_wind_clouds"
+key_light_name = "Sunrise_key"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="StageCamera" type="Camera3D" parent="."]
+current = true
+far = 250.0
+
+[node name="Player" parent="." instance=ExtResource("4")]
+position = Vector3(0, 2, 4)
+appearance_scale = 1.08
