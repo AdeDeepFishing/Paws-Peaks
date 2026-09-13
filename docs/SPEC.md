@@ -1104,3 +1104,13 @@ submissions, including retries; it does not imply provider success.
 flow. **Stay in the dawn** dismisses the book and restores movement; **The last
 page** reopens it. Retain **Back to forest** while exploring. See
 [Ending integration](3d_game/ENDING_INTEGRATION.md) for implementation and checks.
+
+
+## September 14: Return to the map from Chapter 1
+
+Add **Back to map** below the River's Sound button. This is a current-chapter
+map visit, not a restart or an unlocked next chapter. Retain the current scene,
+player position, drawing and encounter state while browsing. Allow bounded map
+zoom and show **Return to chapter →** to resume. Use the same bottom-right page
+turn for both directions. Disable this action while a drawing panel, generation,
+model presentation or chapter-exit transition is active.

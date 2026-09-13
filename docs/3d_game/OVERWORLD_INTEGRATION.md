@@ -44,6 +44,28 @@ and the bird protection encounter still gate progression. Stage 4's cave exit
 and the Stage 5 ending shortcut retain their documented preview status; this
 map integration does not implement otter or final-boss mechanics.
 
+## Return to the current map
+
+Chapter 1's **Back to map** button sits below Sound. It turns to the current
+chapter's map without walking to the next chapter or resetting progress.
+**Return to chapter →** resumes the exact same scene and player position.
+Current drawings, generated models and encounter state stay in memory. Map
+zoom is available during this visit even for Chapter 1.
+
+The chapter stays in the tree with processing and visibility disabled; its
+CanvasLayers are hidden and restored separately. The temporary map is freed on
+return, and the previous camera/process state is restored. Confirming return
+cannot also trigger a jump. The button is disabled while drawing, generating,
+presenting a model or already leaving the chapter. The persistent worker is
+unchanged and map browsing submits no AI requests.
+
+`map_return_smoke.gd` checks repeated visits, same-scene/state preservation,
+position/HUD restoration, map cleanup, duplicate-entry guards and the pending
+request guard. Append `-- --visual` with the native renderer to capture the
+button and the current-chapter map.
+
+![Back to map in Chapter 1](assets/overworld/back-to-map.png)
+
 ## Assets and conversion
 
 Source: the team's supplied `map-overworld-three-times` folder, provided for

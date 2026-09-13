@@ -10,6 +10,7 @@ const SPAWN := Vector3(-6.3, 1.5, -6.3)
 @onready var generation = $DesktopGeneration
 var generated_visual: Node3D
 var generation_modes: OptionButton
+var map_button: Button
 
 @onready var request = $DrawingRequest
 @onready var bridge: Node3D = $Bridge
@@ -69,6 +70,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	presentation.follow_player(delta)
 	_update_drawing_entry()
+	map_button.disabled = not can_browse_map()
 	if player.position.y < 0.35:
 		player.respawn(SPAWN)
 		status_label.text = "Back on dry land. Your drawing is safe."
@@ -310,6 +312,15 @@ func _update_hud() -> void:
 	generation_modes.disabled = presentation.busy or request.state == "PENDING"
 	objective.text = "Follow the path into the woodland." if completed else ("Walk across your bridge." if bridge_built else "Find a way across the river.")
 
+func can_browse_map() -> bool:
+	return not presentation.busy and request.state != "PENDING" and panel_mode.is_empty() and not transitioning
+
+func _back_to_map() -> void:
+	if not can_browse_map(): return
+	var error: Error = get_node("/root/Journey").browse_map()
+	if error != OK and error != ERR_BUSY:
+		status_label.text = "The map could not be opened. Try again."
+
 func _input(event: InputEvent) -> void:
 	var device := hint_device
 	if event is InputEventKey or event is InputEventMouseButton:
@@ -421,6 +432,14 @@ func _build_ui() -> void:
 	sound_button.offset_right = -28
 	sound_button.offset_top = 86
 	sound_button.offset_bottom = 130
+	map_button = _button(root, "Back to map", _back_to_map)
+	map_button.name = "BackToMap"
+	map_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	map_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	map_button.offset_left = -180
+	map_button.offset_right = -28
+	map_button.offset_top = 144
+	map_button.offset_bottom = 188
 	status_label = _label(root, "Follow the pink path to the river.", 19)
 	status_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status_label.position += Vector2(28, -154)

@@ -71,6 +71,10 @@ Chapter 5. **Begin a new journey** returns to the daylight map and **Start the j
 [Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for source assets
 and verification.
 
+In Chapter 1, **Back to map** below Sound opens the current chapter’s map for
+browsing. **Return to chapter →** resumes the same scene, position and drawing
+state. The button waits until drawing/generation presentation has finished.
+
 ## Try the first stage
 
 1. Use **WASD or arrow keys** to move relative to the fixed overhead camera, **Space** to jump,

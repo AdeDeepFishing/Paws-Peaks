@@ -93,6 +93,60 @@ func travel_to(destination: String) -> Error:
 	_begin(origin, target)
 	return OK
 
+func browse_map() -> Error:
+	if busy: return ERR_BUSY
+	var source := get_tree().current_scene
+	if source == null or stage_for_scene(source.scene_file_path) == 0: return ERR_UNCONFIGURED
+	if source.has_method("can_browse_map") and not source.can_browse_map(): return ERR_BUSY
+	if not ResourceLoader.exists(MAP): return ERR_FILE_NOT_FOUND
+	busy = true
+	input_blocker.show()
+	_browse_map.call_deferred(source)
+	return OK
+
+func _browse_map(source: Node3D) -> void:
+	var packed := load(MAP) as PackedScene
+	if packed == null:
+		_recover(source, source.process_mode, "The map could not be opened. Try again.")
+		return
+	var old_mode := source.process_mode
+	var stage := stage_for_scene(source.scene_file_path)
+	var active_camera := get_viewport().get_camera_3d()
+	source.process_mode = Node.PROCESS_MODE_DISABLED
+	await _capture_page()
+	# Keep the same chapter in the tree, paused and hidden, so drafts, generated
+	# models, collision state and encounter progress survive a map visit.
+	var layers: Dictionary = {}
+	for layer in source.find_children("*", "CanvasLayer", true, false):
+		layers[layer] = layer.visible
+		layer.hide()
+	source.hide()
+	var map := packed.instantiate()
+	map.autoplay = false
+	get_tree().root.add_child(map)
+	get_tree().current_scene = map
+	map.configure(stage, stage)
+	await get_tree().process_frame
+	await _turn_page(true)
+	phase = "start"
+	input_blocker.hide()
+	await map.await_start(stage, true)
+	phase = "loading"
+	input_blocker.show()
+	await _capture_page()
+	get_tree().current_scene = source
+	map.queue_free()
+	source.show()
+	for layer in layers: layer.visible = layers[layer]
+	active_camera.make_current()
+	await get_tree().process_frame
+	await _turn_page(false)
+	source.process_mode = old_mode
+	# Confirm and jump can share a button; returning must not trigger a jump.
+	source.player.set_input_enabled(source.player.input_enabled)
+	_finish()
+	finished.emit(stage)
+
 func start_intro() -> void:
 	if busy: return
 	visited_chapters.clear()

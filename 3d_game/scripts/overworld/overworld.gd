@@ -25,6 +25,7 @@ var start_button: Button
 var zoom_controls: HBoxContainer
 var zoom_slider: HSlider
 var review_stage := 1
+var browsing_current := false
 var zoom_amount := 0.0
 var zoom_target := 0.0
 
@@ -154,15 +155,19 @@ func _build_zoom_controls() -> void:
 			button.add_theme_color_override(state, Color("fff4da"))
 	zoom_controls.hide()
 
-func await_start(stage: int = 1) -> void:
+func await_start(stage: int = 1, resume_chapter: bool = false) -> void:
 	phase = "start"
 	review_stage = stage
+	browsing_current = resume_chapter
 	zoom_amount = 0.0
 	zoom_target = 0.0
 	zoom_slider.value = 0.0
 	start_button.text = "Start the journey  →" if stage == 1 else "Next page  →"
 	caption.text = "Draw something, help someone, and have fun ✨" if stage == 1 else "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
-	zoom_controls.visible = stage > 1
+	if resume_chapter:
+		start_button.text = "Return to chapter  →"
+		caption.text = "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
+	zoom_controls.visible = stage > 1 or resume_chapter
 	start_button.disabled = false
 	start_button.show()
 	start_button.grab_focus()
@@ -178,7 +183,7 @@ func _start() -> void:
 	start_requested.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if phase != "start" or review_stage == 1: return
+	if phase != "start" or (review_stage == 1 and not browsing_current): return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			zoom_slider.value -= 0.12
@@ -278,7 +283,7 @@ func _set_camera(value: Transform3D) -> void:
 	camera.transform = value
 
 func _process(delta: float) -> void:
-	if phase == "start" and review_stage > 1:
+	if phase == "start" and (review_stage > 1 or browsing_current):
 		zoom_amount = lerpf(zoom_amount, zoom_target, 1.0 - exp(-delta * 9.0))
 		_set_camera(_close_transform(review_stage).interpolate_with(_full_transform(), zoom_amount))
 	motion_time += delta
