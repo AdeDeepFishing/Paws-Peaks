@@ -9,8 +9,8 @@ static func complete(tree: SceneTree) -> void:
 	for i in 1800:
 		await tree.physics_frame
 		await tree.process_frame
-		if journey.phase == "browse":
-			tree.current_scene.next_button.pressed.emit()
+		if journey.phase == "start":
+			tree.current_scene.start_button.pressed.emit()
 		if not journey.busy: return
 	push_error("Chapter presentation did not finish within 30 seconds")
 	tree.quit(1)

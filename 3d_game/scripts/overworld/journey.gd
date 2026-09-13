@@ -46,7 +46,7 @@ func _ready() -> void:
 	page.hide()
 
 func _input(_event: InputEvent) -> void:
-	if busy and phase != "browse": get_viewport().set_input_as_handled()
+	if busy and phase != "start": get_viewport().set_input_as_handled()
 
 func stage_for_scene(path: String) -> int:
 	return STAGES.find(path) + 1
@@ -121,10 +121,10 @@ func _run() -> void:
 		return
 	phase = "map"
 	await map.play_route(from_stage, target_stage, duration_scale)
-	if from_stage > 0:
-		phase = "browse"
+	if from_stage == 0:
+		phase = "start"
 		input_blocker.hide()
-		await map.await_next_page(target_stage, duration_scale)
+		await map.await_start()
 		phase = "loading"
 		input_blocker.show()
 	while ResourceLoader.load_threaded_get_status(destination) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:

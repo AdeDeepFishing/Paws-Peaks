@@ -30,21 +30,20 @@ func run() -> void:
 	journey.duration_scale = 0.7
 	change_scene_to_file(journey.MAP)
 	await scene_changed
+	while journey.phase != "start": await process_frame
+	await capture("start-live")
+	var point: Vector2 = current_scene.start_button.get_global_rect().get_center()
+	var click := InputEventMouseButton.new()
+	click.position = point
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	root.push_input(click)
+	click = click.duplicate()
+	click.pressed = false
+	root.push_input(click)
 	await journey.finished
 	for stage in [2, 3]:
 		journey.travel_to(journey.STAGES[stage - 1])
-		while journey.phase != "browse": await process_frame
-		await capture("chapter-%d-ready" % stage)
-		await create_timer(0.2).timeout
-		var point: Vector2 = current_scene.next_button.get_global_rect().get_center()
-		var click := InputEventMouseButton.new()
-		click.position = point
-		click.button_index = MOUSE_BUTTON_LEFT
-		click.pressed = true
-		root.push_input(click)
-		click = click.duplicate()
-		click.pressed = false
-		root.push_input(click)
 		await journey.finished
-	print("MAP VISUAL TRANSITIONS: PASS (native mouse clicks)")
+	print("MAP VISUAL TRANSITIONS: PASS (Start mouse click, automatic later chapters)")
 	quit()

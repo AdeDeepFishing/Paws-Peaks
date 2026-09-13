@@ -20,7 +20,7 @@ root as the project entry point; [AGENTS.md](AGENTS.md) stays here for coding-as
 ## Open and run
 
 1. In Godot's Project Manager, click **Import** and select `3d_game/project.godot`.
-2. Open the project and press **F5** (or click Run Project) to launch the **world map intro**, which turns into **Across the River**.
+2. Open the project and press **F5** (or click Run Project) to launch the **world map intro**, which pauses at the hero for **Start** before entering **Across the River**.
 3. The repository root is for documentation and Git; the Godot project lives in `3d_game/`.
 
 Use **Godot 4.7.2 Standard**. The project uses built-in **GodotPhysics3D**; the bundled
@@ -57,14 +57,16 @@ bridgehead, doubles the Stage 1 character visual, and brings its normal camera a
 
 ## World map and chapter turns
 
-After each forward exit in Chapters 1–4, the page turns back to the map and the
-protagonist walks to the next chapter. The map changes to sunset before Chapter
-3 and night before Chapter 5. On arrival, inspect the map with the wheel,
-trackpad, zoom slider, **Full map**, or **My location**; press **Next page** when
-ready to enter. The opening enters Chapter 1 automatically. **Play again** at
-the dawn ending replays the daylight intro. See
-[Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for controls,
-source assets and verification.
+The opening shows the daylight map and zooms to the protagonist. Click **Start**
+(or use Enter/controller confirm) to turn into the first chapter; the character
+then drops onto the path. The opening waits as long as you need.
+
+After each forward exit in Chapters 1–4, the page turns back to the map, the
+protagonist walks to the next chapter, and the camera zooms in before entering
+automatically. The map changes to sunset before Chapter 3 and night before
+Chapter 5. **Play again** returns to the daylight map and **Start**. See
+[Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for source assets
+and verification.
 
 ## Try the first stage
 

@@ -1,6 +1,6 @@
 extends Node3D
 
-signal next_page
+signal start_requested
 
 const RouteData = preload("res://scripts/overworld/route_data.gd")
 const HeroVisual = preload("res://scripts/river/hero_visual.gd")
@@ -21,18 +21,13 @@ var phase := "overview"
 var traveler_offset := 0.0
 var motion_time := 0.0
 var stars: Array[Node] = []
-var browse_panel: PanelContainer
-var next_button: Button
-var zoom_slider: HSlider
-var inspection_stage := 1
-var zoom_amount := 1.0
-var zoom_target := 1.0
+var start_button: Button
 
 func _ready() -> void:
 	_build_route()
 	_build_hero()
 	_build_caption()
-	_build_browse_controls()
+	_build_start_button()
 	_prepare_art()
 	configure(0, 1)
 	var journey := get_node("/root/Journey")
@@ -73,113 +68,59 @@ func _build_caption() -> void:
 	caption.add_theme_constant_override("outline_size", 5)
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-func _build_browse_controls() -> void:
-	browse_panel = PanelContainer.new()
-	caption.get_parent().add_child(browse_panel)
-	browse_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	browse_panel.offset_left = 24
-	browse_panel.offset_right = -24
-	browse_panel.offset_top = -88
-	browse_panel.offset_bottom = -24
+func _build_start_button() -> void:
+	start_button = Button.new()
+	start_button.name = "Start"
+	start_button.text = "Start  →"
+	caption.get_parent().add_child(start_button)
+	start_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	start_button.offset_left = -140
+	start_button.offset_right = 140
+	start_button.offset_top = -150
+	start_button.offset_bottom = -82
+	start_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	start_button.add_theme_font_size_override("font_size", 28)
 	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("f3ebda")
-	paper.set_corner_radius_all(16)
-	paper.content_margin_left = 18
-	paper.content_margin_right = 18
-	paper.content_margin_top = 10
-	paper.content_margin_bottom = 10
-	browse_panel.add_theme_stylebox_override("panel", paper)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	browse_panel.add_child(row)
-	var overview := Button.new()
-	overview.text = "Full map"
-	row.add_child(overview)
-	overview.pressed.connect(func(): set_zoom(0.0))
-	zoom_slider = HSlider.new()
-	zoom_slider.min_value = 0.0
-	zoom_slider.max_value = 1.0
-	zoom_slider.step = 0.01
-	zoom_slider.value = 1.0
-	zoom_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	zoom_slider.custom_minimum_size.x = 80
-	zoom_slider.tooltip_text = "Zoom · Mouse wheel / trackpad / − and +"
-	row.add_child(zoom_slider)
-	zoom_slider.value_changed.connect(set_zoom)
-	var location := Button.new()
-	location.text = "My location"
-	row.add_child(location)
-	location.pressed.connect(func(): set_zoom(1.0))
-	next_button = Button.new()
-	next_button.name = "NextPage"
-	next_button.text = "Next page  →"
-	next_button.custom_minimum_size.x = 160
-	row.add_child(next_button)
-	next_button.pressed.connect(_continue)
-	for button in [overview, location, next_button]:
-		button.add_theme_font_size_override("font_size", 19)
-		button.add_theme_color_override("font_color", Color("273d36"))
-		button.add_theme_color_override("font_hover_color", Color("273d36"))
-		button.add_theme_color_override("font_focus_color", Color("273d36"))
-		button.add_theme_color_override("font_pressed_color", Color("273d36"))
-		button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	var next_paper := paper.duplicate()
-	next_paper.bg_color = Color("34584e")
-	next_paper.set_corner_radius_all(10)
-	next_button.add_theme_stylebox_override("normal", next_paper)
+	paper.bg_color = Color("34584e")
+	paper.set_corner_radius_all(18)
+	paper.border_color = Color("f3ebda")
+	paper.set_border_width_all(2)
+	paper.shadow_color = Color(0.05, 0.12, 0.09, 0.25)
+	paper.shadow_size = 8
+	paper.shadow_offset = Vector2(0, 3)
+	start_button.add_theme_stylebox_override("normal", paper)
+	var hover := paper.duplicate()
+	hover.bg_color = Color("466b5e")
+	start_button.add_theme_stylebox_override("hover", hover)
+	var pressed := paper.duplicate()
+	pressed.bg_color = Color("29463e")
+	start_button.add_theme_stylebox_override("pressed", pressed)
+	var focus := StyleBoxFlat.new()
+	focus.draw_center = false
+	focus.border_color = Color("f4d69a")
+	focus.set_border_width_all(3)
+	focus.set_corner_radius_all(18)
+	start_button.add_theme_stylebox_override("focus", focus)
 	for state in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
-		next_button.add_theme_color_override(state, Color("fff4da"))
-	var hover_paper := next_paper.duplicate()
-	hover_paper.bg_color = Color("466b5e")
-	next_button.add_theme_stylebox_override("hover", hover_paper)
-	next_button.add_theme_stylebox_override("pressed", next_paper)
-	zoom_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	browse_panel.hide()
+		start_button.add_theme_color_override(state, Color("fff4da"))
+	start_button.pressed.connect(_start)
+	start_button.hide()
 
-func await_next_page(stage: int, duration_scale: float) -> void:
-	inspection_stage = stage
-	zoom_amount = 1.0
-	set_zoom(1.0)
-	phase = "browse"
-	caption.offset_top = -140
-	caption.offset_bottom = -92
-	browse_panel.show()
-	next_button.disabled = false
-	next_button.grab_focus()
-	await next_page
+func await_start() -> void:
+	phase = "start"
+	caption.text = "Draw something. Help someone."
+	start_button.disabled = false
+	start_button.show()
+	start_button.grab_focus()
+	await start_requested
 	phase = "leaving"
-	browse_panel.hide()
-	caption.offset_top = -76
-	caption.offset_bottom = -28
-	# Return to the chapter location if the player was inspecting the full map.
-	var tween := create_tween()
-	tween.tween_method(_set_camera, camera.transform, _close_transform(stage), 0.55 * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await tween.finished
+	start_button.hide()
+	caption.text = "CHAPTER 01  ·  " + TITLES[0]
 
-func _continue() -> void:
-	if phase != "browse": return
-	next_button.disabled = true
-	next_page.emit()
-
-func set_zoom(value: float) -> void:
-	zoom_target = clampf(value, 0.0, 1.0)
-	zoom_slider.set_value_no_signal(zoom_target)
-
-func _unhandled_input(event: InputEvent) -> void:
-	if phase != "browse": return
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP: set_zoom(zoom_target + 0.12)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN: set_zoom(zoom_target - 0.12)
-	elif event is InputEventMagnifyGesture:
-		set_zoom(zoom_target + log(event.factor))
-	elif event is InputEventPanGesture:
-		set_zoom(zoom_target - event.delta.y * 0.025)
-	elif event is InputEventKey and event.pressed:
-		if event.keycode in [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD]: set_zoom(zoom_target + 0.12)
-		elif event.keycode in [KEY_MINUS, KEY_KP_SUBTRACT]: set_zoom(zoom_target - 0.12)
-	elif event is InputEventJoypadButton and event.pressed:
-		if event.button_index == JOY_BUTTON_LEFT_SHOULDER: set_zoom(zoom_target - 0.15)
-		elif event.button_index == JOY_BUTTON_RIGHT_SHOULDER: set_zoom(zoom_target + 0.15)
+func _start() -> void:
+	if phase != "start": return
+	start_button.disabled = true
+	start_requested.emit()
 
 func _prepare_art() -> void:
 	var copies := {}
@@ -269,9 +210,6 @@ func _set_camera(value: Transform3D) -> void:
 	camera.transform = value
 
 func _process(delta: float) -> void:
-	if phase == "browse":
-		zoom_amount = lerpf(zoom_amount, zoom_target, 1.0 - exp(-delta * 9.0))
-		_set_camera(_full_transform().interpolate_with(_close_transform(inspection_stage), zoom_amount))
 	motion_time += delta
 	for i in stars.size():
 		stars[i].scale = Vector3.ONE * (0.8 + 0.2 * sin(motion_time * 0.75 + i * 1.19))

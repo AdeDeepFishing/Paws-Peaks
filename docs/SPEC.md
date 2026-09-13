@@ -1059,19 +1059,22 @@ small and large drawings should remain prominent without clipping the cover.
 
 ## September 13: Overworld and page turns (#53)
 
-The approved map flow includes the team's later **Next page** revision. Start
-with the full daylight map, zoom to Chapter 1, and automatically turn into the
-river. Each forward exit in Chapters 1–4 turns back to the map at the completed
+The latest user playtest revision supersedes the earlier **Next page** step.
+Start with the full daylight map, zoom to the protagonist at Chapter 1, then
+hold that closeup with one prominent **Start** CTA. Do not enter the river until
+the player confirms. Clicking Start turns into the first scene, after which the
+protagonist drops onto the path through the existing spawn physics.
+
+Each forward exit in Chapters 1–4 turns back to the map at the completed
 chapter's closeup. Pull back while the protagonist walks along the painted
-route, then zoom to the next chapter. Show **Next page** and wait for player
-confirmation. Until confirmation, allow bounded zoom between the full map and
-the current chapter. Confirming turns into that chapter; map controls cannot
-skip ahead or bypass an unsolved encounter.
+route, then zoom to the next chapter and enter automatically. Later chapters
+require no confirmation or map inspection controls. Existing encounter gates
+still decide when the player can leave.
 
 Blend daylight into sunset during the Chapter 2-to-3 map journey, and sunset
 into night during Chapter 4-to-5. Keep all other map legs in their current time.
-The dawn ending's **Play again** restarts the daylight map intro and fresh
-river state. Individual scene previews remain available. This adds presentation
+The dawn ending's **Play again** returns to the daylight map and Start CTA
+before creating a fresh river. Individual scene previews remain available. This adds presentation
 to the current exits; otter and final-boss gameplay remain separate work.
 See [Overworld integration](3d_game/OVERWORLD_INTEGRATION.md) for assets, controls,
 implementation and verification.

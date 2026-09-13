@@ -22,13 +22,11 @@ func run() -> void:
 		map.configure(stage, stage)
 		map._set_camera(map._full_transform())
 		await snapshot("stage-%d-full" % stage)
-	map.configure(2, 2)
-	map.await_next_page(2, 1.0)
-	await snapshot("browse-close")
-	map.set_zoom(0.0)
-	await create_timer(0.8).timeout
-	await snapshot("browse-full")
+	map.configure(1, 1)
+	map.await_start()
+	await snapshot("start")
 	root.size = Vector2i(850, 720)
 	await create_timer(0.5).timeout
-	await snapshot("narrow")
+	await snapshot("start-narrow")
+	map.start_button.pressed.emit()
 	quit()

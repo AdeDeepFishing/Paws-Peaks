@@ -2,21 +2,19 @@
 
 ## Behavior
 
-F5 opens the supplied storybook map in daylight, holds the full view, zooms to
-Chapter 1 and turns the page into Across the River automatically.
+F5 opens the supplied storybook map in daylight, holds the full view and zooms
+to the protagonist at Chapter 1. It stays there with one prominent **Start**
+button until the player clicks it or uses Enter/controller confirm. The page
+then turns into Across the River; its existing spawn physics let the character
+drop onto the path after the reveal. Repeated activation starts only once.
 
-The existing forward exits in Chapters 1–4 now return to the map. The first
-page turn reveals a close view of the chapter just completed. As the camera
-pulls back, the Moonlit Wanderer walks along the painted route to the next
-chapter. After arrival the camera zooms in and waits for **Next page**.
+The existing forward exits in Chapters 1–4 return to the map. The page turn
+reveals a close view of the chapter just completed. As the camera pulls back,
+the Moonlit Wanderer walks along the painted route to the next chapter. After
+arrival the camera zooms in and automatically turns into the playable scene.
+There are no confirmation or inspection controls on these later journeys.
 
-During this wait, use the mouse wheel, trackpad pinch/scroll, slider, **Full map**,
-or **My location** to inspect the map. Keyboard **−/+** and controller shoulder
-buttons also zoom; Tab/D-pad navigation and the normal confirm action activate
-the buttons. Zoom is bounded by the full map and the current chapter closeup.
-The player cannot move to another chapter or skip an encounter from this view.
-Click **Next page** to return the camera to the destination and turn into its
-playable scene. Repeated clicks and repeated exit signals advance only once.
+This user playtest revision supersedes the earlier Next page requirement.
 
 | Journey | Map appearance |
 | --- | --- |
@@ -27,7 +25,8 @@ playable scene. Repeated clicks and repeated exit signals advance only once.
 | Chapter 4 → Chapter 5 | Smooth sunset-to-night transition during the walk |
 
 The Stage 5-to-dawn ending and backward preview buttons keep their existing
-navigation. **Play again** restarts the daylight map intro and a fresh river.
+navigation. **Play again** returns to the daylight map and Start CTA before a
+fresh river.
 Running an individual chapter with F6 remains supported: its next forward exit
 infers the correct map location and time from the scene path.
 
@@ -82,7 +81,7 @@ textures. This integration creates no additional generated art or paid calls.
 ![Day map](assets/overworld/day.png)
 ![Sunset map](assets/overworld/sunset.png)
 ![Night map](assets/overworld/night.png)
-![Bounded map inspection and Next page](assets/overworld/inspection.png)
+![Opening hero closeup and Start](assets/overworld/start.png)
 ![Returning from a chapter to the map](assets/overworld/page-turn.png)
 
 ## Structure and recovery
@@ -90,7 +89,7 @@ textures. This integration creates no additional generated art or paid calls.
 - `Journey` autoload owns the guarded page/map/stage sequence and a temporary
   outgoing-frame texture. It does not own encounter completion or AI jobs.
 - The overworld scene owns route travel, camera composition, time blending and
-  the bounded inspection controls.
+  the opening Start CTA.
 - `river_level.gd` and the shared `path_exit.gd` route forward exits through
   `Journey.travel_to()`. Ending restart calls `Journey.start_intro()`.
 - The destination loads in the background while the map plays. The outgoing
@@ -100,32 +99,30 @@ textures. This integration creates no additional generated art or paid calls.
 - A failed map open restores the previous stage. A failed destination load
   leaves the map visible with **Try again**. No failure submits an AI request.
 
-The authored intro lasts approximately four seconds. Route walks take at least
+The intro takes approximately three seconds to reach the Start CTA. Route walks take at least
 3.4 seconds, with a 1.8-second pullback, a 3.2-second time change when applicable,
-and a 1.65-second arrival zoom. Page curls last 0.95 seconds. Inspection has no
+and a 1.65-second arrival zoom. Page curls last 0.95 seconds. The Start screen has no
 time limit. `duration_scale` is a test seam; production defaults to 1.0.
 
 ## Verification
 
 Validation uses Godot 4.7.2 Standard. All generation checks use offline fixtures.
 
-- `overworld_smoke.gd`: automatic opening, all four map legs, correct palette
-  boundaries, authored destination positions, simultaneous art animations,
-  indefinite inspection, bounded zoom, duplicate request/click guards, scene
-  cleanup, input release, persistent worker and restart after night.
+- `overworld_smoke.gd`: holds the opening closeup until Start, keyboard activation,
+  duplicate activation guards, all four later journeys completing without input,
+  correct time changes, simultaneous art animations, scene cleanup, and a fresh
+  Start screen after restarting from night.
 - Existing river-to-woodland, woodland, Wind Hill and Sunset Cove exit checks
-  cross their real gameplay boundaries and explicitly confirm **Next page**.
-- Ending checks include the map intro when pressing **Play again**.
-- River, dog and bird encounter regressions verify that map integration retains
-  their existing challenge behavior.
-- `overworld_visual.gd`: native Forward Plus renders of all three map times,
-  close/full inspection, and 1152×720 / 850×720 windows.
-- `overworld_transition_visual.gd`: both page-turn directions, the intermediate
-  sunset blend and real mouse input on **Next page**.
+  cross their real gameplay boundaries and await automatic map transitions.
+- Ending checks include explicit Start confirmation after **Play again**.
+- `overworld_visual.gd`: native Forward Plus renders of all three map times and
+  the Start CTA at 1152×720 and 850×720.
+- `overworld_transition_visual.gd`: real mouse activation of Start, both page-turn
+  directions, the intermediate sunset blend and automatic later chapters.
 
-All nine listed flow/encounter/exit suites passed. The complete overworld suite
-also passed with the native Forward Plus renderer, including mouse-wheel zoom
-and keyboard confirmation. The transition visual run passed real mouse clicks.
+The original integration passed nine flow/encounter/exit suites. This Start CTA
+revision rechecks the overworld flow, four forward exits, ending restart and
+native visual interaction. The river/dog/bird mechanics are unchanged.
 Desktop screenshots are retained in `assets/overworld/`.
 
 Godot 4.7.2 reports one zero-reference `RefCounted` cleanup warning per threaded
