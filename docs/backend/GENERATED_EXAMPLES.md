@@ -10,12 +10,13 @@ preserved under `docs/test-artifacts/`; raw provider manifests and profiles stay
 |---|---|---|---|
 | [1 — River](#stage-1--river-september-13-2026) | Latest in-game bridge sketch | `BRIDGE`; GLB and preview generated | 18.529 s |
 | [2 — Dog](#stage-2--dog) | Bone sketch | `FOOD`; GLB and preview generated | 16.024 s |
-| [3 — Crows](#stage-3--crows) | Bow sketch | Not run; result pending | Pending |
+| [3 — Crows](#stage-3--crows) | Umbrella sketch | `UNKNOWN` before DEFENCE was added; GLB and preview generated | 18.263 s |
 | [4 — Otter](#stage-4--otter) | Gift sketch | Not run; result pending | Pending |
 
 Stage 1 below is the latest completed live game response after simplifying the item
 contract and updating the usefulness prompt. Stage 2 records the subsequent authorized
-CLI test with the shorter, complete-sentence prompt. Stages 3 and 4 remain placeholders.
+CLI test with the shorter, complete-sentence prompt. Stage 3 records an umbrella
+run before DEFENCE was added; Stage 4 remains a placeholder.
 
 ## Stage 1 — River, September 13, 2026
 
@@ -297,21 +298,97 @@ The input image is linked directly from the stage test folder to avoid duplicati
 
 ## Stage 3 — Crows
 
-**Status: Not run.** Input: [bow sketch](../../backend/tests/stage3/input.png).
-
-Planned command (uses provider credits; add `--dry-run` for offline validation):
+**Generation status: SUCCEEDED; protective-class validation remains pending.**
+One authorized live run on September 13, 2026 used the
+[umbrella sketch](../../backend/tests/stage3/input.png). This AI-generated sample
+replaces the bow drawing. The retained run input matches the test image byte for byte.
 
 ```sh
 backend/.venv/bin/python backend/tests/stage_test.py --stage3
 ```
 
-| API call | Request details | Text response | Image/model output | Done timestamp and duration |
-|---|---|---|---|---|
-| 1. Interpret | Pending | Actual JSON pending | No image response expected | Pending |
-| 2. Image edit | Prompt/settings pending | Record any retained text; none expected from this adapter | Reference image pending | Pending |
-| 3. Model generation | Image/settings pending | Task receipt and final status pending; omit actual task ID | GLB and separately labeled local preview pending | Pending |
+This run used `game_stage: crows` and the then-current classes `BOW`, `MAGIC`,
+`UNKNOWN`. `DEFENCE` was added afterward for protective objects such as umbrellas
+and shields. Current classes are `BOW`, `MAGIC`, `DEFENCE`, `UNKNOWN`.
+The historical result below has not been relabeled; a live test with the new class
+is still pending.
 
-Total time, success/failure, run date/provenance, and visual/gameplay review: **Pending**.
+| Validation | Result |
+|---|---|
+| Umbrella image → interpretation → reference → GLB | Passed in the recorded live run |
+| DEFENCE in the Stage 3 schema and mocked provider responses | Passed offline |
+| Live umbrella classification as DEFENCE | Pending |
+| Crows encounter gameplay with the generated object | Not verified |
+
+The backend suite passes 71 tests after removing the per-stage `rejected_classes`
+lists and their checks. The Stage 3 dry-run also passes. Stage 3 validation ticket
+[#43](https://github.com/AdeDeepFishing/Paws-Peaks/issues/43) remains open for the
+live DEFENCE result; this record does not claim the new class was tested live.
+
+### Three API calls and actual responses
+
+**1. Interpret.** One input image, the shared sketch prompt, the crows-stage class
+list above, and the strict item schema produced this saved response:
+
+```json
+{
+  "status": "recognized",
+  "item": {
+    "name": "Umbrella",
+    "description": "This umbrella can provide shelter from rain or falling objects, helping protect the player during challenges.",
+    "type": "UNKNOWN"
+  }
+}
+```
+
+The response arrived at **07:41:51.672532 UTC**, taking **2.538 s**. This call
+returns text only. The object was identified correctly and the usefulness sentence
+is complete, but the available classes had no protective-object category.
+
+**2. Image edit.** The original sketch and
+[exact edit prompt](../test-artifacts/stage3-2026-09-13/reference_prompt.txt)
+produced the reference image below at **07:42:01.853848 UTC**, taking **10.176 s**.
+Settings: `gpt-image-2.5-flare`, one 816 × 816 image, low quality, JPEG compression
+70, opaque background. No text response was retained by this adapter.
+
+**3. Model generation.** The edited reference entered Meshy as image data, with
+`meshy-t2`, `smart-topology`, target 1,000 faces, GLB format, and textures disabled.
+No description text, remeshing, or topology parameter was sent. Submission returned
+a task receipt at **07:42:02.802795 UTC**, taking **0.948 s**. The illustrative
+receipt shape is `{"result": "<task-id>"}`; provider identifiers and signed URLs
+are excluded. The final successful status poll arrived at **07:42:06.683804 UTC**;
+the GLB download completed at **07:42:06.894701 UTC**. The full model stage took
+**5.040 s**. Its output is the [GLB](../test-artifacts/stage3-2026-09-13/model.glb);
+no narrative text or API preview image was retained. The PNG preview was rendered
+locally afterward.
+
+| Input umbrella sketch | Edited reference | Local model preview |
+|---|---|---|
+| ![Umbrella sketch](../../backend/tests/stage3/input.png) | ![Blue umbrella reference](../test-artifacts/stage3-2026-09-13/reference.jpg) | ![Umbrella mesh preview](../test-artifacts/stage3-2026-09-13/model.png) |
+
+Both outputs show an open umbrella with a curved handle. The reference adds blue
+color; the local untextured render shows a faceted canopy from a different camera
+angle. This visual check does not establish collision or a working crows solution.
+
+### Performance and retained files
+
+| Measurement | Time |
+|---|---|
+| Interpretation stage | 2.539 s |
+| Image-edit stage | 10.177 s |
+| Model stage, including polling and download | 5.040 s |
+| Local preview | 0.499 s |
+| **Total stage runner** | **18.263 s** |
+
+Client-observed UTC start: **07:41:49.131628**; completion: **07:42:07.394465**,
+exit code 0. Meshy reported 1.953 s processing and 0.005 s queueing, included in
+the model stage. Image editing contributed about 56% of elapsed time. This single
+run exceeded the 15-second target by 3.263 s; it is not a latency average.
+
+Local output: `backend/output/sketch_to_model/1ccbc1dc06794f6eb0bed573beb7545c/`,
+including `benchmark.jsonl`. This CLI run does not use a game-mailbox `request/`
+directory. Only the generated reference, GLB, local preview, and edit prompt are
+copied into documentation, byte for byte; the test input is linked directly.
 
 ## Stage 4 — Otter
 

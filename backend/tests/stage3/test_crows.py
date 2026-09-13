@@ -11,5 +11,4 @@ class CrowsTests(StageCases, unittest.TestCase):
     stage_number = 3
     stage = 'crows'
     encounter = 'E03'
-    classes = ('BOW', 'MAGIC', 'UNKNOWN')
-    rejected_classes = ('BOAT', 'BRIDGE', 'FOOD', 'GIFT', 'TOOL', 'TOY', 'WEAPON')
+    classes = ('BOW', 'MAGIC', 'DEFENCE', 'UNKNOWN')

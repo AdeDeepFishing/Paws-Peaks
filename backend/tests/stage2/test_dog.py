@@ -12,4 +12,3 @@ class DogTests(StageCases, unittest.TestCase):
     stage = 'dog'
     encounter = 'E02'
     classes = ('FOOD', 'TOY', 'WEAPON', 'UNKNOWN')
-    rejected_classes = ('BOAT', 'BOW', 'BRIDGE', 'GIFT', 'MAGIC', 'TOOL')

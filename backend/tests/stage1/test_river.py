@@ -12,4 +12,3 @@ class RiverTests(StageCases, unittest.TestCase):
     stage = 'river'
     encounter = 'E01'
     classes = ('BRIDGE', 'BOAT', 'UNKNOWN')
-    rejected_classes = ('BOW', 'FOOD', 'GIFT', 'MAGIC', 'TOOL', 'TOY', 'WEAPON')

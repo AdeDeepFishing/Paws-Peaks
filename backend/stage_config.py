@@ -4,7 +4,7 @@ from utils.common import AppError
 STAGES = {
     'river': {'stage_number': 1, 'encounter_id': 'E01', 'classes': ('BRIDGE', 'BOAT', 'UNKNOWN')},
     'dog': {'stage_number': 2, 'encounter_id': 'E02', 'classes': ('FOOD', 'TOY', 'WEAPON', 'UNKNOWN')},
-    'crows': {'stage_number': 3, 'encounter_id': 'E03', 'classes': ('BOW', 'MAGIC', 'UNKNOWN')},
+    'crows': {'stage_number': 3, 'encounter_id': 'E03', 'classes': ('BOW', 'MAGIC', 'DEFENCE', 'UNKNOWN')},
     'otter': {'stage_number': 4, 'encounter_id': 'E04', 'classes': ('GIFT', 'TOOL', 'UNKNOWN')},
 }
 
