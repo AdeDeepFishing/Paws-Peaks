@@ -343,7 +343,7 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 
 ### E03 — The Crows
 
-- **Confirmed classification (September 13):** backend classes are BOW, MAGIC, UNKNOWN. These supersede shield/umbrella as classification choices; gameplay effects and success rules remain to be defined.
+- **Confirmed classification (September 13):** backend classes are BOW, MAGIC, DEFENCE, UNKNOWN. DEFENCE covers protective objects such as shields and umbrellas; gameplay effects and success rules remain to be defined.
 
 - **Confirmed premise:** multiple crows descend, flap around the player, and obstruct the way.
 - **Reference examples:** the player holds a shield-like object; the drawing card shows an umbrella. Protection or repelling the flock is the reference direction, not restoring a stolen road sign.

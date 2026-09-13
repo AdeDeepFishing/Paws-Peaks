@@ -313,7 +313,7 @@ The executable source of truth is [`backend/stage_config.py`](../../backend/stag
 |---|---|---|---|
 | 1 — River | `river` | `E01` | **`BRIDGE`, `BOAT`, `UNKNOWN`** |
 | 2 — Large Dog | `dog` | `E02` | **`FOOD`, `TOY`, `WEAPON`, `UNKNOWN`** |
-| 3 — Crows | `crows` | `E03` | **`BOW`, `MAGIC`, `UNKNOWN`** |
+| 3 — Crows | `crows` | `E03` | **`BOW`, `MAGIC`, `DEFENCE`, `UNKNOWN`** |
 | 4 — Otter | `otter` | `E04` | **`GIFT`, `TOOL`, `UNKNOWN`** |
 
 These are separate allowed sets, not one combined enum. For example, `FOOD` is valid
@@ -509,7 +509,7 @@ backend/.venv/bin/python -m unittest discover -s backend/tests -v
 
 Stage classification cases live in `backend/tests/stage1/` (River), `stage2/`
 (Dog), `stage3/` (Crows), and `stage4/` (Otter). Each covers encounter identity,
-provider schema, accepted classes, cross-stage rejection, and uncertain drawings
+provider schema, accepted classes, and uncertain drawings
 using mocked provider responses. Shared assertions live in `stage_cases.py`;
 shared configuration and feature tests remain at the test root.
 Run one stage with, for example:
@@ -521,9 +521,10 @@ backend/.venv/bin/python -m unittest discover -s backend/tests/stage2 -v
 Each stage folder contains an input image for the manual pipeline runner:
 Stage 1 reuses Yanwen's saved river sketch
 (`tests/fixtures/sketches/E01-2026-09-12T15-55-03-58aa7d14598ccf2b.png`),
-Stages 2, 3, and 4 contain synthetic line drawings of a bone, a bow, and a
-wrapped gift. These are sample inputs, not verified
-model predictions or gameplay outcomes.
+Stages 2 and 4 contain synthetic line drawings of a bone and a wrapped gift.
+Stage 3 uses an AI-generated black-line umbrella sketch. Recorded model results
+are in [generated examples](GENERATED_EXAMPLES.md); sample images alone do not
+establish gameplay outcomes.
 
 Validate a sample offline:
 
@@ -545,13 +546,15 @@ and backend stage classes, retaining the original image and results under ignore
 `backend/output/sketch_to_model/<run-id>/`. This manual runner is excluded from
 unittest discovery; automated routing tests mock its pipeline calls.
 
-Latest local verification after rebasing onto main: 75 backend tests passed.
-Godot desktop-generation, river, encounter-flow, dog-encounter, woodland-exit,
+Latest backend verification: 71 tests passed after removing the per-stage rejected-class checks.
+The preceding backend refactor passed these Godot checks on main:
+desktop-generation, river, encounter-flow, dog-encounter, woodland-exit,
 hero, and wind-hill smoke tests passed. The dog check covers FOOD and TOY using
 the three-field item response, including retry and duplicate-offer protection.
 All four stage dry-runs passed. The authorized Stage 2 live run completed in
 16.024 seconds; its response and assets are in [generated examples](GENERATED_EXAMPLES.md#stage-2--dog).
-Stage 3 and Stage 4 live validation remain pending. Offline game checks do not
+The initial Stage 3 umbrella run completed in 18.263 seconds as `UNKNOWN` before
+`DEFENCE` was added. Live validation of `DEFENCE` and Stage 4 remain pending. Offline game checks do not
 establish live recognition quality or end-to-end gameplay with provider responses.
 
 ## Performance profiling

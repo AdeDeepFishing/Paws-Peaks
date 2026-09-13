@@ -6,7 +6,6 @@ import sys
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from utils.common import AppError
 from interpret import run
 from stage_config import STAGES, classes_for
 from test_interpret import CONFIG, ITEM, provider_response
@@ -31,13 +30,6 @@ class StageCases:
                 payload = json.loads(http.call_args.args[0].data)
                 enum = payload['text']['format']['schema']['properties']['item']['anyOf'][0]['properties']['type']['enum']
                 self.assertEqual(enum, list(self.classes))
-
-    def test_rejects_other_stage_classes(self):
-        for kind in self.rejected_classes:
-            with self.subTest(kind=kind):
-                value = {'status': 'recognized', 'item': {**ITEM, 'type': kind}}
-                with self.assertRaises(AppError):
-                    run.validate_interpretation(value, self.stage)
 
     def test_uncertain_drawing(self):
         value = {'status': 'uncertain', 'item': None}

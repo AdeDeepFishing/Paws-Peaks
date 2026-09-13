@@ -97,7 +97,7 @@ Every game request includes a `game_stage` label alongside its `encounter_id`:
 |---|---|---|
 | `river` | `E01` | BRIDGE, BOAT, UNKNOWN |
 | `dog` | `E02` | FOOD, TOY, WEAPON, UNKNOWN |
-| `crows` | `E03` | BOW, MAGIC, UNKNOWN |
+| `crows` | `E03` | BOW, MAGIC, DEFENCE, UNKNOWN |
 | `otter` | `E04` | GIFT, TOOL, UNKNOWN |
 
 For example, the river scene writes:

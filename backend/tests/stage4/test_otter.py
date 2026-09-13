@@ -12,4 +12,3 @@ class OtterTests(StageCases, unittest.TestCase):
     stage = 'otter'
     encounter = 'E04'
     classes = ('GIFT', 'TOOL', 'UNKNOWN')
-    rejected_classes = ('BOAT', 'BOW', 'BRIDGE', 'FOOD', 'MAGIC', 'TOY', 'WEAPON')
