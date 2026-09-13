@@ -316,9 +316,12 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 ### E02 — The Large Dog
 
 - **Confirmed September 13, issue #38:** this is a drawing-driven distraction encounter.
-  It supersedes the earlier sword/confrontation proposal. The dog normally plays Idle,
-  plays Idle Alert when the protagonist approaches, and walks or runs across the path
+  It supersedes the earlier sword/confrontation proposal. On arrival the dog walks
+  a continuous oval across the path, plays Idle Alert when the protagonist approaches,
+  and walks or runs across the path
   to intercept attempts to pass. There is no damage or combat requirement.
+  Retreating resumes patrol; drawing pauses both movement and the walking clip.
+  Collection stops patrol and leaves the dog idle beside the offering.
 - Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
   TOY (for example a toy bone) are the supported solutions.
   WEAPON and UNKNOWN give a contextual retry; they never open the route.

@@ -5,17 +5,25 @@ signal state_changed(state: String)
 
 const CLIPS := {"idle": "Idle", "alert": "Idle_Alert", "walk": "Walk", "run": "Run", "jump": "Jump", "rest": "Rest_Pose"}
 const ALERT_RADIUS := 13.0
+const INTERCEPT_RADIUS := 10.0
+const PATROL_RADII := Vector2(3.2, 1.8)
+const GROUND_MASK := 2
 const WALK_SPEED := 2.6
 const RUN_SPEED := 10.0
 
 var state := "idle"
 var state_time := 0.0
+var patrol_phase := 0.0
 var home: Vector3
 var target: Vector3
 var offering_position: Vector3
 var distracted := false
 var solved := false
-var paused := false
+var paused := false:
+	set(value):
+		paused = value
+		if animator:
+			animator.speed_scale = 0.0 if value else 1.0
 var animator: AnimationPlayer
 var player: Node3D
 @onready var character: Node3D = $Character
@@ -67,16 +75,15 @@ func _physics_process(delta: float) -> void:
 		_set_state("fetch_walk" if slow else "fetch_run", "walk" if slow else "run")
 		_move_toward(target, WALK_SPEED if slow else RUN_SPEED, delta)
 		return
-	var near := _flat_distance(player.global_position, global_position) < ALERT_RADIUS or player.global_position.z < home.z + 7.0
+	# Measure from the guard post, not the circling dog, to avoid false approaches.
+	# A wider release radius prevents repeated patrol/alert changes at the edge.
+	var guarding := state in ["alert", "block_walk", "block_run"]
+	var radius := ALERT_RADIUS if guarding else INTERCEPT_RADIUS
+	var near := _flat_distance(player.global_position, home) < radius or player.global_position.z < home.z + 7.0
 	if not near:
-		if _flat_distance(global_position, home) > 0.1:
-			_set_state("return", "walk")
-			_move_toward(home, WALK_SPEED, delta)
-		else:
-			_set_state("idle", "idle")
-			_face(Vector3.BACK, delta)
+		_patrol(delta)
 		return
-	if state in ["idle", "return"]:
+	if state in ["idle", "patrol"]:
 		_set_state("alert", "alert")
 		return
 	# Let the warning pose read before moving across the player's route.
@@ -92,6 +99,20 @@ func _physics_process(delta: float) -> void:
 	else:
 		_set_state("alert", "alert")
 		_face(player.global_position - global_position, delta)
+
+func _patrol(delta: float) -> void:
+	_set_state("patrol", "walk")
+	var waypoint := _patrol_position()
+	# Rejoin the interrupted circuit by walking, without snapping or skipping ahead.
+	if _flat_distance(global_position, waypoint) < 0.1:
+		var tangent := Vector2(PATROL_RADII.x * cos(patrol_phase), -PATROL_RADII.y * sin(patrol_phase))
+		patrol_phase = fposmod(patrol_phase + WALK_SPEED * delta / tangent.length(), TAU)
+		waypoint = _patrol_position()
+	_move_toward(waypoint, WALK_SPEED, delta)
+
+func _patrol_position() -> Vector3:
+	# Start at the authored post and loop behind it, always on the guarded side.
+	return home + Vector3(PATROL_RADII.x * sin(patrol_phase), 0, PATROL_RADII.y * (cos(patrol_phase) - 1.0))
 
 func distract(at: Vector3, offering: Vector3) -> bool:
 	if distracted or solved:
@@ -115,7 +136,8 @@ func _move_toward(at: Vector3, speed: float, delta: float) -> void:
 	direction.y = 0
 	_face(direction, delta)
 	global_position += direction.normalized() * minf(speed * delta, direction.length())
-	var query := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 10, global_position + Vector3.DOWN * 10, 1, [get_rid(), player.get_rid()])
+	# Probe terrain only: overhanging oak branches must never lift the dog.
+	var query := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 10, global_position + Vector3.DOWN * 10, GROUND_MASK)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		global_position.y = hit.position.y
