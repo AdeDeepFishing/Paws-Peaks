@@ -3,10 +3,11 @@
 ## Behavior
 
 F5 opens the supplied storybook map in daylight, holds the full view and zooms
-to the protagonist at Chapter 1. It stays there with one prominent **Start**
+to the protagonist at Chapter 1. It stays there with one prominent **Start the journey**
 button until the player clicks it or uses Enter/controller confirm. The page
 then turns into Across the River; its existing spawn physics let the character
 drop onto the path after the reveal. Repeated activation starts only once.
+The supporting copy reads “Draw something, help someone, and have fun ✨”.
 
 The existing forward exits in Chapters 1–4 return to the map. The page turn
 reveals a close view of the chapter just completed. As the camera pulls back,
@@ -132,3 +133,19 @@ once during shutdown after passing the map assertions. The native full-flow run
 completed with exit code 0; map instances, page textures and input blockers were
 released. Sandboxed headless runs can additionally report a macOS certificate
 access diagnostic. Web export and browser rendering remain unverified.
+
+## Playtest follow-up
+
+The River drawing button shows **E · Draw** for keyboard/mouse input. Active
+controller input switches the drawing and control hints to that controller’s
+layout; mouse/keyboard input or unplugging the controller restores keyboard
+hints. Small stick drift does not switch layouts. `input_hints_smoke.gd` checks
+these transitions and the Xbox, PlayStation and Switch label mappings.
+
+The updated opening copy was checked at 1152×720 and 850×720. The desktop
+generation smoke, River smoke and all 21 backend unit tests passed with offline
+fixtures. A missing private configuration in the isolated preview checkout
+caused the reported generation configuration error; reconnecting the existing
+ignored configuration passed validation with provider requests blocked. This
+does not establish live provider availability. See the
+[checkout setup notes](DESKTOP_GENERATION.md#separate-checkouts-and-worktrees).

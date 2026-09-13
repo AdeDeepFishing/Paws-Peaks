@@ -47,7 +47,8 @@ var submit_button: Button
 var cancel_button: Button
 var audio: AudioStreamPlayer
 var tones: Dictionary = {}
-var book_key := "X/Square"
+var book_key := "E"
+var hint_device := -1
 
 func _ready() -> void:
 	_build_ui()
@@ -97,7 +98,7 @@ func _on_drawing_area(body: Node3D) -> void:
 	in_drawing_area = true
 	if not unlocked:
 		unlocked = true
-		status_label.text = "Could you draw a way across? E / %s · Draw" % book_key
+		status_label.text = "Could you draw a way across? %s · Draw" % book_key
 	_update_drawing_entry()
 
 func _on_leaving_drawing_area(body: Node3D) -> void:
@@ -109,7 +110,7 @@ func _update_drawing_entry() -> void:
 	book.visible = true
 	book.disabled = presentation.busy or not in_drawing_area or completed or bridge_built or request.state == "PENDING"
 	drawing_shine.set_active(not book.disabled)
-	book.text = "E / %s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
+	book.text = "%s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
 	cancel_button.visible = not presentation.busy and request.state == "PENDING" and not completed
 
 func _open_book() -> void:
@@ -309,17 +310,42 @@ func _update_hud() -> void:
 	generation_modes.disabled = presentation.busy or request.state == "PENDING"
 	objective.text = "Follow the path into the woodland." if completed else ("Walk across your bridge." if bridge_built else "Find a way across the river.")
 
-func _update_controller_hints(_device: int = -1, _connected: bool = false) -> void:
-	var switch_layout := false
-	for device in Input.get_connected_joypads():
-		if "Nintendo" in Input.get_joy_name(device) or "Switch" in Input.get_joy_name(device):
-			switch_layout = true
-	book_key = "Y" if switch_layout else "X/Square"
-	var jump_key := "B" if switch_layout else "A/Cross"
-	var sprint_key := "R" if switch_layout else "RB/R1"
-	var close_key := "A" if switch_layout else "B/Circle"
-	controls.text = "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint\nStick / D-pad  Move    %s  Jump    %s  Sprint\nE / %s  Draw    Esc / %s  Close" % [jump_key, sprint_key, book_key, close_key]
-	drawing_cancel.text = "Cancel · Esc / " + close_key
+func _input(event: InputEvent) -> void:
+	var device := hint_device
+	if event is InputEventKey or event is InputEventMouseButton:
+		device = -1
+	elif event is InputEventMouseMotion and event.relative.length() > 2.0:
+		device = -1
+	elif event is InputEventJoypadButton and event.pressed:
+		device = event.device
+	elif event is InputEventJoypadMotion and absf(event.axis_value) > 0.25:
+		device = event.device
+	if device != hint_device:
+		hint_device = device
+		_update_controller_hints()
+
+static func controller_labels(device_name: String) -> Dictionary:
+	var label := device_name.to_lower()
+	if "nintendo" in label or "switch" in label:
+		return {"draw": "Y", "jump": "B", "sprint": "R", "close": "A"}
+	if "playstation" in label or "dualshock" in label or "dualsense" in label or "ps4" in label or "ps5" in label:
+		return {"draw": "□", "jump": "×", "sprint": "R1", "close": "○"}
+	if "xbox" in label or "xinput" in label:
+		return {"draw": "X", "jump": "A", "sprint": "RB", "close": "B"}
+	return {"draw": "West button", "jump": "South button", "sprint": "Right shoulder", "close": "East button"}
+
+func _update_controller_hints(device: int = -1, connected: bool = false) -> void:
+	if device >= 0 and device == hint_device and not connected:
+		hint_device = -1
+	if hint_device < 0:
+		book_key = "E"
+		controls.text = "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint\nE  Draw    Esc  Close"
+		drawing_cancel.text = "Cancel · Esc"
+	else:
+		var keys := controller_labels(Input.get_joy_name(hint_device))
+		book_key = keys.draw
+		controls.text = "Stick / D-pad  Move    %s  Jump    %s  Sprint\n%s  Draw    %s  Close" % [keys.jump, keys.sprint, book_key, keys.close]
+		drawing_cancel.text = "Cancel · " + keys.close
 	_update_hud()
 
 func _build_ui() -> void:

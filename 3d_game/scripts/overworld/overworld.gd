@@ -71,11 +71,11 @@ func _build_caption() -> void:
 func _build_start_button() -> void:
 	start_button = Button.new()
 	start_button.name = "Start"
-	start_button.text = "Start  →"
+	start_button.text = "Start the journey  →"
 	caption.get_parent().add_child(start_button)
 	start_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	start_button.offset_left = -140
-	start_button.offset_right = 140
+	start_button.offset_left = -180
+	start_button.offset_right = 180
 	start_button.offset_top = -150
 	start_button.offset_bottom = -82
 	start_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -108,7 +108,7 @@ func _build_start_button() -> void:
 
 func await_start() -> void:
 	phase = "start"
-	caption.text = "Draw something. Help someone."
+	caption.text = "Draw something, help someone, and have fun ✨"
 	start_button.disabled = false
 	start_button.show()
 	start_button.grab_focus()

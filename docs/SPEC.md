@@ -1061,7 +1061,7 @@ small and large drawings should remain prominent without clipping the cover.
 
 The latest user playtest revision supersedes the earlier **Next page** step.
 Start with the full daylight map, zoom to the protagonist at Chapter 1, then
-hold that closeup with one prominent **Start** CTA. Do not enter the river until
+hold that closeup with one prominent **Start the journey** CTA. Do not enter the river until
 the player confirms. Clicking Start turns into the first scene, after which the
 protagonist drops onto the path through the existing spawn physics.
 
