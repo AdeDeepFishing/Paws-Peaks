@@ -48,6 +48,8 @@ func run() -> void:
 	Input.action_release("move_right")
 	await frames(60)
 	await JourneyTest.complete(self)
+	# The map presentation finishes before the chapter arrival drop lands.
+	await frames(45)
 	var level = current_scene
 	check(level != null and level.name == "MoonlitForest", "Walking beside the cave enters Stage 5")
 	if level == null or level.name != "MoonlitForest":

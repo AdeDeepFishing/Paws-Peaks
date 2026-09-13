@@ -229,8 +229,10 @@ In Stage 4, walk right toward the cave. Reaching the cave approach enters Stage 
 even from the surrounding grass, without jumping onto a rock. You can also run
 `3d_game/scenes/moonlit_forest/moonlit_forest.tscn` directly. The scene includes
 the designer's V5 painted night forest, terrain collision, shared protagonist, wind, moving
-clouds and fireflies. **Back to Sunset Cove** returns to Stage 4.
-Final boss gameplay remains separate. See
+clouds and fireflies, and the giant Storykeeper with its supplied hand-lift and
+body-sway loop. **Back to Sunset Cove** returns to Stage 4.
+Boss personality and encounter gameplay remain separate. See
+[Boss integration](docs/3d_game/BOSS_INTEGRATION.md) for the character asset and
 [Stage 05 integration](docs/3d_game/STAGE05_INTEGRATION.md) for assets and checks.
 
 
@@ -246,6 +248,8 @@ and Start CTA before a fresh river. **Back to forest** remains available while
 exploring the dawn.
 Direct entry: `3d_game/scenes/ending/dawn_forest.tscn`.
 
-Boss victory is the intended final trigger; the boss is not implemented yet.
+Boss victory is the intended final trigger; the visual is integrated, but the
+boss encounter is not implemented yet. Walk around the Storykeeper to reach
+the temporary preview exit.
 See [Ending integration](docs/3d_game/ENDING_INTEGRATION.md) for the preview
 switch, future victory hook, asset provenance and verification.

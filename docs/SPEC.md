@@ -387,7 +387,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 ### E05 — Final Boss — DETAILS OPEN
 
 - **Confirmed:** the fifth stage is a final boss encounter, followed by the ending.
-- **Reference concept only:** the illustration labels the boss as the story itself and shows a figure made of pages, with a possible connection to the narrator. Treat that identity/twist and its visual form as a proposal, not a finalized story decision.
+- **Confirmed visual (September 14, #36):** use the supplied Storykeeper GLB as a giant figure of pages, with its authored hand-lift and body-sway loop.
+- **Reference concept only:** the illustration labels the boss as the story itself, with a possible connection to the narrator. That identity/twist is not confirmed by the visual integration. Personality/agent work is reserved for #63.
 - **Not yet decided:** the boss's final identity, behavior, attacks or phases, what the player draws, the winning strategy, role of item statistics, failure/retry behavior, and the ending.
 - Do not prescribe a sword-only fight, a health-bar system, a fixed phase count, an otter-assisted victory, or a specific ending without team agreement.
 - Reserve a boss scene and ending transition for integration. A placeholder is not a finished boss.
@@ -1116,3 +1117,18 @@ zoom and show **Return to chapter →** to resume. **Back to map** turns from
 the bottom-left toward the upper-right, as returning to the previous page.
 **Return to chapter** turns forward from the bottom-right again. Disable this action while a drawing panel, generation,
 model presentation or chapter-exit transition is active.
+
+
+## September 14 asset update: giant Storykeeper (#36)
+
+The supplied `boss-Storykeeper-HandLift-Sway-Loop-v01.glb` is the accepted
+Stage 5 boss visual. Place it centrally in Moonlit Forest at a giant scale so
+the protagonist feels small in front of it. Preserve the source hand-lift and
+body-sway animation, materials and manuscript texture. The integrated visual
+is approximately 11 world units tall, with a solid body and terrain grounding.
+
+This update covers the model only. The user explicitly deferred the separate
+boss personality/agent requirements (#63); no dialogue, combat, drawing rules
+or victory condition is inferred from that file. The existing temporary route
+around the boss to the dawn ending remains available until encounter gameplay
+is implemented. See [Boss integration](3d_game/BOSS_INTEGRATION.md).

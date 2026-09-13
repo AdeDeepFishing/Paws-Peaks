@@ -1,7 +1,9 @@
 # Stage 05: Moonlit Forest integration
 
-Updated: 2026-09-13. Uses the designer's V5 replacement for issue #32.
-The final boss encounter (#36) and drawing rules remain separate work.
+Updated: 2026-09-14. Uses the designer's V5 replacement for issue #32.
+The giant Storykeeper visual and idle loop (#36) are integrated; see
+[Boss integration](BOSS_INTEGRATION.md). Personality/agent work (#63) and
+encounter drawing rules remain separate.
 The dawn ending (#52) is connected through a temporary exploration shortcut;
 see [Ending integration](ENDING_INTEGRATION.md).
 
@@ -30,7 +32,7 @@ see [Ending integration](ENDING_INTEGRATION.md).
 
 ![Stage 4 cave approach before the exit boundary](../assets/stage05/cave-approach.png)
 
-Continue deeper into the clearing to world **z <= -12** to enter the dawn ending.
+Walk around the Storykeeper and continue deeper into the clearing to world **z <= -12** to enter the dawn ending.
 Like the Stage 2 exit, this boundary covers every X position and jump height.
 This is a preview shortcut, not a completed boss encounter.
 
@@ -107,6 +109,6 @@ godot --headless --path 3d_game --script res://tests/water_reflection_smoke.gd
 For screenshots, omit `--headless` and add `-- --visual` to the first command.
 It writes `/private/tmp/paws-stage04-cave-exit.png` and
 `/private/tmp/paws-stage05.png`. Headless execution does not validate rendered
-pixels. Web export, browser performance and the final boss have not been tested
+pixels. Web export, browser performance and the final boss encounter have not been tested
 or implemented by this scene integration; the large asset still needs a Web
 delivery budget pass.
