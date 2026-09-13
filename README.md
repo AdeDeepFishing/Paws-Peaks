@@ -202,7 +202,7 @@ differences from the source HTML renderer.
 In Stage 4, walk right toward the cave. Reaching the cave approach enters Stage 5
 even from the surrounding grass, without jumping onto a rock. You can also run
 `3d_game/scenes/moonlit_forest/moonlit_forest.tscn` directly. The scene includes
-the painted night forest, terrain collision, shared protagonist, wind, moving
+the designer's V5 painted night forest, terrain collision, shared protagonist, wind, moving
 clouds and fireflies. **Back to Sunset Cove** returns to Stage 4.
 Final boss gameplay remains separate. See
 [Stage 05 integration](docs/3d_game/STAGE05_INTEGRATION.md) for assets and checks.

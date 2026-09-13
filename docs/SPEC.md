@@ -947,7 +947,9 @@ E04 otter gameplay remains open. See
 
 ## September 13 asset update: Stage 5 Moonlit Forest (#32)
 
-The supplied Moonlit Forest V4 is integrated as a playable environment preview.
+The designer's Moonlit Forest V5 replaces V4 as the playable environment preview,
+including revised ancient trees, nine midground trees, watercolor hills and
+woodland, a new night sky and 20 cloud layers/wisps.
 Walking right to Stage 4's cave approach at world x>=5.5 enters Stage 5 across
 all depth positions and jump heights. The forest retains the delivered painted
 assets, camera, cloud/canopy/firefly animation and lights, with native foliage

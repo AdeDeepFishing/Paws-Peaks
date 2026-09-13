@@ -54,7 +54,17 @@ func run() -> void:
 	check(level.player.is_on_floor(), "Stage 5 spawn is grounded")
 	check(level.camera == root.get_camera_3d() and is_equal_approx(level.camera.fov, 52.0), "Stage 5 uses its delivered camera lens")
 	var art := level.get_node("Stage05Art")
-	check(art.find_children("*", "MeshInstance3D", true, false).size() == 339, "All delivered meshes are present")
+	check(art.find_children("*", "MeshInstance3D", true, false).size() == 514, "All V5 meshes replace the previous environment")
+	check(art.find_children("Cloud_layer*", "MeshInstance3D", true, false).size() == 20, "All 12 cloud layers and 8 wisps are present")
+	check(art.find_children("Midground_painted_trunk*", "MeshInstance3D", true, false).size() == 9, "All nine V5 midground trees are present")
+	var sky: MeshInstance3D = art.find_child("Sky_dome", true, false)
+	check(sky.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "The mirrored sky does not cast a shadow over the playable forest")
+	var sky_paint: ShaderMaterial = sky.get_active_material(0)
+	check(sky_paint.get_shader_parameter("paint") != null, "V5 painted sky retains its texture")
+	check(sky_paint.get_shader_parameter("paint_scale").is_equal_approx(Vector2(5, 2.6)), "V5 mirrored sky tiling is preserved")
+	var trunk: MeshInstance3D = art.find_child("Flowing_painted_trunk", true, false)
+	var bark_paint: ShaderMaterial = trunk.get_active_material(0)
+	check(bark_paint.get_shader_parameter("paint_scale").is_equal_approx(Vector2(1, 2.35)), "V5 mirrored bark tiling is preserved")
 	check(art.find_children("Firefly_*", "Node3D", true, false).size() == 62, "All 62 fireflies are retained")
 	var animator: AnimationPlayer = art.find_child("AnimationPlayer", true, false)
 	check(animator != null and animator.is_playing(), "Forest animation is playing")
@@ -77,7 +87,7 @@ func run() -> void:
 	animator.advance(0.02)
 	check(cloud.position.distance_to(before_repeat) < 0.1, "Cloud playback crosses the repeat boundary without teleporting")
 	animator.seek(5.0, true)
-	for label in ["Continuous_organic_forest_terrain", "Flowing_painted_trunk", "Painted_rounded_rock"]:
+	for label in ["Continuous_organic_forest_terrain", "Flowing_painted_trunk", "Painted_rounded_rock", "Midground_painted_trunk_0"]:
 		check(not art.find_child(label, true, false).find_children("*", "CollisionShape3D", true, false).is_empty(), "Solid scenery has collision: " + label)
 	for label in ["Cloud_layer_5", "Low_painted_grass_0", "Painted_moon"]:
 		check(art.find_child(label, true, false).find_children("*", "CollisionShape3D", true, false).is_empty(), "Decorative scenery does not block movement: " + label)
