@@ -29,7 +29,7 @@ func run():
 			if current_scene == null or current_scene.name != "WindHill":
 				failed = true
 				push_error("Crossing the exit beside the path failed at x=" + str(x))
-			elif root.get_child_count() != 1:
+			elif root.get_children().filter(func(node): return node is Node3D).size() != 1:
 				failed = true
 				push_error("Exit left multiple active scenes")
 		if current_scene:
