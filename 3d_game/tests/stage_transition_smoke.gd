@@ -1,4 +1,6 @@
 extends SceneTree
+
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
 var failed := false
 func _initialize(): call_deferred("run")
 func check(ok: bool, message: String):
@@ -10,6 +12,7 @@ func frames(n):
 		await physics_frame
 		await process_frame
 func run():
+	JourneyTest.fast(self)
 	var river = load("res://scenes/river/river_crossing.tscn").instantiate()
 	root.add_child(river)
 	current_scene = river
@@ -49,6 +52,7 @@ func run():
 	Input.action_release("move_right")
 	Input.action_release("move_down")
 	await frames(30)
+	await JourneyTest.complete(self)
 	check(current_scene != null and current_scene.name == "WoodlandPath", "Continuing forward automatically enters Stage 2")
 	check(root.get_children().filter(func(node): return node is Node3D).size() == 1, "Transition removes the previous scene")
 	print("WALK-THROUGH TRANSITION: ", "FAIL" if failed else "PASS")

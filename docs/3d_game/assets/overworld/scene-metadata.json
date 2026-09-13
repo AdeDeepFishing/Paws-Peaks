@@ -1,0 +1,81 @@
+{
+  "objects": 563,
+  "triangles": 232289,
+  "animationClips": [
+    {
+      "name": "Breeze_8s",
+      "duration": 8
+    },
+    {
+      "name": "Painted_Water_8s",
+      "duration": 8
+    },
+    {
+      "name": "Painted_Clouds_24s",
+      "duration": 24
+    }
+  ],
+  "windMeshes": 258,
+  "waterStrokes": 92,
+  "cloudBanks": 8,
+  "cloudSurfaces": 16,
+  "stars": 90,
+  "transitionSeconds": 3.2,
+  "stages": [
+    {
+      "name": "Stage_1",
+      "position": [
+        -14,
+        0.45799999999999996,
+        12.3
+      ]
+    },
+    {
+      "name": "Stage_2",
+      "position": [
+        -12,
+        1.1853573495333434,
+        3
+      ]
+    },
+    {
+      "name": "Stage_3",
+      "position": [
+        -1,
+        2.1503780585130317,
+        -1
+      ]
+    },
+    {
+      "name": "Stage_4",
+      "position": [
+        9,
+        1.4757325221119975,
+        -3
+      ]
+    },
+    {
+      "name": "Stage_5",
+      "position": [
+        15,
+        3.6324468567004224,
+        -11
+      ]
+    }
+  ],
+  "camera": {
+    "position": [
+      0,
+      40.48747813034984,
+      44.482349084709625
+    ],
+    "target": [
+      0,
+      5.7,
+      0
+    ],
+    "verticalFov": 40
+  },
+  "originalMapPreserved": true,
+  "skyAdded": true
+}

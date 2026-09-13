@@ -1,5 +1,48 @@
 extends "res://scripts/woodland/woodland_level.gd"
 
+const EndingBook = preload("res://scripts/ending/ending_book.gd")
+var book: Control
+var veil: ColorRect
+var exploration: Control
+var memory: Texture2D
+var presentation_phase := "arrival"
+var book_tween: Tween
+var ambience: Environment
+var arrival_lights: Dictionary = {}
+
+func _ready() -> void:
+	super._ready()
+	player.set_input_enabled(false)
+	ambience = $WorldEnvironment.environment.duplicate()
+	$WorldEnvironment.environment = ambience
+	for light in $DawnArt.find_children("*", "Light3D", true, false):
+		arrival_lights[light] = light.light_energy
+	_set_dawn(0.0)
+	# F6 remains a complete preview; Journey owns timing for the normal final exit.
+	if not get_node("/root/Journey").busy:
+		reveal_dawn.call_deferred(get_node("/root/Journey").duration_scale)
+
+func _set_dawn(amount: float) -> void:
+	ambience.tonemap_exposure = lerpf(0.46, 0.78, amount)
+	ambience.ambient_light_energy = lerpf(0.22, 0.34, amount)
+	ambience.fog_light_color = Color("53637a").lerp(Color("bfc9db"), amount)
+	ambience.fog_light_energy = lerpf(0.24, 0.38, amount)
+	for light in arrival_lights:
+		light.light_energy = arrival_lights[light] * lerpf(0.65, 1.0, amount)
+
+func reveal_dawn(timing: float = 1.0) -> void:
+	if presentation_phase != "arrival": return
+	presentation_phase = "dawn"
+	var tween := create_tween()
+	tween.tween_method(_set_dawn, 0.0, 1.0, 3.6 * timing).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		memory = ImageTexture.create_from_image(get_viewport().get_texture().get_image())
+	var journey := get_node("/root/Journey")
+	book.set_memory(memory, journey.visited_chapters, journey.sketches_shared)
+	await show_book(timing)
+
 func _build_ui() -> void:
 	var hud := CanvasLayer.new()
 	hud.name = "EndingHUD"
@@ -8,36 +51,95 @@ func _build_ui() -> void:
 	hud.add_child(hud_root)
 	hud_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	veil = ColorRect.new()
+	hud_root.add_child(veil)
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.color = Color("122c30")
+	veil.modulate.a = 0.0
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	exploration = Control.new()
+	hud_root.add_child(exploration)
+	exploration.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	exploration.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	exploration.hide()
 	var paper := StyleBoxFlat.new()
 	paper.bg_color = Color("f3ebda")
-	paper.set_corner_radius_all(14)
-	paper.content_margin_left = 24
-	paper.content_margin_right = 24
-	paper.content_margin_top = 18
-	paper.content_margin_bottom = 18
-	var card := PanelContainer.new()
-	card.position = Vector2(28, 28)
-	card.add_theme_stylebox_override("panel", paper)
-	hud_root.add_child(card)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 8)
-	card.add_child(stack)
-	_label(stack, "PAWS & PEAKS  /  THE END", 14)
-	_label(stack, stage_title, 32)
-	objective = _label(stack, "Thank you for playing Paws & Peaks.", 16)
-	_label(stack, "Made by Four Otters", 14)
+	paper.set_corner_radius_all(10)
+	paper.content_margin_left = 20
+	paper.content_margin_right = 20
+	paper.content_margin_top = 12
+	paper.content_margin_bottom = 12
 	var navigation := VBoxContainer.new()
-	hud_root.add_child(navigation)
+	exploration.add_child(navigation)
 	navigation.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	navigation.offset_left = -240
+	navigation.offset_left = -236
 	navigation.offset_right = -28
 	navigation.offset_top = 28
 	navigation.add_theme_constant_override("separation", 10)
-	_navigation_button(navigation, "RestartButton", "Play again", "res://scenes/river/river_crossing.tscn", paper)
+	var memories := Button.new()
+	memories.text = "The last page"
+	memories.name = "MemoriesButton"
+	memories.add_theme_stylebox_override("normal", paper)
+	memories.add_theme_color_override("font_color", Color("294a43"))
+	navigation.add_child(memories)
+	memories.pressed.connect(show_book)
 	_navigation_button(navigation, "BackButton", return_label, return_scene, paper)
-	status = _label(hud_root, "Stay a while. A new day is beginning.", 16)
+	status = _label(exploration, "Stay a while. A new day is beginning.", 16)
 	status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status.position += Vector2(28, -52)
 	status.add_theme_color_override("font_color", Color("fff9ed"))
 	status.add_theme_color_override("font_outline_color", Color("273d36"))
 	status.add_theme_constant_override("outline_size", 4)
+	objective = status
+	book = EndingBook.new()
+	book.name = "VictoryBook"
+	hud_root.add_child(book)
+	book.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	book.hide()
+	book.replay_requested.connect(_replay)
+	book.explore_requested.connect(_explore)
+
+func show_book(timing: float = 1.0) -> void:
+	if presentation_phase in ["book", "opening_book", "leaving"]: return
+	presentation_phase = "opening_book"
+	player.set_input_enabled(false)
+	exploration.hide()
+	book.show()
+	book.modulate.a = 0.0
+	book.replay.disabled = true
+	book.explore.disabled = true
+	if book_tween: book_tween.kill()
+	book_tween = create_tween().set_parallel(true)
+	book_tween.tween_property(veil, "modulate:a", 0.48, 0.8 * timing).set_trans(Tween.TRANS_SINE)
+	book_tween.tween_property(book, "modulate:a", 1.0, 0.8 * timing).set_trans(Tween.TRANS_SINE)
+	await book_tween.finished
+	presentation_phase = "book"
+	book.replay.disabled = false
+	book.explore.disabled = false
+	book.replay.grab_focus()
+
+func _explore() -> void:
+	if presentation_phase != "book": return
+	presentation_phase = "closing_book"
+	book.replay.disabled = true
+	book.explore.disabled = true
+	book_tween = create_tween().set_parallel(true)
+	book_tween.tween_property(book, "modulate:a", 0.0, 0.25)
+	book_tween.tween_property(veil, "modulate:a", 0.0, 0.35)
+	await book_tween.finished
+	book.hide()
+	exploration.show()
+	presentation_phase = "explore"
+	player.set_input_enabled(true)
+
+func _replay() -> void:
+	if presentation_phase != "book": return
+	presentation_phase = "leaving"
+	book.replay.disabled = true
+	book.explore.disabled = true
+	get_node("/root/Journey").start_intro()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and presentation_phase == "book":
+		get_viewport().set_input_as_handled()
+		_explore()

@@ -27,7 +27,7 @@ func activate() -> void:
 func _change_scene() -> void:
 	var tree := get_tree()
 	tree.current_scene = get_parent()
-	var error := tree.change_scene_to_file(destination)
+	var error: Error = get_node("/root/Journey").travel_to(destination)
 	if error != OK:
 		transitioning = false
 		push_error("Could not enter the next stage: " + error_string(error))

@@ -20,7 +20,7 @@ root as the project entry point; [AGENTS.md](AGENTS.md) stays here for coding-as
 ## Open and run
 
 1. In Godot's Project Manager, click **Import** and select `3d_game/project.godot`.
-2. Open the project and press **F5** (or click Run Project) to launch the **Across the River** prototype.
+2. Open the project and press **F5** (or click Run Project) to launch the **world map intro**, which pauses at the hero for **Start the journey** before entering **Across the River**.
 3. The repository root is for documentation and Git; the Godot project lives in `3d_game/`.
 
 Use **Godot 4.7.2 Standard**. The project uses built-in **GodotPhysics3D**; the bundled
@@ -36,7 +36,8 @@ Godot includes a script editor; VS Code is optional. Scripts use GDScript.
 ## What's here
 
 - `3d_game/project.godot`: the active Godot project settings.
-- `3d_game/scenes/river/river_crossing.tscn`: the first-stage prototype and startup scene.
+- `3d_game/scenes/overworld/overworld.tscn`: the opening map and chapter transitions.
+- `3d_game/scenes/river/river_crossing.tscn`: the first-stage prototype.
 - `3d_game/scripts/river/`: drawing UI, third-person controls, encounter logic, and the AI handoff boundary.
 - `3d_game/scenes/river/river_player.tscn`: shared animated protagonist and capsule collision.
 - `3d_game/main.tscn`: the original Brackeys dungeon demo, retained as a reference.
@@ -53,6 +54,27 @@ pushing/climbing, later encounter mechanics, and Web deployment are still outsta
 Stage 2 includes the [dog distraction encounter](docs/3d_game/DOG_ENCOUNTER.md).
 Issue #37 removes coin pickups/counters from active gameplay, clears the far-bank
 bridgehead, doubles the Stage 1 character visual, and brings its normal camera about 18% closer.
+
+## World map and chapter turns
+
+The opening shows the daylight map and zooms to the protagonist. Click **Start the journey**
+(or use Enter/controller confirm) to turn into the first chapter; the character
+then drops onto the path. The opening waits as long as you need.
+
+After each forward exit in Chapters 1–4, the page turns back to the map, the
+protagonist walks to the next chapter, and the camera zooms in. **Next page →**
+waits for your confirmation. Before entering, use the scroll wheel, trackpad
+pinch, slider or **You / Map** controls to browse between the chapter closeup
+and full map. Forward chapter turns lift from the bottom-right toward the
+upper-left, including chapter-completion map journeys and the ending. The
+**Back to map** button turns to the previous page from the left instead. The map changes to sunset before Chapter 3 and night before
+Chapter 5. **Begin a new journey** returns to the daylight map and **Start the journey**. See
+[Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for source assets
+and verification.
+
+In Chapter 1, **Back to map** below Sound opens the current chapter’s map for
+browsing. **Return to chapter →** resumes the same scene, position and drawing
+state. The button waits until drawing/generation presentation has finished.
 
 ## Try the first stage
 
@@ -170,7 +192,7 @@ reward timing, and map-boundary changes.
 ## Preview the woodland scene
 
 After crossing the river, keep walking along the far-bank path to its lower-right
-edge to enter the woodland automatically, without a completion dialog. You can also run
+edge to return to the map, then choose **Next page** to enter the woodland. You can also run
 `3d_game/scenes/woodland/woodland_path.tscn` directly in Godot. Stage 2 includes the imported environment, fixed-angle camera, walking/jumping,
 and the dog distraction encounter. UNKNOWN objects render without unlocking the path.
 See [Stage 02 integration](docs/3d_game/STAGE02_INTEGRATION.md) for source ownership and checks.
@@ -181,8 +203,8 @@ animation handling and the temporary jump pose.
 
 ## Preview Wind Hill
 
-In Stage 2, follow the lakeside path to the white birch trees to enter Wind Hill
-automatically, or run
+In Stage 2, follow the lakeside path to the white birch trees to return to the
+map, then choose **Next page** for Wind Hill, or run
 `3d_game/scenes/wind_hill/wind_hill.tscn` directly. Stage 3 includes the supplied
 painted environment, restored textures, terrain collision, the shared protagonist
 and a 16-second wind animation at 80% of the delivered maximum strength.
@@ -192,8 +214,8 @@ See [Stage 03 integration](docs/3d_game/STAGE03_INTEGRATION.md) for asset repair
 ## Preview Sunset Cove
 
 In Stage 3, walk right toward the large rock beside the tree. Reaching its near
-edge automatically enters Stage 4, including when walking beside the path or
-jumping; climbing onto the rock is unnecessary. You can also run
+edge starts the map journey toward Stage 4; choose **Next page** when ready.
+The exit also works while walking beside the path or jumping; climbing onto the rock is unnecessary. You can also run
 `3d_game/scenes/sunset_cove/sunset_cove.tscn` directly. Sunset Cove includes the
 painted beach and cave, collision, the shared protagonist, wind and water motion,
 and live water reflections of the sunset, scenery and character.
@@ -216,9 +238,12 @@ Final boss gameplay remains separate. See
 
 Continue deeper into Stage 5's clearing to enter **A New Dawn**. The temporary
 exit covers the full width of the forest, including jumping. The ending uses
-the supplied dawn forest, with moving clouds, painted foliage, morning light,
-a thank-you card and Four Otters team credit. You can keep exploring,
-choose **Back to forest**, or **Play again** to start fresh at the river.
+the supplied dawn forest. A slower final page turn leads into a soft sunrise,
+then a storybook victory spread with a keepsake of the scene and actual session
+counts. **Stay in the dawn** restores exploration; **The last page** reopens the
+book. **Begin a new journey** clears the recap and returns to the daylight map
+and Start CTA before a fresh river. **Back to forest** remains available while
+exploring the dawn.
 Direct entry: `3d_game/scenes/ending/dawn_forest.tscn`.
 
 Boss victory is the intended final trigger; the boss is not implemented yet.

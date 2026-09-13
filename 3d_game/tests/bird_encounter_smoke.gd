@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 const Level = preload("res://scenes/wind_hill/wind_hill.tscn")
 var failed := false
 var visual := false
@@ -50,6 +52,7 @@ func draw(level, outcome: int):
 	level._submit()
 	check(not level.drawing, "Accepted submission closes canvas")
 func run():
+	JourneyTest.fast(self)
 	visual = "--visual" in OS.get_cmdline_user_args()
 	var level = fresh()
 	await frames(40)
@@ -117,6 +120,7 @@ func run():
 	check(level.solved and level.player.is_on_floor(), "Fall recovery retains completion")
 	level.player.position = Vector3(10, 5, -20)
 	await frames(8)
+	await JourneyTest.complete(self)
 	check(current_scene != null and current_scene.name == "SunsetCove", "Cleared full-width boundary enters Stage 4")
 	current_scene.queue_free()
 	current_scene = null

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 var failed := false
 
 func _initialize():
@@ -11,6 +13,7 @@ func frames(count: int):
 		await process_frame
 
 func run():
+	JourneyTest.fast(self)
 	# A vertical screen boundary covers near/far ground positions and jump heights.
 	for point in [Vector3(9.25, 0, -27), Vector3(9.25, 0, -0.5), Vector3(9.25, 5, 0), Vector3(9.25, 0, 13)]:
 		var hill = load("res://scenes/wind_hill/wind_hill.tscn").instantiate()
@@ -27,6 +30,7 @@ func run():
 		else:
 			hill.player.position.x = 9.75
 			await frames(5)
+			await JourneyTest.complete(self)
 			if current_scene == null or current_scene.name != "SunsetCove":
 				failed = true
 				push_error("Full-depth exit did not trigger at " + str(point))

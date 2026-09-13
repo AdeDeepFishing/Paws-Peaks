@@ -110,7 +110,7 @@ AI-generated durability.
 - Repository: <https://github.com/AdeDeepFishing/Paws-Peaks>
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
-- The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
+- The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/overworld/overworld.tscn` as its startup scene. The map intro leads to `3d_game/scenes/river/river_crossing.tscn`. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
 - The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E04–E05 gameplay, and Web deployment remain incomplete. E02 implements the food/toy distraction encounter and E03 implements the giant bird protection encounter described below. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 - Character integration update (2026-09-12): both playable scenes now use the supplied
@@ -1055,3 +1055,64 @@ The subsequent marked screenshot defines the Stage 3 composition more precisely:
 frame the central sketch/cover area as the close-up, moving the shot center upward
 from the ground. Include the sketch bounds when choosing both center and distance;
 small and large drawings should remain prominent without clipping the cover.
+
+
+## September 13: Overworld and page turns (#53)
+
+The September 14 ticket update restores **Next page** confirmation before
+Chapters 2–5, superseding the temporary automatic-entry playtest revision.
+Start with the full daylight map, zoom to the protagonist at Chapter 1, then
+hold that closeup with one prominent **Start the journey** CTA. Do not enter the river until
+the player confirms. Clicking Start turns into the first scene, after which the
+protagonist drops onto the path through the existing spawn physics.
+
+Each forward exit in Chapters 1–4 turns back to the map at the completed
+chapter's closeup. Pull back while the protagonist walks along the painted
+route, then zoom to the next chapter and show **Next page →**. Hold until the
+player confirms. While waiting, allow smooth bounded zoom between the current
+chapter closeup and full-map view. Keep the opening **Start the journey** CTA.
+Existing encounter gates still decide when the player can leave.
+
+Forward progression lifts the bottom-right corner toward the upper-left at
+one fixed physical angle, following the user’s paper reference. This includes
+chapter-completion map journeys and the ending. The later **Back to map**
+button revision below is previous-page navigation and uses the left corner.
+
+Blend daylight into sunset during the Chapter 2-to-3 map journey, and sunset
+into night during Chapter 4-to-5. Keep all other map legs in their current time.
+The dawn ending's **Begin a new journey** returns to the daylight map and Start CTA
+before creating a fresh river. Individual scene previews remain available. This adds presentation
+to the current exits; otter and final-boss gameplay remain separate work.
+See [Overworld integration](3d_game/OVERWORLD_INTEGRATION.md) for assets, controls,
+implementation and verification.
+
+
+## September 14: The last page and victory recap (#60)
+
+Replace the abrupt Chapter 5-to-ending cut with a slower final page curl. Fade
+out the chapter HUD before turning; keep the revealed dawn restrained, then
+raise its light smoothly. Reduce dawn exposure, key/local light and bloom rather
+than using a white flash. Keep the existing preview exit and future boss-victory
+hook; this presentation does not implement or simulate boss combat.
+
+After dawn settles, show an open storybook victory spread: a keepsake of the
+forest, “Journey complete.”, the actual chapters visited and sketches submitted
+this session, and the Four Otters credit. Do not invent score, stars earned,
+completed encounters or visited chapters. “Sketches shared” counts valid accepted
+submissions, including retries; it does not imply provider success.
+
+**Begin a new journey** resets the recap and returns to the opening map/Start
+flow. **Stay in the dawn** dismisses the book and restores movement; **The last
+page** reopens it. Retain **Back to forest** while exploring. See
+[Ending integration](3d_game/ENDING_INTEGRATION.md) for implementation and checks.
+
+
+## September 14: Return to the map from Chapter 1
+
+Add **Back to map** below the River's Sound button. This is a current-chapter
+map visit, not a restart or an unlocked next chapter. Retain the current scene,
+player position, drawing and encounter state while browsing. Allow bounded map
+zoom and show **Return to chapter →** to resume. **Back to map** turns from
+the bottom-left toward the upper-right, as returning to the previous page.
+**Return to chapter** turns forward from the bottom-right again. Disable this action while a drawing panel, generation,
+model presentation or chapter-exit transition is active.

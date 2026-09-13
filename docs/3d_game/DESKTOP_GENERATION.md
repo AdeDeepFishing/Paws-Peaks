@@ -35,6 +35,21 @@ the same screen position and size. Each visual replaces the previous stage: sket
 reference image → model. No sketch sprite is attached to the completed model.
 The mode cannot change while a request is pending.
 
+## Separate checkouts and worktrees
+
+Git does not copy the ignored `backend/.env` or `backend/.venv` into another
+checkout. A game launched from a new worktree uses that worktree's backend by
+default, so Live AI reports a configuration error even when the original
+checkout is configured. Before a local preview, provide an ignored `.env` in
+that checkout (a local symlink to the existing private file is sufficient) and
+ensure its Python interpreter is available. Do not commit the configuration,
+symlink, virtual environment or generated output.
+
+Restart the game after correcting setup. Validate configuration without provider
+requests and run the offline desktop generation smoke before retrying Live AI.
+Offline success verifies the local worker and model delivery, not the remote
+providers or account credits.
+
 ## Lifecycle and files
 
 Each game session owns an ignored `backend/output/game_bridge/worker-<id>/`

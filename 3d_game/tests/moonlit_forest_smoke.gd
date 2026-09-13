@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 var failed := false
 var visual := "--visual" in OS.get_cmdline_user_args()
 
@@ -22,6 +24,7 @@ func screenshot(path: String) -> void:
 		root.get_texture().get_image().save_png(path)
 
 func run() -> void:
+	JourneyTest.fast(self)
 	var cove = load("res://scenes/sunset_cove/sunset_cove.tscn").instantiate()
 	root.add_child(cove)
 	current_scene = cove
@@ -44,6 +47,7 @@ func run() -> void:
 		await frames(1)
 	Input.action_release("move_right")
 	await frames(60)
+	await JourneyTest.complete(self)
 	var level = current_scene
 	check(level != null and level.name == "MoonlitForest", "Walking beside the cave enters Stage 5")
 	if level == null or level.name != "MoonlitForest":

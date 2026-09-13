@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 const FOREST := "res://scenes/moonlit_forest/moonlit_forest.tscn"
 var failed := false
 var visual := "--visual" in OS.get_cmdline_user_args()
@@ -28,6 +30,7 @@ func forest() -> Node:
 	return level
 
 func run() -> void:
+	JourneyTest.fast(self)
 	var worker := root.get_node("GenerationWorker")
 	var level = forest()
 	await frames(45)
@@ -38,6 +41,7 @@ func run() -> void:
 		await frames(1)
 	Input.action_release("move_up")
 	await frames(60)
+	await JourneyTest.complete(self)
 	check(current_scene.name == "DawnForest", "Walking deeper into Stage 5 reaches the ending without jumping")
 	if current_scene.name != "DawnForest":
 		print("STUCK AT: ", level.player.position)
@@ -61,6 +65,12 @@ func run() -> void:
 	if visual:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("/private/tmp/paws-ending.png")
+	check(ending.presentation_phase == "book" and ending.book.visible, "The final page settles on the victory book")
+	check(not ending.player.input_enabled, "Victory book blocks movement behind its controls")
+	check(ending.ambience.tonemap_exposure < 0.8 and ending.ambience.glow_bloom < 0.03, "Dawn stays softer than the former full-exposure ending")
+	ending.book.explore.pressed.emit()
+	await frames(30)
+	check(ending.presentation_phase == "explore" and ending.player.input_enabled, "Stay in the dawn dismisses the book and restores play")
 	var before: Vector3 = ending.player.position
 	Input.action_press("move_right")
 	for i in 20:
@@ -85,10 +95,12 @@ func run() -> void:
 	current_scene.complete_boss_encounter()
 	current_scene.complete_boss_encounter()
 	await frames(30)
+	await JourneyTest.complete(self)
 	check(current_scene.name == "DawnForest", "Boss completion hook reaches the ending once")
 	current_scene.find_child("RestartButton", true, false).pressed.emit()
 	await frames(45)
-	check(current_scene.name == "RiverCrossing", "Play again opens the first stage")
+	await JourneyTest.complete(self)
+	check(current_scene.name == "RiverCrossing", "Play again opens the first stage through the map intro")
 	check(not current_scene.completed and not current_scene.bridge_built and current_scene.current_item.is_empty(), "Play again starts with fresh encounter and item state")
 	check(current_scene.current_png.is_empty() and current_scene.request.state != "PENDING", "Play again clears drawing and pending request state")
 	check(root.get_node("GenerationWorker") == worker, "Navigation retains the persistent worker without submitting a request")
@@ -103,6 +115,7 @@ func run() -> void:
 	level.complete_boss_encounter()
 	level.complete_boss_encounter()
 	await frames(15)
+	await JourneyTest.complete(self)
 	check(current_scene.name == "DawnForest", "Boss victory bypasses the disabled preview shortcut")
 	check(root.get_children().filter(func(node): return node is Node3D).size() == 1, "Repeated completion leaves only one active world")
 	await clear_scene()
@@ -114,6 +127,7 @@ func run() -> void:
 		check(current_scene == level, "Before the full-width boundary remains in Stage 5")
 		level.player.position.z = -12.25
 		await frames(12)
+		await JourneyTest.complete(self)
 		check(current_scene.name == "DawnForest", "Ending boundary covers both sides and jumping")
 		await clear_scene()
 	print("ENDING SMOKE: ", "FAIL" if failed else "PASS")

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 var failed := false
 
 func _initialize():
@@ -11,6 +13,7 @@ func frames(count: int):
 		await process_frame
 
 func run():
+	JourneyTest.fast(self)
 	# Sample both terrain edges, the lakeside shoulder, and the main path.
 	for x in [-59.0, 0.0, 6.5, 25.0, 59.0]:
 		var level = load("res://scenes/woodland/woodland_path.tscn").instantiate()
@@ -35,6 +38,7 @@ func run():
 			# Crossing while airborne must work too; X and Y do not gate progress.
 			level.player.position.z = -28.25
 			await frames(5)
+			await JourneyTest.complete(self)
 			if current_scene == null or current_scene.name != "WindHill":
 				failed = true
 				push_error("Crossing the exit beside the path failed at x=" + str(x))
