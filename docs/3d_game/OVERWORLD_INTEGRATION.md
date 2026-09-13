@@ -12,10 +12,17 @@ The supporting copy reads “Draw something, help someone, and have fun ✨”.
 The existing forward exits in Chapters 1–4 return to the map. The page turn
 reveals a close view of the chapter just completed. As the camera pulls back,
 the Moonlit Wanderer walks along the painted route to the next chapter. After
-arrival the camera zooms in and automatically turns into the playable scene.
-There are no confirmation or inspection controls on these later journeys.
+arrival the camera zooms in and shows **Next page →**. The player decides when
+to enter; it never advances just because time passes. While waiting, the scroll
+wheel, trackpad magnify gesture, slider and **You / Map** buttons smoothly zoom
+between the current chapter closeup and full-map view. The slider and buttons
+retain keyboard/controller focus navigation. Zoom cannot exceed either bound.
 
-This user playtest revision supersedes the earlier Next page requirement.
+This September 14 revision supersedes the temporary automatic-entry behavior.
+Every page lifts from the bottom-right toward the upper-left. Scene-to-map,
+map-to-scene and ending turns share one shader and one physical fold angle;
+there is no mirrored return direction. The reflected page bounds create a
+lifting corner with a shaded paper underside and a soft cast shadow.
 
 | Journey | Map appearance |
 | --- | --- |
@@ -84,6 +91,8 @@ textures. This integration creates no additional generated art or paid calls.
 ![Sunset map](assets/overworld/sunset.png)
 ![Night map](assets/overworld/night.png)
 ![Opening hero closeup and Start](assets/overworld/start.png)
+![Waiting for the next chapter](assets/overworld/next-page.png)
+![Browsing the full map before entry](assets/overworld/browse.png)
 ![Returning from a chapter to the map](assets/overworld/page-turn.png)
 
 ## Structure and recovery
@@ -91,7 +100,7 @@ textures. This integration creates no additional generated art or paid calls.
 - `Journey` autoload owns the guarded page/map/stage sequence and a temporary
   outgoing-frame texture. It does not own encounter completion or AI jobs.
 - The overworld scene owns route travel, camera composition, time blending and
-  the opening Start CTA.
+  chapter CTAs and bounded map browsing.
 - `river_level.gd` and the shared `path_exit.gd` route forward exits through
   `Journey.travel_to()`. Ending restart calls `Journey.start_intro()`.
 - The destination loads in the background while the map plays. The outgoing
@@ -103,7 +112,7 @@ textures. This integration creates no additional generated art or paid calls.
 
 The intro takes approximately three seconds to reach the Start CTA. Route walks take at least
 3.4 seconds, with a 1.8-second pullback, a 3.2-second time change when applicable,
-and a 1.65-second arrival zoom. Page curls last 0.95 seconds. The Start screen has no
+and a 1.65-second arrival zoom. Page curls last 0.95 seconds (1.65 seconds for the ending). Chapter CTAs have no
 time limit. `duration_scale` is a test seam; production defaults to 1.0.
 
 ## Verification
@@ -111,20 +120,27 @@ time limit. `duration_scale` is a test seam; production defaults to 1.0.
 Validation uses Godot 4.7.2 Standard. All generation checks use offline fixtures.
 
 - `overworld_smoke.gd`: holds the opening closeup until Start, keyboard activation,
-  duplicate activation guards, all four later journeys completing without input,
+  duplicate activation guards, all four later journeys waiting for confirmation,
+  zoom bounds and closeup/full-map composition,
   correct time changes, simultaneous art animations, scene cleanup, and a fresh
   Start screen after restarting from night.
 - Existing river-to-woodland, woodland, Wind Hill and Sunset Cove exit checks
-  cross their real gameplay boundaries and await automatic map transitions.
+  cross their real gameplay boundaries, await map travel and explicitly confirm
+  the chapter CTA.
 - Ending checks include explicit Start confirmation after **Begin a new journey**.
 - `overworld_visual.gd`: native Forward Plus renders of all three map times and
   the Start CTA at 1152×720 and 850×720.
 - `overworld_transition_visual.gd`: real mouse activation of Start, both page-turn
-  directions, the intermediate sunset blend and automatic later chapters.
+  contexts with a consistent angle, the intermediate sunset blend, later chapter
+  CTAs and full-map browsing. Append `-- --preview` to leave the second
+  chapter’s map CTA open for a manual playtest.
+- `page_corner_smoke.gd`: native rendered-pixel checks for map entry, map return
+  and the ending; the bottom-right reveals first while the left and top-right
+  remain on the outgoing page. This check requires a graphical renderer.
 
-The original integration passed nine flow/encounter/exit suites. This Start CTA
-revision rechecks the overworld flow, four forward exits, ending restart and
-native visual interaction. The river/dog/bird mechanics are unchanged.
+The original integration passed nine flow/encounter/exit suites. The current CTA revision rechecks all five chapter confirmations and zoom
+bounds, ending restart, native map interactions and the rendered turn corner
+for every transition context. The river/dog/bird mechanics are unchanged.
 Desktop screenshots are retained in `assets/overworld/`.
 
 Godot 4.7.2 reports one zero-reference `RefCounted` cleanup warning per threaded

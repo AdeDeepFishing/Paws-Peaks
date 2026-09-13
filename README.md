@@ -62,8 +62,11 @@ The opening shows the daylight map and zooms to the protagonist. Click **Start t
 then drops onto the path. The opening waits as long as you need.
 
 After each forward exit in Chapters 1–4, the page turns back to the map, the
-protagonist walks to the next chapter, and the camera zooms in before entering
-automatically. The map changes to sunset before Chapter 3 and night before
+protagonist walks to the next chapter, and the camera zooms in. **Next page →**
+waits for your confirmation. Before entering, use the scroll wheel, trackpad
+pinch, slider or **You / Map** controls to browse between the chapter closeup
+and full map. Every page lifts from the bottom-right toward the upper-left,
+including returns to the map and the ending. The map changes to sunset before Chapter 3 and night before
 Chapter 5. **Begin a new journey** returns to the daylight map and **Start the journey**. See
 [Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for source assets
 and verification.
@@ -184,7 +187,7 @@ reward timing, and map-boundary changes.
 ## Preview the woodland scene
 
 After crossing the river, keep walking along the far-bank path to its lower-right
-edge to enter the woodland automatically, without a completion dialog. You can also run
+edge to return to the map, then choose **Next page** to enter the woodland. You can also run
 `3d_game/scenes/woodland/woodland_path.tscn` directly in Godot. Stage 2 includes the imported environment, fixed-angle camera, walking/jumping,
 and the dog distraction encounter. UNKNOWN objects render without unlocking the path.
 See [Stage 02 integration](docs/3d_game/STAGE02_INTEGRATION.md) for source ownership and checks.
@@ -195,8 +198,8 @@ animation handling and the temporary jump pose.
 
 ## Preview Wind Hill
 
-In Stage 2, follow the lakeside path to the white birch trees to enter Wind Hill
-automatically, or run
+In Stage 2, follow the lakeside path to the white birch trees to return to the
+map, then choose **Next page** for Wind Hill, or run
 `3d_game/scenes/wind_hill/wind_hill.tscn` directly. Stage 3 includes the supplied
 painted environment, restored textures, terrain collision, the shared protagonist
 and a 16-second wind animation at 80% of the delivered maximum strength.
@@ -206,8 +209,8 @@ See [Stage 03 integration](docs/3d_game/STAGE03_INTEGRATION.md) for asset repair
 ## Preview Sunset Cove
 
 In Stage 3, walk right toward the large rock beside the tree. Reaching its near
-edge automatically enters Stage 4, including when walking beside the path or
-jumping; climbing onto the rock is unnecessary. You can also run
+edge starts the map journey toward Stage 4; choose **Next page** when ready.
+The exit also works while walking beside the path or jumping; climbing onto the rock is unnecessary. You can also run
 `3d_game/scenes/sunset_cove/sunset_cove.tscn` directly. Sunset Cove includes the
 painted beach and cave, collision, the shared protagonist, wind and water motion,
 and live water reflections of the sunset, scenery and character.

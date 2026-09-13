@@ -18,7 +18,8 @@ same deferred, duplicate-guarded transition, independently of the walk gate.
 No boss or combat victory is simulated by this integration.
 
 The exit now fades the chapter HUD over 0.45 seconds, then curls the final page
-for 1.65 seconds. A dim dawn lies beneath the outgoing night scene, with a muted
+for 1.65 seconds, lifting from the same bottom-right corner and angle used by
+all map turns. A dim dawn lies beneath the outgoing night scene, with a muted
 paper underside rather than a bright flash. Dawn light rises over 3.6 seconds;
 the victory spread and a soft backdrop fade in over 0.8 seconds. Chapter exits
 and final-page input are guarded against duplicate activation. The destination

@@ -1059,7 +1059,8 @@ small and large drawings should remain prominent without clipping the cover.
 
 ## September 13: Overworld and page turns (#53)
 
-The latest user playtest revision supersedes the earlier **Next page** step.
+The September 14 ticket update restores **Next page** confirmation before
+Chapters 2–5, superseding the temporary automatic-entry playtest revision.
 Start with the full daylight map, zoom to the protagonist at Chapter 1, then
 hold that closeup with one prominent **Start the journey** CTA. Do not enter the river until
 the player confirms. Clicking Start turns into the first scene, after which the
@@ -1067,9 +1068,14 @@ protagonist drops onto the path through the existing spawn physics.
 
 Each forward exit in Chapters 1–4 turns back to the map at the completed
 chapter's closeup. Pull back while the protagonist walks along the painted
-route, then zoom to the next chapter and enter automatically. Later chapters
-require no confirmation or map inspection controls. Existing encounter gates
-still decide when the player can leave.
+route, then zoom to the next chapter and show **Next page →**. Hold until the
+player confirms. While waiting, allow smooth bounded zoom between the current
+chapter closeup and full-map view. Keep the opening **Start the journey** CTA.
+Existing encounter gates still decide when the player can leave.
+
+All page turns lift the bottom-right corner toward the upper-left at one fixed
+physical angle, following the user’s paper reference. Never mirror the turn
+when returning from a scene to the map. Use the same corner for the ending.
 
 Blend daylight into sunset during the Chapter 2-to-3 map journey, and sunset
 into night during Chapter 4-to-5. Keep all other map legs in their current time.

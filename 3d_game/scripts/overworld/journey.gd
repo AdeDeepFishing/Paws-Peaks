@@ -114,10 +114,9 @@ func _capture_page() -> void:
 	page_material.set_shader_parameter("progress", 0.0)
 	page.show()
 
-func _turn_page(backwards: bool, seconds: float = 0.95, final_page: bool = false) -> void:
-	phase = "page_to_ending" if final_page else ("page_to_map" if backwards else "page_to_stage")
+func _turn_page(returning_to_map: bool, seconds: float = 0.95, final_page: bool = false) -> void:
+	phase = "page_to_ending" if final_page else ("page_to_map" if returning_to_map else "page_to_stage")
 	page_material.set_shader_parameter("paper_tint", Color("aab3b0") if final_page else Color("f5ecd4"))
-	page_material.set_shader_parameter("backwards", backwards)
 	var tween := create_tween()
 	tween.tween_method(func(value: float): page_material.set_shader_parameter("progress", value), 0.0, 1.0, seconds * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
@@ -153,12 +152,11 @@ func _run() -> void:
 		return
 	phase = "map"
 	await map.play_route(from_stage, target_stage, duration_scale)
-	if from_stage == 0:
-		phase = "start"
-		input_blocker.hide()
-		await map.await_start()
-		phase = "loading"
-		input_blocker.show()
+	phase = "start"
+	input_blocker.hide()
+	await map.await_start(target_stage)
+	phase = "loading"
+	input_blocker.show()
 	while ResourceLoader.load_threaded_get_status(destination) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
 		await get_tree().process_frame
 	if ResourceLoader.load_threaded_get_status(destination) != ResourceLoader.THREAD_LOAD_LOADED:

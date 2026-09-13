@@ -62,10 +62,10 @@ func run() -> void:
 		for i in 1800:
 			await frames(1)
 			if not journey.busy: break
-			check(journey.phase != "start", "Later chapters never require another Start")
+			if journey.phase == "start": break
 			if current_scene != null and current_scene.name == "Overworld":
 				var map := current_scene
-				check(not map.start_button.visible, "The CTA only appears at the opening")
+				check(not map.start_button.visible, "The CTA stays hidden during the route animation")
 				if map.phase == "arrival" and not saw_arrival:
 					saw_arrival = true
 					check(map.materials.size() == 36, "All palette materials are present")
@@ -75,8 +75,25 @@ func run() -> void:
 					check(map.hero.position.distance_to(map.RouteData.STAGES[stage - 1]) < 0.25, "Traveler reaches the authored chapter point")
 					check(map.hero.state == "idle", "Traveler stops at the destination")
 					check(map.art.find_children("*", "AnimationPlayer", true, false).filter(func(player): return player.is_playing()).size() == 3, "Wind, water and clouds animate together")
-		check(saw_arrival, "The map shows arrival before entering the chapter")
-		check(not journey.busy and current_scene.scene_file_path == journey.STAGES[stage - 1], "Later chapters enter automatically without any input")
+		check(saw_arrival, "The map shows arrival before offering the next page")
+		check(journey.phase == "start", "Every later arrival waits for confirmation")
+		var waiting := current_scene
+		check(waiting.start_button.text == "Next page  →" and waiting.start_button.visible, "Later maps offer the Next page CTA")
+		check(waiting.zoom_controls.visible and not journey.input_blocker.visible, "Map browsing is available while waiting")
+		await frames(90)
+		check(current_scene == waiting and journey.phase == "start", "Waiting never enters the next chapter automatically")
+		waiting.zoom_slider.value = 2.0
+		await frames(60)
+		check(waiting.zoom_target == 1.0 and waiting.zoom_amount <= 1.0, "Zoom out is bounded at the full map")
+		check(waiting.camera.position.distance_to(waiting._full_transform().origin) < 0.05, "Zoom out shows the full map")
+		waiting.zoom_slider.value = -1.0
+		await frames(60)
+		check(waiting.zoom_target == 0.0 and waiting.zoom_amount >= 0.0, "Zoom in is bounded at the player")
+		check(waiting.camera.position.distance_to(waiting._close_transform(stage).origin) < 0.05, "Zoom in returns to the current chapter")
+		waiting.start_button.pressed.emit()
+		waiting.start_button.pressed.emit()
+		await JourneyTest.complete(self)
+		check(not journey.busy and current_scene.scene_file_path == journey.STAGES[stage - 1], "A single confirmation enters the chosen chapter")
 		check(not is_instance_valid(previous), "The previous stage is released")
 		check(current_scene.process_mode == Node.PROCESS_MODE_INHERIT, "Gameplay resumes after the page turn")
 		check(root.get_children().filter(func(node): return node is Node3D).size() == 1, "Only one world remains active")

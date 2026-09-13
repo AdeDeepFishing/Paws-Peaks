@@ -44,6 +44,13 @@ func run() -> void:
 	await journey.finished
 	for stage in [2, 3]:
 		journey.travel_to(journey.STAGES[stage - 1])
+		while journey.phase != "start": await process_frame
+		await capture("chapter-%d-cta" % stage)
+		if "--preview" in OS.get_cmdline_user_args(): return
+		current_scene.zoom_slider.value = 1.0
+		await create_timer(0.8).timeout
+		await capture("chapter-%d-map" % stage)
+		current_scene.start_button.pressed.emit()
 		await journey.finished
-	print("MAP VISUAL TRANSITIONS: PASS (Start mouse click, automatic later chapters)")
+	print("MAP VISUAL TRANSITIONS: PASS (Start mouse click, chapter CTA, map zoom and consistent page direction)")
 	quit()
