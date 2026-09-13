@@ -439,8 +439,8 @@ Being a valid class does not guarantee that an object solves the challenge. Game
 rules are evaluated separately in Godot. River currently accepts `type: BRIDGE`
 with `movable: false`
 for its fixed crossing, with placement committed once per encounter. Recognizing `BOAT` does not
-implement boat movement. Stage 2 renders FOOD, TOY and UNKNOWN, but only FOOD and
-TOY distract the dog and unlock the path. UNKNOWN permits another sketch; submitting
+implement boat movement. Stage 2 renders every returned class, but only FOOD and
+TOY distract the dog and unlock the path. Other classes permit another sketch; submitting
 replaces the previous object. Later-stage success rules remain design work.
 
 ### Changing a class set
