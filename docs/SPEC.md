@@ -1038,3 +1038,14 @@ For Stage 3 classification, ordinary umbrellas and shields count as DEFENCE afte
 the model identifies the object. This clarification must not steer the identity
 toward a solution. The successful-model display and the level's solve check remain
 separate, so an unsuitable classification never silently discards a generated GLB.
+
+## September 13 late playtest revision: fixed generation close-up (#59)
+
+Increase the shared sketch cover opacity across all implemented drawing stages.
+For Stage 3, zoom closer to the sketch and protagonist, then hold the camera fixed
+through processing and the completed-model pause; bird movement must not move the
+camera. This supersedes the earlier Stage 3 group-tracking requirement above.
+Retain Stage 2 group framing. When the bird departs, detach the protection from the
+protagonist and animate it tilting, drifting away, shrinking and fading out. Remove
+it after departure; the protagonist must remain grounded. This supersedes the
+earlier persistent equipped-protection behavior.

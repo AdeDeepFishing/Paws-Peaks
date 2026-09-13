@@ -20,21 +20,21 @@ static func add_sketch(points: Array[Vector3], preview: Control, basis: Basis) -
 		for y in [-padding, size.y + padding]:
 			points.append(preview.world_anchor + basis.x * x + basis.y * y)
 
-static func fit(camera: Camera3D, points: Array[Vector3], center_points: Array[Vector3], basis: Basis, preview: Control) -> Transform3D:
+static func fit(camera: Camera3D, points: Array[Vector3], center_points: Array[Vector3], basis: Basis, preview: Control, fov: float = FOCUS_FOV, magnification_limit: float = 1.3, vertical_fill: float = 0.58) -> Transform3D:
 	var inverse := basis.inverse()
 	var bounds := AABB(inverse * center_points[0], Vector3.ZERO)
 	for point in center_points: bounds = bounds.expand(inverse * point)
 	var focus := basis * bounds.get_center()
 	var viewport := camera.get_viewport().get_visible_rect().size
 	var aspect := viewport.x / viewport.y
-	var tangent_y := tan(deg_to_rad(FOCUS_FOV) * 0.5)
+	var tangent_y := tan(deg_to_rad(fov) * 0.5)
 	if camera.keep_aspect == Camera3D.KEEP_WIDTH: tangent_y /= aspect
 	var tangent_x := tangent_y * aspect
 	var distance := 8.0
 	if preview.visible:
 		# Even a tiny sketch should not suddenly inflate when the lens changes.
-		distance = maxf(distance, viewport.y / (2.0 * tangent_y * maxf(preview.submitted_pixels_per_unit * 1.3, 0.001)))
+		distance = maxf(distance, viewport.y / (2.0 * tangent_y * maxf(preview.submitted_pixels_per_unit * magnification_limit, 0.001)))
 	for point in points:
 		var relative := inverse * (point - focus)
-		distance = maxf(distance, relative.z + maxf(absf(relative.x) / (tangent_x * 0.82), absf(relative.y) / (tangent_y * 0.58)))
+		distance = maxf(distance, relative.z + maxf(absf(relative.x) / (tangent_x * 0.82), absf(relative.y) / (tangent_y * vertical_fill)))
 	return Transform3D(basis, focus + basis.z * (distance + 0.5))

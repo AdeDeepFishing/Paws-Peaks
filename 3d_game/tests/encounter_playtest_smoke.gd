@@ -29,13 +29,12 @@ func run():
 	level._open_drawing()
 	sketch(level)
 	level._submit()
-	check(await wait_for(func(): return level.presentation.phase == "waiting", 4), "Group framing settles")
+	check(await wait_for(func(): return level.presentation.phase == "waiting", 4), "Sketch framing settles")
 	actor_in_frame(level, level.player.global_position, "Protagonist feet")
 	actor_in_frame(level, level.player.global_position + Vector3.UP * 3.3, "Protagonist head")
-	actor_in_frame(level, level.bird.visual.global_position, "Bird")
 	actor_in_frame(level, level.sketch_anchor, "Object landing")
 	var sight := PhysicsRayQueryParameters3D.create(level.camera.global_position, level.player.global_position + Vector3.UP * 1.5, level.GROUND_MASK)
-	check(level.get_world_3d().direct_space_state.intersect_ray(sight).is_empty(), "The terrain does not hide the protagonist during group framing")
+	check(level.get_world_3d().direct_space_state.intersect_ray(sight).is_empty(), "The terrain does not hide the protagonist during sketch framing")
 	await capture("group-focus")
 	# Feed an ordinary backend completion through the actual desktop adapter.
 	# A successful but unsuitable item must still display its returned GLB.

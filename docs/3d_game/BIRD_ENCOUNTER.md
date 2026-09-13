@@ -32,18 +32,20 @@ multiple-crow premise. The backend stage identity remains `E03` / `crows`.
   prompt and does not unlock the route. The next submission replaces that preview.
   Mock unsupported outcomes have no generated asset and retain their retry response.
 - Soft particles and local blur surround the sketch at its ground contact. The camera moves
-  above the grass into a group close-up over two seconds. The 40-degree lens and
-  fitted camera retain the bird, protagonist, sketch/mist and generated model.
-  Framing smoothly follows the participants while processing instead of cropping
-  them with a fixed distance. The elevated angle avoids putting the camera below
+  above the grass into a closer 32-degree shot over two seconds, fitted to the
+  protagonist, sketch/mist and generated object. The camera stays fixed throughout
+  processing and the result hold, independent of the bird flight path. The bird
+  may pass out of this close-up; it no longer determines the generation framing. The elevated angle avoids putting the camera below
   the foreground hill when it pulls back.
   Early interpretation/reference previews use the shared generation overlay.
   After the model appears, the view holds two seconds and returns over one second.
 - The finished model replaces the sketch overlay. The protection rises above the
   protagonist and expands to a ten-unit width, comparable with the giant bird's
   wingspan. The bird approaches above the actual canopy height, recoils and flies away. Only after departure
-  does movement resume and the Stage 4 exit open. The model remains equipped and
-  follows the protagonist; it is not a loose obstacle on the ground.
+  does movement resume and the Stage 4 exit open. At the start of bird departure,
+  the protection detaches from the protagonist, tilts and drifts upward and away
+  over 2.6 seconds, shrinking and fading before removal. The protagonist remains
+  on the ground throughout.
 - Stop waiting / Escape, service errors, unclear drawings and
   invalid model files restore control and keep the latest canvas draft for retry.
   Late and duplicate responses cannot unlock the exit or replay the resolution.
@@ -65,7 +67,8 @@ made. Downloads is not needed to run the committed project.
 protection and progression. The shared reveal controller now accepts an
 optional encounter pause hook and close-up transform. `encounter_framing.gd`
 fits mesh bounds and the submitted sketch for both Stage 2 and Stage 3; the
-shared presentation tracks the group during waiting and the result hold. Only terrain receives the drawing raycast layer, so
+shared presentation tracks Stage 2 subjects, while Stage 3 holds a stationary
+shot during waiting and the result hold. Only terrain receives the drawing raycast layer, so
 swaying foliage and tree branches cannot become a placement surface.
 
 The scene defaults to the existing AI mode, which makes paid calls only when the
@@ -116,6 +119,11 @@ Offline tests establish the prompt payload, not new recognition accuracy.
 `encounter_playtest_smoke.gd` drives the real desktop completion adapter with an
 existing GLB. It verifies display and retry for an unsuitable result, replacement
 by a supported result, model reveal, protection and progression. It also checks
-30% smaller scale, continued canvas flight, downward pitch, group projection and
+30% smaller scale, continued canvas flight, downward pitch, protagonist/object projection and
 an unobstructed camera-to-protagonist terrain ray. Its visual mode captures these
 steps without the traversal smoke's fall/recovery sequence.
+
+`bird_reveal_followup_smoke.gd` verifies the closer shot stays stationary while the
+bird moves, mist bounds, result hold, detached protection flight and removal,
+grounded protagonist and route unlocking. Its Forward+ visual mode captures the
+opaque cover, early protection departure and clear route using an existing GLB.

@@ -37,6 +37,7 @@ func _ready() -> void:
 	request.state_changed.connect(_on_request_state)
 	generation.progress_changed.connect(func(message: String): status.text = message)
 	bird.cleared.connect(_on_cleared)
+	bird.departure_started.connect(_release_protection)
 	bird.swooping.connect(func():
 		if not resolving and request.state != "PENDING":
 			status.text = "Watch out! Draw an umbrella or a shield to block the bird."
@@ -47,6 +48,8 @@ func _ready() -> void:
 	_build_drawing()
 	presentation = Presentation.new()
 	presentation.name = "BirdPresentation"
+	presentation.focus_fov = 32.0
+	presentation.track_subjects = false
 	add_child(presentation)
 	presentation.finished.connect(_finish_presentation)
 	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
@@ -70,14 +73,9 @@ func presentation_camera_transform(anchor: Vector3) -> Transform3D:
 	Framing.add_box(points, AABB(to_global(anchor), Vector3(0, 3, 0)))
 	if is_instance_valid(offered): Framing.add_visual(points, offered)
 	var centers: Array[Vector3] = points.duplicate()
-	var bird_points: Array[Vector3] = []
-	Framing.add_visual(bird_points, bird.visual)
-	points.append_array(bird_points)
-	# A nearby bird belongs in the composition center; a distant arrival does not.
-	if bird.visual.global_position.distance_to(player.global_position) < 30:
-		centers.append_array(bird_points)
+	# The generation close-up belongs to the sketch and protagonist, not the flight path.
 	Framing.add_sketch(points, generation_preview, basis)
-	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview)
+	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview, presentation.focus_fov, 1.65, 0.72)
 
 func can_exit() -> bool:
 	return solved
@@ -232,6 +230,25 @@ func _raise_protection() -> void:
 	bird.protect(top + 0.3)
 	objective.text = "Your protection blocks the bird."
 	status.text = "Safe underneath! The bird is flying away."
+
+func _release_protection() -> void:
+	if not resolving or not is_instance_valid(offered): return
+	var model := offered
+	var token := resolution_epoch
+	# The wind takes only the drawing. Detach before animating any transform.
+	model.reparent(self)
+	protection_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	protection_tween.tween_property(model, "position", model.position + Vector3(16, 10, -12), 2.6)
+	protection_tween.tween_property(model, "rotation", model.rotation + Vector3(0.2, 0.5, -0.5), 2.6)
+	protection_tween.tween_property(model, "scale", model.scale * 0.3, 2.6)
+	for mesh in model.get_children():
+		if mesh is MeshInstance3D:
+			protection_tween.tween_property(mesh, "transparency", 1.0, 0.65).set_delay(1.95)
+	protection_tween.finished.connect(func():
+		if token != resolution_epoch or not is_instance_valid(model): return
+		model.queue_free()
+		if offered == model: offered = null
+	)
 
 func _on_cleared() -> void:
 	if not resolving: return

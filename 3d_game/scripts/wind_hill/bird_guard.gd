@@ -2,6 +2,7 @@ extends Node3D
 
 signal swooping
 signal cleared
+signal departure_started
 
 const FLAP = preload("res://models/bird/flap.glb")
 const VISUAL_SCALE := 2.8
@@ -116,6 +117,7 @@ func _enter(next: String) -> void:
 	phase = next
 	elapsed = 0.0
 	start = visual.position
+	if next == "departing": departure_started.emit()
 
 func _orbit(center: Vector3, time: float) -> Vector3:
 	var angle := time * 0.9

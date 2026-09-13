@@ -6,6 +6,8 @@ signal finished
 const Framing = preload("res://scripts/woodland/encounter_framing.gd")
 
 @export var duration_scale := 1.0
+@export var focus_fov := Framing.FOCUS_FOV
+@export var track_subjects := true
 var phase := "idle"
 var active := false
 var busy := false
@@ -33,7 +35,7 @@ func begin(anchor: Vector3) -> void:
 		destination = level.presentation_camera_transform(anchor)
 	tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(camera, "transform", destination, 2.0 * duration_scale)
-	tween.tween_property(camera, "fov", Framing.FOCUS_FOV, 2.0 * duration_scale)
+	tween.tween_property(camera, "fov", focus_fov, 2.0 * duration_scale)
 	await tween.finished
 	if token != epoch: return
 	phase = "waiting"
@@ -41,7 +43,7 @@ func begin(anchor: Vector3) -> void:
 	focused.emit()
 
 func _process(delta: float) -> void:
-	if active and phase in ["waiting", "revealing"] and level.has_method("presentation_camera_transform"):
+	if active and track_subjects and phase in ["waiting", "revealing"] and level.has_method("presentation_camera_transform"):
 		var destination: Transform3D = level.presentation_camera_transform(focus_anchor)
 		camera.transform = camera.transform.interpolate_with(destination, 1.0 - exp(-delta * 3.0))
 

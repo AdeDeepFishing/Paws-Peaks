@@ -8,16 +8,18 @@ This supersedes older cloth-cover descriptions in the stage integration notes.
 
 - On submission, small pearl-white particles with pale mint, pink and gold highlights
   drift around the sketch. A softly masked local blur makes the nearby scene hazy
-  while keeping the drawing and interpretation readable.
+  with a denser pearl-white center (88% cover opacity), while keeping the drawing
+  and interpretation readable.
 - The atmosphere follows the submitted sketch's world contact as the camera moves
   and zooms. River now anchors its preview to the drawing plane as well; Dog and
   Bird retain their existing terrain anchors. The endpoint is the same location
   used by the drawing preview, not a separate tent or construction prop.
-- Woodland and Wind Hill fit the camera to the protagonist, animal, model and
-  submitted sketch, with at most 30% sketch enlargement and space for the mist.
-  Their 40-degree close-up smoothly follows the group while waiting and revealing;
-  large drawings use a wider framing instead of being cropped. Wind Hill uses a
-  slightly elevated angle so the foreground hill does not hide the participants.
+- Woodland fits its 40-degree close-up to the protagonist, dog, model and sketch,
+  with at most 30% sketch enlargement and smooth group tracking. Wind Hill instead
+  uses a closer 32-degree shot with up to 65% sketch enlargement, fitted to the
+  protagonist and drawing/model. After the initial move it stays fixed, regardless
+  of bird movement, through processing and the result hold. Both retain mist margins
+  and widen for large drawings; Wind Hill stays above the foreground hill.
 - Early interpretation and reference images keep their existing lifecycle. The
   effect remains until the finished model is actually presented, including the
   short interval after the backend reports READY.
