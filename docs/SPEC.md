@@ -102,7 +102,7 @@ Drawing to solve encounters is the core mechanic. The confirmed five-stage route
 - Local folder: `/Users/yanwenchen/GodotProjects/Paws-Peaks`
 - Board: <https://github.com/users/AdeDeepFishing/projects/1/views/1>
 - The active Godot project is `3d_game/project.godot`, with `3d_game/scenes/river/river_crossing.tscn` as its startup scene. The Brackeys dungeon remains at `3d_game/main.tscn` as a reference.
-- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, collectible coins, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E02–E05 gameplay, and Web deployment remain incomplete. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
+- The first stage uses the supplied stag01 storybook creek, a placeholder hiker, camera-relative movement, a fixed overhead orthographic camera, walking/jumping/sprinting, transparent full-viewport drawing with transparent-background PNG export, a background request boundary with explicit mock responses, automatic encounter-object placement, collectible coins, a fixed bridge, fall recovery, and completion/restart. Desktop AI generation is connected through a persistent Python worker, with offline fixture and live modes; see [desktop integration](3d_game/DESKTOP_GENERATION.md). Visual output quality, final art/audio, push/climb, E03–E05 gameplay, and Web deployment remain incomplete. E02 now implements the food/toy distraction encounter described below. GodotPhysics3D is enabled and the old Jolt extension is ignored; Forward Plus remains selected.
 - Board linking, teammate permissions, export templates, API access, and hosting must be verified separately.
 - Character integration update (2026-09-12): both playable scenes now use the supplied
   Moonlit Wanderer skinned model with idle, walk and run clips. Jumping retains a
@@ -279,7 +279,7 @@ The image's Japanese writing is reference material only. All shipped titles, nar
 | ID | Working English title | Confirmed content | Still to decide |
 |---|---|---|---|
 | E01 | Across the River | The player needs to reach the far bank of a river too wide to cross unaided; draw something useful | Supported crossing objects, alternative routes, trigger and reach/size rules |
-| E02 | The Large Dog | A large growling dog blocks the path; the player must deal with the confrontation | Exact weapon/action interaction, whether alternatives are supported, damage/retreat conditions, retries |
+| E02 | The Large Dog | Draw food or a toy to distract the dog and clear its guarded path (#38) | Live recognition playtesting and final audio |
 | E03 | The Crows | A flock descends and blocks or harasses the player; draw an object to deal with them | How shielding/repelling works, accepted alternatives, duration and success condition |
 | E04 | Meeting the Otter | The player meets an otter in the fourth stage | What it needs, how the player helps or interacts, and any later help/reward |
 | E05 | Final Boss | The fifth stage is the final boss encounter | Final identity/presentation, phases or actions, winning strategy, failure/retry rules, and ending |
@@ -301,16 +301,32 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 
 ### E02 — The Large Dog
 
-- **Confirmed classification (September 13):** backend classes are FOOD, TOY, WEAPON, UNKNOWN. These are recognition categories; their gameplay effects and success rules remain to be defined.
-
-- **Confirmed premise:** a large growling dog stands in the player's way.
-- **Reference example:** the image shows the player with a drawn sword. A drawn weapon confronting the dog is the reference direction; exact attack and victory rules have not been specified in the meeting.
-- **Implementation proposal:** start with one bounded, pre-authored confrontation action rather than building a general combat engine. The team must decide whether it is a click-to-use sequence, timed action, or short real-time exchange.
-- Define which types/tags can trigger the action, how accepted attack_power/range/speed/durability affect it, and how the dog yields, retreats, or is otherwise overcome. Do not invent fixed health values or a final damage formula in this document.
-- Food, distraction, intimidation, or other alternatives may be discussed, but none is confirmed merely because the previous spec had FOOD or SOUND tags.
-- Provide a safe processing pocket; retries and recognition delays must not expose the player to unavoidable harm.
-- **Completion:** the approved resolution clears the dog obstruction and unlocks E03.
-- **Acceptance:** the intended drawn object visibly participates in the confrontation; the approved success and failure rules are observable and cannot soft-lock the route.
+- **Confirmed September 13, issue #38:** this is a drawing-driven distraction encounter.
+  It supersedes the earlier sword/confrontation proposal. The dog normally plays Idle,
+  plays Idle Alert when the protagonist approaches, and walks or runs across the path
+  to intercept attempts to pass. There is no damage or combat requirement.
+- Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
+  TOY (for example a toy bone) with positive durability are the supported solutions.
+  WEAPON and UNKNOWN give a contextual retry; they never open the route.
+- A successful object appears at the authored roadside offering spot with the original
+  sketch visible. The dog jumps once, runs toward it, slows to a walk, then collects
+  it and displays a heart and “Thank you!” while remaining off the path.
+- The forward boundary is blocked at every lateral position and jump height until
+  collection finishes. The E03 exit also checks encounter completion independently.
+  Once cleared, the full-width z=-28 exit works as before.
+- One accepted offering consumes one durability. Attack, range and speed remain item
+  metadata; dog travel speed and the offering position are authored. No damage formula
+  or item-stat combat thresholds are introduced.
+- Drawing pauses protagonist input and dog pursuit. Processing restores exploration;
+  it cannot unlock passage. Failed, unclear and canceled results preserve the draft
+  for retry, and stale/duplicate results cannot replay the resolution.
+- The drawing button stays visible during exploration and glows near an available
+  challenge. The normal HUD is hidden while drawing. E02 allows drafting away from
+  the dog, but submission/offer requires returning within interaction range.
+- **Completion:** the dog collects FOOD or TOY, leaves the main path clear, and unlocks E03.
+- **Verification status:** desktop/offline integration and recovery are covered in
+  [the implementation note](3d_game/DOG_ENCOUNTER.md). This does not assert paid live
+  recognition accuracy or Web backend availability.
 
 ### E03 — The Crows
 
@@ -355,7 +371,7 @@ The type/stat JSON contract remains required. Effect tags below are a working vo
 | FLOATS | Functions as a flotation aid | Raft or flotation ring; candidate for E01 |
 | STURDY | Provides firm support | Solid board; candidate for a crossing solution |
 | PROTECTS | Provides cover or shielding | Shield or umbrella; proposed addition for E03, subject to rule confirmation |
-| FOOD | Something an animal may consider food | Available vocabulary; no E02/E04 feeding solution is finalized |
+| FOOD | Something an animal may consider food | E02 accepts FOOD to distract the dog; E04 feeding is not established |
 | SOUND | Produces noticeable sound | Available vocabulary; deterrent effectiveness must be agreed per stage |
 | OTHER | No supported effect applies | Unrelated object |
 
@@ -486,7 +502,7 @@ Use lowercase snake_case JSON keys; the UI uses the human-readable labels reques
 - Godot checks the same contract and displays only the accepted numbers. No raw model output directly changes the game.
 - UNKNOWN is an item type; OTHER is an exclusive effect tag. They are different fields. Uncertain recognition still returns `item: null` rather than inventing an item.
 - Type is not a winning-answer lookup. Keep effect tags because category alone does not determine whether an object solves the encounter.
-- P0 includes all stats in real AI output, validation, and the item card. Finalize their concrete use in the E02 dog confrontation and E05 boss rule sheets; any E01 span/reach threshold remains a candidate rather than the former bag-retrieval rule. `speed` can scale an approved use sequence; `durability` decrements only after a successful use commits once.
+- P0 includes all stats in real AI output, validation, and the item card. E02 consumes one durability on an accepted offering; finalize remaining stat use in the E05 boss rule sheet; any E01 span/reach threshold remains a candidate rather than the former bag-retrieval rule. `speed` can scale an approved use sequence; `durability` decrements only after a successful use commits once.
 - Failed attempts, inspection, drawing, network errors, and canceled actions never spend durability. An exhausted item can always be replaced with a free basic drawing; no progression soft-lock.
 - Define whether and how `attack_power` affects the approved dog/boss actions before implementing those stages. It remains informational for unrelated actions. Do not apply arbitrary model numbers directly to health or invent a full combat engine merely to consume the field.
 - Do not derive an overall Power Score yet. Keep each field interpretable and avoid rewarding unrealistic text written into the sketch.
@@ -787,7 +803,7 @@ These are proposed tasks, not issues already created on GitHub.
 | Confirmed stage order | River -> large dog -> crows -> otter -> final boss; no extra old scenario or skipped stage |
 | Approved solution routes | Every finalized route is tested; two per stage remains the design target, not evidence of implemented routes |
 | E01 river crossing | Approved drawing enables safe bank-to-bank traversal and opens E02 |
-| E02 large dog | Approved weapon/action visibly resolves the confrontation and opens E03 |
+| E02 large dog | FOOD/TOY visibly distracts the dog; collection opens E03; bypasses and unrelated drawings remain blocked |
 | E03 crows | Approved protection/repelling effect resolves the flock and opens E04; no stolen-sign objective |
 | E04 otter | Matches the task/outcome the team eventually records; a placeholder does not pass |
 | E05 boss | Approved strategy, retry and victory rules work; not marked done while design remains open |
@@ -844,7 +860,7 @@ Already settled: production has begun on September 12; five-stage order and the 
 |---|---|---|
 | E04 otter task and outcome | Meeting the otter is confirmed; what to do, accepted drawings, reward and later help are open | Proposed target: end of Day 1, before dependent implementation/assets |
 | E05 boss and winning strategy | Final boss is confirmed; identity/twist, actions, phases, stat use, retry and ending are open | Proposed target: end of Day 1, before dependent implementation/assets |
-| E01–E03 exact solution rules | Premises confirmed; raft/sword/shield-umbrella are reference examples, not a complete ruleset | Day 1 design/integration |
+| Remaining E01/E03 solution rules | E02 food/toy distraction is confirmed in #38; E01 alternatives and E03 action rules still need definition | Design/integration |
 | Submission portal and video details | URL and gameplay video required; video duration, format/hosting and portal fields not supplied | Before recording/final submission |
 | Judge browser/network and remaining asset/code rules | Web delivery planned; exact constraints and reuse/disclosure details still to verify | Early Day 1 |
 | Camera feel and player appearance | Fixed views per stage; E01 overhead orthographic. Later framing follows designers; illustrated or low-detail character | During controller spike |
@@ -853,7 +869,7 @@ Already settled: production has begun on September 12; five-stage order and the 
 | Final setting and ending presentation | Storybook trail; paper/story boss and narrator connection are visual-reference proposals | E05 design decision, before final art/voice |
 | Narrator/otter voices and exact English script | Pre-generated ElevenLabs clips and subtitles; later-stage lines await design | Before voice generation |
 | Audio sources | Instrumental BGM, SFX and scripted voices | Before final audio selection |
-| Item stat budgets and action coverage | Five fields required; dog/boss action rules determine their approved use | E02/E05 rules and integration |
+| Item stat budgets and action coverage | Five fields required; E02 uses one durability per offering; E05 stat effects remain open | E05 rules and integration |
 | AI provider/model, account owner, spending cap | Not selected | Before real integration/public access |
 | Named implementation owners | Role split remains a proposal; submission fallback already assigned to yanwen | Team task assignment |
 
@@ -913,8 +929,8 @@ terrain/prop collision. See [implementation and verification](3d_game/ENCOUNTER_
 The supplied woodland environment is now available as a playable scene preview
 with its reference camera, wind/shadow animation and player movement. Stage 1
 now transitions into it when the player keeps walking along the far bank,
-without a completion modal. E02 dog confrontation and success rules remain open;
-this asset integration does not resolve those design decisions. See
+without a completion modal. This original environment integration did not settle
+E02 encounter rules; the September 13 issue #38 update below supersedes that status. See
 [Stage 02 integration](3d_game/STAGE02_INTEGRATION.md).
 
 ## September 12 asset update: Stage 3 Wind Hill
@@ -943,3 +959,12 @@ painted materials and exported animation, with native water and sky motion and
 live planar water reflections.
 E04 otter gameplay and Stage 5 remain open. See
 [Stage 04 integration](3d_game/STAGE04_INTEGRATION.md) for checks and visual limits.
+
+## September 13: Stage 2 dog interaction (#38)
+
+The approved E02 distraction rules above replace the earlier environment-only dog
+status and unrestricted Stage 2 exit. Six supplied animations are integrated into
+one model. The drawing button remains visible in the river and shared later-stage
+previews, with a glow when an implemented challenge is available. Preview stages
+without an implemented encounter keep the button inactive. See
+[Dog encounter implementation](3d_game/DOG_ENCOUNTER.md).

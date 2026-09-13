@@ -328,7 +328,7 @@ func overlay_checks() -> void:
 	check(level.panel_mode == "" and canvas.strokes == saved, "Toolbar Cancel exits without drawing or discarding the draft")
 	level.player.respawn(level.SPAWN)
 	await frames(30)
-	check(not level.book.visible and not level.near_crossing(), "Leaving the river removes the drawing entry")
+	check(level.book.visible and level.book.disabled and not level.near_crossing(), "Leaving the river keeps the drawing entry visible but inactive")
 	level._open_book()
 	check(not level.drawing_overlay.visible, "Revisiting a discovered stage cannot open drawing outside its area")
 	level.player.respawn(Vector3(-4.6, 1.5, -6.3))

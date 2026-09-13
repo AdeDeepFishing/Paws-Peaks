@@ -108,7 +108,10 @@ func _on_leaving_drawing_area(body: Node3D) -> void:
 		_update_drawing_entry()
 
 func _update_drawing_entry() -> void:
-	book.visible = not presentation.busy and in_drawing_area and not completed and not bridge_built and request.state != "PENDING"
+	book.visible = true
+	book.disabled = presentation.busy or not in_drawing_area or completed or bridge_built or request.state == "PENDING"
+	var glow := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.004)
+	book.modulate = Color.WHITE if book.disabled else Color(1.1 + glow * 0.12, 1.05 + glow * 0.08, 0.8)
 	book.text = "E / %s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
 	cancel_button.visible = not presentation.busy and request.state == "PENDING" and not completed
 
