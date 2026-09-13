@@ -10,15 +10,15 @@ background_mode = 1
 background_color = Color(0.7, 0.79, 0.88, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.86, 0.88, 0.94, 1)
-ambient_light_energy = 0.5
+ambient_light_energy = 0.34
 tonemap_mode = 3
-tonemap_exposure = 1.0
+tonemap_exposure = 0.78
 glow_enabled = true
-glow_intensity = 0.45
-glow_bloom = 0.08
+glow_intensity = 0.24
+glow_bloom = 0.025
 fog_enabled = true
 fog_light_color = Color(0.75, 0.79, 0.86, 1)
-fog_light_energy = 0.6
+fog_light_energy = 0.38
 fog_density = 0.003
 
 [node name="DawnForest" type="Node3D"]
@@ -35,6 +35,8 @@ return_label = "Back to forest"
 script = ExtResource("3")
 animation_name = "Forest_dawn_wind_clouds"
 key_light_name = "Sunrise_key"
+directional_energy_scale = 0.32
+local_energy_scale = 0.2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment")

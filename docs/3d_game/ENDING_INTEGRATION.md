@@ -1,6 +1,7 @@
 # Dawn ending integration
 
-Updated: 2026-09-13. Implements the ending presentation requested in #52.
+Updated: 2026-09-14. Implements the supplied ending (#52) and the final-page
+transition, gentler dawn and victory recap requested in #60.
 
 ## Entry, replay and future boss integration
 
@@ -16,19 +17,45 @@ When implementing #36, set that property false and call
 same deferred, duplicate-guarded transition, independently of the walk gate.
 No boss or combat victory is simulated by this integration.
 
-The ending is an explorable morning epilogue with **THE END**, **A New Dawn**,
-a thank-you line and the Four Otters team credit. It has no drawing prompt.
-**Back to forest** returns to Stage 5's safe clearing spawn, before the exit.
-**Play again** loads a fresh river scene with empty item/drawing/request state
-and an unbuilt bridge. The generation worker stays alive across navigation;
-these scene transitions submit no AI requests. Existing scene-local state is
-fresh on restart; a future persistent story-state system must add its reset here.
+The exit now fades the chapter HUD over 0.45 seconds, then curls the final page
+for 1.65 seconds. A dim dawn lies beneath the outgoing night scene, with a muted
+paper underside rather than a bright flash. Dawn light rises over 3.6 seconds;
+the victory spread and a soft backdrop fade in over 0.8 seconds. Chapter exits
+and final-page input are guarded against duplicate activation. The destination
+loads in the background while the source scene remains visible.
+
+The final spread reads **Journey complete.**, shows a keepsake captured from the
+settled dawn, and displays the session's actual **Chapters visited** and
+**Sketches shared**. Journey observes scene entry and each DrawingRequest's
+existing `request_prepared` signal. Chapters are unique; accepted sketch
+submissions include retries, while rejected/pending duplicates do not count.
+These are local session counts, not encounter victories or successful AI jobs.
+Direct Stage 5 previews consequently show 1/5 visited, not invented completion.
+No drawing or screenshot data is sent to a provider by this presentation.
+
+**Begin a new journey** clears the recap and returns to the daylight map and
+**Start the journey** before a fresh river with empty encounter/drawing state.
+**Stay in the dawn** (or Escape/controller cancel) dismisses the book and restores
+movement without a confirm-button jump. **The last page** reopens the same
+keepsake. **Back to forest** remains available during exploration, returning to
+the safe Stage 5 clearing before the exit. The generation worker persists;
+navigation makes no AI requests.
+
+The victory spread uses native Godot controls and vector drawing, with a cloth
+cover, layered paper edges, a shaded gutter, gold seal and route markers. The
+keepsake is a session-only viewport texture. The UI scales as one composition;
+buttons keep real focus/click behavior. Serif headings request installed Georgia,
+Noto Serif or DejaVu Serif, with Godot's system fallback; no font files are bundled.
 
 The protagonist retains Stage 5's 1.08 visual scale, authored 52-degree lens,
 three-unit camera pullback, movement, jumping and fall recovery. Terrain, rocks,
 trunks, trail stones and buttress roots use the shared forest collision setup.
 
-![Dawn ending in Godot](../assets/ending/gameplay.png)
+![The final page](assets/ending/last-turn.png)
+
+![Victory storybook](assets/ending/victory.png)
+
+![Explorable, softer dawn](assets/ending/dawn.png)
 
 ## Asset provenance and rendering
 
@@ -52,14 +79,17 @@ parameters. Stage 5 retains its existing defaults. Dawn selects
 `Forest_dawn_wind_clouds` and `Sunrise_key`, reuses the native foliage wind and
 mirrored sky/bark texture sampling, and disables shadow casting on sky/clouds.
 Its non-seamless animation plays forward/backward to avoid an end-frame snap.
-Directional and local lights retain the calibrated 50% / 30% energy scales;
-dawn adds brighter ambient light and pale distance fog. Native lighting and
+Night retains its 50% / 30% directional/local light scales. Dawn uses 32% / 20%,
+0.78 final exposure, 0.34 ambient energy, 0.24 glow intensity and 0.025 bloom.
+Arrival starts at 0.46 exposure, 0.22 ambient energy and 65% of those dawn lights,
+then eases toward the final values with cool fog gradually warming. Native lighting and
 bloom approximate the supplied renderer rather than matching its pixels.
 
 ## Verification and remaining scope
 
 `ending_smoke.gd` exercises actual forward walking from Stage 5 into the ending,
-checks dawn assets, camera, animation and sky material, then verifies movement,
+checks dawn assets, camera, animation, sky material, the victory-book input lock
+and its exploration action, then verifies movement,
 jumping/landing, fall recovery, return and fresh restart. It also checks a
 disabled walking shortcut, explicit boss completion, repeated completion,
 lateral/airborne boundary crossings and a single active world with the same
@@ -72,8 +102,16 @@ godot --headless --path 3d_game --script res://tests/wind_hill_exit_smoke.gd
 godot --headless --path 3d_game --script res://tests/moonlit_forest_smoke.gd
 ```
 
-For a rendered playtest, omit `--headless` and append `-- --visual` to the first
-command; it saves `/private/tmp/paws-ending.png`. Validation uses Godot 4.7.2
+`journey_journal_smoke.gd` verifies real accepted submissions, rejected and pending
+duplicates, partial chapter visits, displayed recap and replay reset.
+`overworld_smoke.gd` covers all five map chapters and journal reset. The forest
+regression waits for the map presentation before checking its destination.
+
+`ending_visual.gd` captures the native night scene, midpoint page curl, dim arrival,
+settled victory spread at 1152×720 and 850×720, restored exploration via a real
+mouse click, and the reopened book. Append `-- --preview` to leave the victory
+screen open for a manual playtest. Its captures are written under
+`/private/tmp/map60-*.png`. Validation uses Godot 4.7.2
 Forward+ on Apple M1. The shared exit regressions preserve the Stage 2 dog gate
 and Stage 3 rock boundary; the night-forest regression checks unchanged V5 art
 and the Stage 4-to-5 flow.
@@ -81,3 +119,9 @@ and the Stage 4-to-5 flow.
 The final boss and its victory call site, voiced ending, full asset credits UI,
 Web export and browser performance are not part of this implementation. The
 large GLBs still need a Web delivery budget pass.
+
+
+The final-page, journal, map-flow and night-forest checks run offline. Native
+Forward+ validation covers both sizes and the actual final page/dawn sequence.
+Godot 4.7.2's previously isolated threaded-resource cleanup warning remains;
+see [map validation notes](OVERWORLD_INTEGRATION.md#verification).

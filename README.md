@@ -64,7 +64,7 @@ then drops onto the path. The opening waits as long as you need.
 After each forward exit in Chapters 1–4, the page turns back to the map, the
 protagonist walks to the next chapter, and the camera zooms in before entering
 automatically. The map changes to sunset before Chapter 3 and night before
-Chapter 5. **Play again** returns to the daylight map and **Start the journey**. See
+Chapter 5. **Begin a new journey** returns to the daylight map and **Start the journey**. See
 [Overworld integration](docs/3d_game/OVERWORLD_INTEGRATION.md) for source assets
 and verification.
 
@@ -230,9 +230,12 @@ Final boss gameplay remains separate. See
 
 Continue deeper into Stage 5's clearing to enter **A New Dawn**. The temporary
 exit covers the full width of the forest, including jumping. The ending uses
-the supplied dawn forest, with moving clouds, painted foliage, morning light,
-a thank-you card and Four Otters team credit. You can keep exploring,
-choose **Back to forest**, or **Play again** to start fresh at the river.
+the supplied dawn forest. A slower final page turn leads into a soft sunrise,
+then a storybook victory spread with a keepsake of the scene and actual session
+counts. **Stay in the dawn** restores exploration; **The last page** reopens the
+book. **Begin a new journey** clears the recap and returns to the daylight map
+and Start CTA before a fresh river. **Back to forest** remains available while
+exploring the dawn.
 Direct entry: `3d_game/scenes/ending/dawn_forest.tscn`.
 
 Boss victory is the intended final trigger; the boss is not implemented yet.

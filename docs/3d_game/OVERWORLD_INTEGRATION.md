@@ -25,8 +25,9 @@ This user playtest revision supersedes the earlier Next page requirement.
 | Chapter 3 → Chapter 4 | Sunset |
 | Chapter 4 → Chapter 5 | Smooth sunset-to-night transition during the walk |
 
-The Stage 5-to-dawn ending and backward preview buttons keep their existing
-navigation. **Play again** returns to the daylight map and Start CTA before a
+The Stage 5-to-dawn ending now uses a slower final page turn and soft sunrise
+before the victory book (#60). Backward preview buttons keep their existing
+navigation. **Begin a new journey** returns to the daylight map and Start CTA before a
 fresh river.
 Running an individual chapter with F6 remains supported: its next forward exit
 infers the correct map location and time from the scene path.
@@ -115,7 +116,7 @@ Validation uses Godot 4.7.2 Standard. All generation checks use offline fixtures
   Start screen after restarting from night.
 - Existing river-to-woodland, woodland, Wind Hill and Sunset Cove exit checks
   cross their real gameplay boundaries and await automatic map transitions.
-- Ending checks include explicit Start confirmation after **Play again**.
+- Ending checks include explicit Start confirmation after **Begin a new journey**.
 - `overworld_visual.gd`: native Forward Plus renders of all three map times and
   the Start CTA at 1152×720 and 850×720.
 - `overworld_transition_visual.gd`: real mouse activation of Start, both page-turn

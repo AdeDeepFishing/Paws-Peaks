@@ -3,6 +3,7 @@ render_mode unshaded;
 
 uniform float progress : hint_range(0.0, 1.0) = 0.0;
 uniform bool backwards = false;
+uniform vec4 paper_tint : source_color = vec4(0.96, 0.925, 0.83, 1.0);
 
 void fragment() {
 	vec2 uv = UV;
@@ -24,7 +25,7 @@ void fragment() {
 		float shade = 0.72 + 0.28 * abs(cos(angle));
 		vec3 front = texture(TEXTURE, clamp(page_uv, vec2(0.0), vec2(1.0))).rgb;
 		float grain = fract(sin(dot(UV * 1500.0, vec2(12.9898, 78.233))) * 43758.5453);
-		vec3 paper = vec3(0.96, 0.925, 0.83) * (0.98 + grain * 0.02);
+		vec3 paper = paper_tint.rgb * (0.98 + grain * 0.02);
 		result = vec4(mix(front, paper, smoothstep(1.3, 1.7, angle)) * shade, 1.0);
 	} else {
 		float shadow = exp(-max(0.0, distance_to_fold - radius) * 55.0) * 0.23;

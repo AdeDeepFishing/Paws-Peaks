@@ -82,12 +82,14 @@ func run() -> void:
 		check(root.get_children().filter(func(node): return node is Node3D).size() == 1, "Only one world remains active")
 		check(not journey.page.visible and journey.page.texture == null and not journey.input_blocker.visible, "Transition snapshots and input blockers are released")
 	check(root.get_node("GenerationWorker") == worker, "All five chapters retain the same AI worker without submitting jobs")
+	check(journey.visited_chapters == [1, 2, 3, 4, 5], "Journal records actual chapter visits once")
 	# Restart after night returns to the daylight Start screen.
 	journey.start_intro()
 	if not await until_phase("start"):
 		quit(1)
 		return
 	check(current_scene.palette_weights == Vector3(1, 0, 0), "Restart resets the map to day")
+	check(journey.visited_chapters.is_empty() and journey.sketches_shared == 0, "A new journey clears the session journal before Start")
 	await frames(30)
 	check(journey.phase == "start", "Restart also waits for Start")
 	await JourneyTest.complete(self)

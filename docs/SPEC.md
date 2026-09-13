@@ -1073,8 +1073,28 @@ still decide when the player can leave.
 
 Blend daylight into sunset during the Chapter 2-to-3 map journey, and sunset
 into night during Chapter 4-to-5. Keep all other map legs in their current time.
-The dawn ending's **Play again** returns to the daylight map and Start CTA
+The dawn ending's **Begin a new journey** returns to the daylight map and Start CTA
 before creating a fresh river. Individual scene previews remain available. This adds presentation
 to the current exits; otter and final-boss gameplay remain separate work.
 See [Overworld integration](3d_game/OVERWORLD_INTEGRATION.md) for assets, controls,
 implementation and verification.
+
+
+## September 14: The last page and victory recap (#60)
+
+Replace the abrupt Chapter 5-to-ending cut with a slower final page curl. Fade
+out the chapter HUD before turning; keep the revealed dawn restrained, then
+raise its light smoothly. Reduce dawn exposure, key/local light and bloom rather
+than using a white flash. Keep the existing preview exit and future boss-victory
+hook; this presentation does not implement or simulate boss combat.
+
+After dawn settles, show an open storybook victory spread: a keepsake of the
+forest, “Journey complete.”, the actual chapters visited and sketches submitted
+this session, and the Four Otters credit. Do not invent score, stars earned,
+completed encounters or visited chapters. “Sketches shared” counts valid accepted
+submissions, including retries; it does not imply provider success.
+
+**Begin a new journey** resets the recap and returns to the opening map/Start
+flow. **Stay in the dawn** dismisses the book and restores movement; **The last
+page** reopens it. Retain **Back to forest** while exploring. See
+[Ending integration](3d_game/ENDING_INTEGRATION.md) for implementation and checks.

@@ -1,10 +1,11 @@
 extends Node
 
-## Owns only chapter presentation. Existing encounters remain responsible for
-## deciding whether an exit is unlocked; scene paths determine map position.
+## Owns chapter presentation and the session recap. Existing encounters decide
+## whether an exit is unlocked; scene paths determine map position.
 signal finished(stage: int)
 signal failed(message: String)
 
+const ENDING := "res://scenes/ending/dawn_forest.tscn"
 const MAP := "res://scenes/overworld/overworld.tscn"
 const STAGES := [
 	"res://scenes/river/river_crossing.tscn",
@@ -24,6 +25,8 @@ var page_material: ShaderMaterial
 var overlay: CanvasLayer
 var input_blocker: Control
 var phase := "idle"
+var visited_chapters: Array[int] = []
+var sketches_shared := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -44,6 +47,22 @@ func _ready() -> void:
 	page_material.shader = preload("res://shaders/overworld/page_turn.gdshader")
 	page.material = page_material
 	page.hide()
+	get_tree().scene_changed.connect(_observe_chapter)
+
+func _observe_chapter() -> void:
+	var scene := get_tree().current_scene
+	if scene == null: return
+	_record_chapter(stage_for_scene(scene.scene_file_path))
+	for node in scene.find_children("*", "Node", true, false):
+		if node.has_signal("request_prepared") and not node.is_connected("request_prepared", _record_sketch):
+			node.connect("request_prepared", _record_sketch)
+
+func _record_chapter(stage: int) -> void:
+	if stage > 0 and stage not in visited_chapters: visited_chapters.append(stage)
+
+func _record_sketch(_payload: Dictionary) -> void:
+	# Count accepted submissions, including retries; never claim AI success.
+	sketches_shared += 1
 
 func _input(_event: InputEvent) -> void:
 	if busy and phase != "start": get_viewport().set_input_as_handled()
@@ -57,7 +76,16 @@ func travel_to(destination: String) -> Error:
 	if source == null: return ERR_UNCONFIGURED
 	var origin := stage_for_scene(source.scene_file_path)
 	var target := stage_for_scene(destination)
-	# Back buttons and the dawn epilogue retain their existing navigation.
+	_record_chapter(origin)
+	if origin == 5 and destination == ENDING:
+		if not ResourceLoader.exists(destination): return ERR_FILE_NOT_FOUND
+		busy = true
+		from_stage = 5
+		target_stage = 6
+		input_blocker.show()
+		_run_ending.call_deferred()
+		return OK
+	# Back buttons retain their existing navigation.
 	if origin == 0 or target != origin + 1:
 		return get_tree().change_scene_to_file(destination)
 	if not ResourceLoader.exists(destination) or not ResourceLoader.exists(MAP):
@@ -66,7 +94,10 @@ func travel_to(destination: String) -> Error:
 	return OK
 
 func start_intro() -> void:
-	if not busy: _begin(0, 1)
+	if busy: return
+	visited_chapters.clear()
+	sketches_shared = 0
+	_begin(0, 1)
 
 func _begin(origin: int, target: int) -> void:
 	busy = true
@@ -83,11 +114,12 @@ func _capture_page() -> void:
 	page_material.set_shader_parameter("progress", 0.0)
 	page.show()
 
-func _turn_page(backwards: bool) -> void:
-	phase = "page_to_map" if backwards else "page_to_stage"
+func _turn_page(backwards: bool, seconds: float = 0.95, final_page: bool = false) -> void:
+	phase = "page_to_ending" if final_page else ("page_to_map" if backwards else "page_to_stage")
+	page_material.set_shader_parameter("paper_tint", Color("aab3b0") if final_page else Color("f5ecd4"))
 	page_material.set_shader_parameter("backwards", backwards)
 	var tween := create_tween()
-	tween.tween_method(func(value: float): page_material.set_shader_parameter("progress", value), 0.0, 1.0, 0.95 * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_method(func(value: float): page_material.set_shader_parameter("progress", value), 0.0, 1.0, seconds * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
 	page.hide()
 	page.texture = null
@@ -145,6 +177,42 @@ func _run() -> void:
 	await _turn_page(false)
 	level.process_mode = Node.PROCESS_MODE_INHERIT
 	current_stage = target_stage
+	_finish()
+	finished.emit(current_stage)
+
+func _run_ending() -> void:
+	var source := get_tree().current_scene
+	var old_mode := source.process_mode
+	source.process_mode = Node.PROCESS_MODE_DISABLED
+	phase = "ending_prepare"
+	var error := ResourceLoader.load_threaded_request(ENDING)
+	if error != OK:
+		_recover(source, old_mode, "The last page could not be loaded. Try again.")
+		return
+	while ResourceLoader.load_threaded_get_status(ENDING) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		await get_tree().process_frame
+	if ResourceLoader.load_threaded_get_status(ENDING) != ResourceLoader.THREAD_LOAD_LOADED:
+		_recover(source, old_mode, "The last page could not be loaded. Try again.")
+		return
+	var packed: PackedScene = ResourceLoader.load_threaded_get(ENDING)
+	# Let the night scene breathe, then turn its last page without a bright flash.
+	var hud: Control = source.hud_root
+	var fade := create_tween()
+	fade.tween_property(hud, "modulate:a", 0.0, 0.45 * duration_scale)
+	await fade.finished
+	await _capture_page()
+	error = get_tree().change_scene_to_packed(packed)
+	if error != OK:
+		hud.modulate.a = 1.0
+		_recover(source, old_mode, "The last page could not be opened. Try again.")
+		return
+	await get_tree().scene_changed
+	var ending := get_tree().current_scene
+	await get_tree().process_frame
+	await _turn_page(false, 1.65, true)
+	phase = "dawn"
+	await ending.reveal_dawn(duration_scale)
+	current_stage = 6
 	_finish()
 	finished.emit(current_stage)
 
