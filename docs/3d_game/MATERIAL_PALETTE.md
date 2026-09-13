@@ -5,13 +5,12 @@ one of the keys below and an opaque `#RRGGBB` color. The same neutral material c
 be brown, blue, green or any other tint without generating another image.
 
 Each runtime tile is
-an opaque **128 × 128 grayscale PNG**. All 16 PNGs total **90,150 bytes (88.0 KiB)**;
+an opaque **128 × 128 grayscale PNG**. All 15 PNGs total **84,955 bytes (83.0 KiB)**;
 Godot's generated import cache is additional. The catalog is
 [`palette.json`](../../3d_game/assets/materials/palette.json).
 
 | Key | Surface | Roughness | Metallic |
 |---|---|---:|---:|
-| `plain` | Smooth neutral surface | 0.85 | 0 |
 | `wood` | Wood grain | 0.8 | 0 |
 | `bark` | Tree bark | 0.95 | 0 |
 | `stone` | Mottled stone | 0.95 | 0 |
@@ -43,7 +42,7 @@ Godot's generated import cache is additional. The catalog is
 
 This is the item returned by the live Stage 2 interpretation check. The prompt
 lists all keys and their surface descriptions. It chooses the dominant material,
-uses `plain` if none fits, and selects a suitable color based on the identified
+chooses the closest suitable material, and selects a suitable color based on the identified
 object. Backend and game reject unknown keys and invalid hex colors.
 
 Image edit receives the same material key and hex color. Its prompt requests that
@@ -71,7 +70,7 @@ strokes, simple readable patterns, low contrast**.
 
 Source atlas SHA-256: `93081cc961edae8375c8ecb1144c08dae2186c9dcebb89f097375897888baba2`.
 
-`backend/utils/prepare_material_palette.py` crops each cell, removes two edge pixels,
+`backend/utils/prepare_material_palette.py` skips the original plain cell, crops the other 15 cells, removes two edge pixels,
 resizes to 128 pixels, blends opposing edge bands, and quantizes to 16 light-gray
 levels before saving optimized PNGs. This preserves tint flexibility and keeps
 files small. Edge pixels match; complex patterns may still reveal repetition.
@@ -88,7 +87,7 @@ backend/.venv/bin/python backend/utils/prepare_material_palette.py backend/outpu
 ## Verification
 
 The existing offline tests validate all palette keys and the six-field item schema.
-The desktop game smoke loads all 16 textures, checks 128-pixel dimensions, reuses
+The desktop game smoke loads all 15 textures, checks 128-pixel dimensions, reuses
 one texture with two distinct tints, verifies different metallic properties, and
 rejects invalid keys/colors. The full backend suite remains 20 tests.
 

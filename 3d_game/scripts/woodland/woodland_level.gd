@@ -6,6 +6,9 @@ extends Node3D
 @export var chapter := "02"
 @export var stage_title := "Woodland Path"
 @export var fallback_spawn := Vector3(0, 2, 5)
+@export var entrance_offset := Vector3(0, 0, 4)
+var entering := true
+
 @export var camera_pullback := 6.0
 @export var return_scene := "res://scenes/river/river_crossing.tscn"
 @export var return_label := "Back to river"
@@ -41,13 +44,16 @@ func _ready() -> void:
 	if marker: spawn = marker.global_position + Vector3.UP * 2
 	player.respawn(spawn)
 	_build_ui()
+	player.set_input_enabled(false)
+	hud_root.hide()
+	_start_entrance.call_deferred()
 
 func _process(delta: float) -> void:
 	if player.position.y < -4:
 		player.respawn(spawn)
 		status.text = "Back on the path."
 	# Preserve the designer's lens and orientation; track only ground movement.
-	if not camera_follow_enabled: return
+	if entering or not camera_follow_enabled: return
 	var offset: Vector3 = player.position - spawn
 	offset.y = 0
 	camera.position = camera.position.lerp(reference.origin + offset, 1.0 - exp(-delta * 4.0))
@@ -128,3 +134,15 @@ func _label(parent: Node, text: String, size: int) -> Label:
 	label.add_theme_color_override("font_color",Color("273d36"))
 	parent.add_child(label)
 	return label
+
+func _start_entrance() -> void:
+	await get_tree().physics_frame
+	var start := to_global(spawn + entrance_offset)
+	var query := PhysicsRayQueryParameters3D.create(start + Vector3.UP * 20, start + Vector3.DOWN * 40, 3, [player.get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty(): start.y = hit.position.y + 0.05
+	player.entrance_finished.connect(func():
+		entering = false
+		hud_root.show()
+	, CONNECT_ONE_SHOT)
+	player.walk_into_scene(start, to_global(spawn))

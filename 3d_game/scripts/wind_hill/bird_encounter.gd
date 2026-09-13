@@ -57,7 +57,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	draw_button.disabled = solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor()
+	draw_button.disabled = entering or solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor()
 	draw_button.text = "Path is clear" if solved else ("Protected" if resolving else ("E · Use protection" if request.state == "READY" and item.get("type") == "DEFENCE" else "E · Draw"))
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
@@ -90,6 +90,7 @@ func set_encounter_paused(value: bool) -> void:
 	bird.paused = value
 
 func _unhandled_input(event: InputEvent) -> void:
+	if entering: return
 	if event.is_action_pressed("sketchbook"):
 		if drawing: _close_drawing()
 		else: _open_drawing()
@@ -100,6 +101,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _open_drawing() -> void:
+	if entering: return
 	if solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor(): return
 	if request.state == "READY" and not item.is_empty() and not is_instance_valid(offered):
 		_offer_item()

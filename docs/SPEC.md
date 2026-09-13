@@ -375,7 +375,9 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 
 ### E04 — Meeting the Otter — DETAILS OPEN
 
-- **Confirmed classification (September 13):** backend classes are GIFT, TOOL, UNKNOWN. The otter task, gameplay effects and success rules remain open.
+- **Implemented greeting (September 14):** the otter idles by the water, faces the player, loops its wave while the player is more than 2.5 units away, and returns to idle on approach. One model shares all 13 imported animation clips and saved selection descriptions. Within 2.5 units, the player can submit a sketch labeled E04 / otter, carrying the animation options. The first AI call selects a reaction; the otter looks confused until the model appears, then plays that reaction. Stage resolution remains open.
+
+- **Updated September 14:** Stage 4 identifies the object without classification and selects one reaction from the otter animation descriptions. The otter task, gameplay effects and success rules remain open.
 
 - **Confirmed:** the fourth stage features meeting the otter. It follows the crow encounter.
 - **Reference tone:** a small otter appears lonely or interested in company. The illustration suggests gifts or play, including fish, flowers, or friendship motifs.
@@ -1132,3 +1134,15 @@ boss personality/agent requirements (#63); no dialogue, combat, drawing rules
 or victory condition is inferred from that file. The existing temporary route
 around the boss to the dawn ending remains available until encounter gameplay
 is implemented. See [Boss integration](3d_game/BOSS_INTEGRATION.md).
+## September 14: Stage entrances
+
+Stages 2–5 now begin with an automatic walk to the existing starting position.
+The player starts four world units behind that position along the approach path
+(Stage 3 approaches from the left). Normal walking animation and terrain collision
+remain active. The camera holds its authored starting framing during the entrance;
+movement, sprint, jump, and drawing controls unlock on grounded arrival. The HUD
+appears at that point. Stage 1 keeps its existing start flow.
+
+`3d_game/tests/stage_entrance_smoke.gd` checks all four arrivals with movement,
+sprint, and jump held throughout the entrance, plus drawing lockout and the final
+position. Use `-- --visual` for approach and arrival screenshots.

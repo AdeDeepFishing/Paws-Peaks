@@ -144,6 +144,7 @@ func run():
 	var unknown_model = level.offered
 	level._open_drawing()
 	check(level.drawing and is_instance_valid(unknown_model), "Player can draw again while the UNKNOWN model remains visible")
+	check(not level.surface.has_drawing(), "Drawing again after a rendered item starts with an empty canvas")
 	sketch_in_front(level)
 	level.request.mock_delay = 5.0
 	level.choices.selected = 0
@@ -158,7 +159,7 @@ func run():
 	var preview_rect: Rect2 = level.generation_preview.image.get_global_rect()
 	check(Vector2(preview_rect.get_center().x, preview_rect.end.y).distance_to(level.camera.unproject_position(saved_anchor)) < 1.0, "Reference overlay tracks the same world anchor when camera moves")
 	check(level.sketch_anchor == saved_anchor, "Camera movement does not recalculate the submission anchor")
-	level.generation.interpretation_ready.emit(old_id, {"name": "Drawn food", "description": "A tasty snack could keep the dog busy.", "type": "FOOD", "movable": true, "texture_key": "plain", "color": "#D9C6A0"})
+	level.generation.interpretation_ready.emit(old_id, {"name": "Drawn food", "description": "A tasty snack could keep the dog busy.", "type": "FOOD", "movable": true, "texture_key": "wood", "color": "#D9C6A0"})
 	check(level.generation_preview.card.visible and level.generation_preview.item_name.text == "Drawn food", "Dog encounter displays early interpretation")
 	level.generation.reference_image_ready.emit(old_id, ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/reference.jpg"))
 	check(level.generation_preview.image.texture != null and level.generation_preview.visible, "Dog encounter displays reference overlay while pending")
@@ -195,7 +196,7 @@ func run():
 	await draw(level, 0)
 	var model_path := ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/model.glb")
 	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "model_path": model_path,
-		"item": {"name": "Drawn food", "description": "A snack for the dog.", "type": "FOOD", "movable": true, "texture_key": "plain", "color": "#D9C6A0"}})
+		"item": {"name": "Drawn food", "description": "A snack for the dog.", "type": "FOOD", "movable": true, "texture_key": "wood", "color": "#D9C6A0"}})
 	check(level.offered is RigidBody3D, "Movable interpretation creates a physics body")
 	check(level.offered.global_position.is_equal_approx(level.sketch_anchor + Vector3.UP * 2), "Movable model drops above the submitted sketch location")
 	check(level.offered.freeze and not level.dog.distracted, "Movable model waits under the cover before falling")
@@ -243,7 +244,7 @@ func run():
 	level.request.mock_mode = false
 	await draw(level, 1)
 	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "model_path": model_path,
-		"item": {"name": "Fixed toy", "description": "A toy fixed to the ground.", "type": "TOY", "movable": false, "texture_key": "plain", "color": "#D9C6A0"}})
+		"item": {"name": "Fixed toy", "description": "A toy fixed to the ground.", "type": "TOY", "movable": false, "texture_key": "wood", "color": "#D9C6A0"}})
 	check(level.offered is StaticBody3D, "Fixed interpretation creates an anchored body")
 	if level.offered == null:
 		quit(1)

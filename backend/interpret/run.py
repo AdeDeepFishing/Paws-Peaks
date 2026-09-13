@@ -40,21 +40,18 @@ SCHEMA = {
     },
 }
 PROMPT = """Interpret the main object in this image for Paws & Peaks, a warm storybook game.
-Accept rough sketches. Perform these two steps in order within this one response:
+Accept rough sketches. First identify the object before making any game decisions:
 1. Identify the object from its visible strokes, silhouette, proportions, and parts.
 Make a best-effort guess of a reasonably common object even when confidence is low.
 Choose the most plausible common object suggested by the image. Do not let the game
-stage or its allowed classes influence the object's identity.
-2. Only after identifying the object, classify that object using the allowed classes.
-Use UNKNOWN if the identified object does not fit any named class. Do not change its
-identity to fit a class or solve the challenge.
+context influence the object's identity.
 Also decide whether the identified object is movable: true for portable or loose
 objects such as food, toys, tools, or a freestanding chair; false for fixed structures
-such as a bridge or building. Base this on the object itself, not the stage class.
+such as a bridge or building. Base this on the object itself, not the game context.
 Choose one texture_key from the material palette for the object's dominant material.
-Use plain if none fits. Choose color as an opaque #RRGGBB hex tint suitable for the
-identified object. Prefer
-warm, muted storybook colors. The saved textures are neutral grayscale; material
+Choose the closest suitable material from the palette.
+Choose color as an opaque #RRGGBB hex tint suitable for the identified object.
+Prefer warm, muted storybook colors. The saved textures are neutral grayscale; material
 and color are independent. Do not put color names or file paths in texture_key.
 Always return an item; do not return an uncertainty status or a null item.
 Write a short English name. In description, write one complete English sentence naming the object and its possible usefulness.
@@ -63,23 +60,48 @@ Describe a potential use, without claiming the player has already used it or sol
 """
 
 
-def schema_for(game_stage):
+CLASSIFICATION_PROMPT = """2. Only after identifying the object, classify that object using the allowed classes.
+Use UNKNOWN if the identified object does not fit any named class. Do not change its
+identity to fit a class or solve the challenge.
+"""
+
+
+def reaction_options(options=None):
+    catalog = json.loads((ROOT.parent / "3d_game/models/otter/animations.json").read_text())
+    if options is None:
+        return catalog
+    if (not isinstance(options, dict) or not options
+            or any(key not in catalog or description != catalog[key] for key, description in options.items())):
+        raise AppError("INVALID_REQUEST", "Animation options must match the otter animation catalog.")
+    return options
+
+
+def schema_for(game_stage, animation_options=None):
     schema = deepcopy(SCHEMA)
     schema["properties"]["item"]["properties"]["type"]["enum"] = list(classes_for(game_stage))
+    if game_stage == "otter":
+        del schema["properties"]["item"]["properties"]["type"]
+        schema["properties"]["item"]["required"].remove("type")
+        schema["required"].append("reaction")
+        schema["properties"]["reaction"] = {"type": "string", "enum": list(reaction_options(animation_options))}
     return schema
 
 
-def validate_interpretation(value, game_stage="river"):
+def validate_interpretation(value, game_stage="river", animation_options=None):
     allowed_types = classes_for(game_stage)
     invalid = AppError("INVALID_MODEL_OUTPUT", "OpenAI returned an invalid item. Try again.")
-    if not isinstance(value, dict) or set(value) != {"item"}:
+    fields = {"item", "reaction"} if game_stage == "otter" else {"item"}
+    if not isinstance(value, dict) or set(value) != fields:
+        raise invalid
+    if game_stage == "otter" and (not isinstance(value["reaction"], str)
+                                  or value["reaction"] not in reaction_options(animation_options)):
         raise invalid
     item = value["item"]
-    if not isinstance(item, dict) or set(item) != set(ITEM_PROPERTIES):
+    if not isinstance(item, dict) or set(item) != (set(ITEM_PROPERTIES) - {"type"} if game_stage == "otter" else set(ITEM_PROPERTIES)):
         raise invalid
     if not isinstance(item["name"], str) or not 1 <= len(item["name"].strip()) or len(item["name"]) > 40:
         raise invalid
-    if not isinstance(item["description"], str) or len(item["description"]) > 160 or item["type"] not in allowed_types:
+    if not isinstance(item["description"], str) or len(item["description"]) > 160 or (game_stage != "otter" and item["type"] not in allowed_types):
         raise invalid
     if type(item["movable"]) is not bool:
         raise invalid
@@ -90,7 +112,7 @@ def validate_interpretation(value, game_stage="river"):
     return value
 
 
-def parse_response(response, game_stage="river"):
+def parse_response(response, game_stage="river", animation_options=None):
     invalid = AppError("INVALID_MODEL_OUTPUT", "OpenAI returned incomplete or unreadable output. Try again.")
     if not isinstance(response, dict) or response.get("status") != "completed":
         raise invalid
@@ -104,22 +126,31 @@ def parse_response(response, game_stage="river"):
                     raise AppError("INVALID_MODEL_OUTPUT", "OpenAI could not interpret this image. Try another image.")
                 if content.get("type") == "output_text":
                     texts.append(content["text"])
-        return validate_interpretation(json.loads("".join(texts)), game_stage)
+        return validate_interpretation(json.loads("".join(texts)), game_stage, animation_options)
     except (KeyError, TypeError, ValueError, AttributeError):
         raise invalid from None
 
 
-def interpret(image, config, prompt=PROMPT, game_stage="river"):
-    """Make one synchronous provider call. Run off the game main thread later."""
+def interpret(image, config, prompt=PROMPT, game_stage="river", animation_options=None):
+    """Make one synchronous provider call in the backend worker."""
     allowed_types = classes_for(game_stage)
-    if "UNKNOWN" not in allowed_types:
-        raise AppError("CONFIG_ERROR", "Stage classes must include UNKNOWN for unmatched objects.")
-    prompt += ("\nClassification context for step 2 only: game stage " + game_stage
-               + ". Allowed item classes: " + ", ".join(allowed_types)
-               + ". Use UNKNOWN if no named class fits the object identified in step 1.")
+    if game_stage != "otter":
+        if "UNKNOWN" not in allowed_types:
+            raise AppError("CONFIG_ERROR", "Stage classes must include UNKNOWN for unmatched objects.")
+        prompt += "\n" + CLASSIFICATION_PROMPT
+        prompt += ("\nClassification context for step 2 only: game stage " + game_stage
+                   + ". Allowed item classes: " + ", ".join(allowed_types)
+                   + ". Use UNKNOWN if no named class fits the object identified in step 1.")
     guidance = STAGES[game_stage].get("classification_guidance", "")
     if guidance:
         prompt += "\n" + guidance
+    if game_stage == "otter":
+        animation_options = reaction_options(animation_options)
+        prompt += ("\n2. After identifying the object, choose one suitable reaction for the otter "
+                   "as if it has just seen that object. Use the animation descriptions below. "
+                   "Return the exact animation key in the top-level reaction field. "
+                   "Do not change the object to fit an animation. Stage 4 does not classify objects; omit type.\n"
+                   + json.dumps(animation_options, ensure_ascii=False))
     prompt += "\n" + PALETTE_PROMPT
     key = config["OPENAI_API_KEY"]
     if not key or key.lower().startswith(("your_", "paste_")):
@@ -134,7 +165,7 @@ def interpret(image, config, prompt=PROMPT, game_stage="river"):
             {"role": "system", "content": prompt},
             {"role": "user", "content": [{"type": "input_image", "image_url": image, "detail": "auto"}]},
         ],
-        "text": {"format": {"type": "json_schema", "name": "drawing_interpretation", "strict": True, "schema": schema_for(game_stage)}},
+        "text": {"format": {"type": "json_schema", "name": "drawing_interpretation", "strict": True, "schema": schema_for(game_stage, animation_options)}},
     }
     request = Request(API_URL, data=json.dumps(payload).encode("utf-8"), method="POST",
                       headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
@@ -147,7 +178,7 @@ def interpret(image, config, prompt=PROMPT, game_stage="river"):
         if len(data) > 1024 * 1024:
             raise AppError("INVALID_MODEL_OUTPUT", "The provider response was too large.")
         with measure("response_validation"):
-            return parse_response(json.loads(data), game_stage)
+            return parse_response(json.loads(data), game_stage, animation_options)
     except HTTPError as error:
         # Never print the provider body, request headers, or the key.
         messages = {

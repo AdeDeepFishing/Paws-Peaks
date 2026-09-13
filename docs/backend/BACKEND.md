@@ -78,6 +78,7 @@ Stage 1 (River), live generation:
 | `encounter_id` | `E01`–`E04`, matching the selected game stage |
 | `game_stage` | `river`, `dog`, `crows`, or `otter`; see [stage mapping](#approved-classes) |
 | `mode` | `live` runs the three paid generation steps; `fixture` returns saved sample assets without provider calls, available for River and Dog |
+| `animation_options` | Stage 4 map of playable animation keys to their saved descriptions, validated against the otter catalog and supplied to the first AI call; other stages omit it |
 | `request/input.png` | One drawing in the request directory, supplied separately from JSON; game-generated PNG, at most 1 MiB |
 
 `stage_number` is backend configuration, not a request field. The request contains
@@ -126,6 +127,7 @@ paths within the originating job directory; live generated assets are under its
 | Identity fields | Echo the originating `request_id`, `encounter_id`, `game_stage`, and `mode` |
 | `stage` | Progress: `starting`, `description`, `reference_image`, `model`, `preview`, `complete`, or `error` |
 | `status` | `PENDING`, `SUCCEEDED`, or `FAILED` |
+| `reaction` | Stage 4 only: selected animation key, published with the item and retained through completion |
 | `item` | Validated interpretation; appears before model completion; [field bounds](#item-validation) |
 | Asset paths | `reference_path`, `model_path`, and `preview_path` appear as assets become available |
 | `request_received_at` | Unix seconds when the backend observes the published request, before queueing; retained through completion |
@@ -196,7 +198,9 @@ benchmark logs to this same operation.
 ## Three-call flow
 
 Interpretation makes a best-effort guess of a reasonably common object, then
-classifies it in the same AI call. The response contains only `item`.
+classifies it in the same AI call for Stages 1–3. Stage 4 instead selects an
+otter reaction from the supplied animation descriptions and returns `item` plus
+`reaction`, with no `item.type`.
 The prompt requests this reasoning order; offline tests verify the contract and
 routing, not the model's actual reasoning or recognition quality.
 
@@ -207,7 +211,7 @@ identifies the Meshy job.
 
 | AI call | Input | Output |
 |---|---|---|
-| **1. Interpret** | `SKETCH` + interpretation prompt + game stage's allowed classes | `{ "item": ITEM }`, where `ITEM` contains `name`, `description`, `type`, `movable`, `texture_key`, and `color`; no `status` field |
+| **1. Interpret** | `SKETCH` + interpretation prompt + stage classes (Stages 1–3) or animation descriptions (Stage 4) | `{ "item": ITEM }`, where `ITEM` contains `name`, `description`, `type`, `movable`, `texture_key`, and `color`; Stage 4 omits `type` and adds top-level `reaction`; no `status` field |
 | **2. Image edit** | `SKETCH` + `ITEM.name` + `ITEM.description` + `ITEM.texture_key` + `ITEM.color` + style instructions + image settings | `REFERENCE_IMAGE`: one 816 × 816 object-reference PNG, prompted to use `ITEM.color` as its dominant base color |
 | **3. 3D generation** | `REFERENCE_IMAGE` + Meshy T2 settings: target 500 faces, no textures, GLB format | `MODEL_TASK_ID`: task ID used to retrieve the model |
 
@@ -349,7 +353,7 @@ rungs; intent and structural fidelity still need human review.
 
 ### Reusable material palette
 
-Interpretation selects `texture_key` from the 16 keys in
+Interpretation selects `texture_key` from the 15 keys in
 `3d_game/assets/materials/palette.json` and returns an opaque `color` in `#RRGGBB`
 format. That same catalog supplies the prompt descriptions, schema enum and game
 material properties. Invalid keys and malformed colors fail validation.
@@ -363,12 +367,12 @@ keys, preparation, provenance and verification limits.
 
 ## Current multi-stage request contract
 
-**The backend selects the classification classes from the game stage. All four stages
+**The backend selects classes for Stages 1–3. Stage 4 selects an otter reaction without classifying the object. All four stages
 share the same generation pipeline. The game never supplies a class list.**
 
 ### Approved classes
 
-These sets were confirmed on September 13, 2026. Class labels are case-sensitive.
+Stages 1–3 were confirmed on September 13, 2026. Stage 4 classification was removed on September 14. Class labels are case-sensitive.
 Each configuration entry also defines `stage_number` (1–4); the bridge uses this
 number to select the River or Dog fixture. Requests still send the named
 `game_stage`, which the backend resolves through this configuration.
@@ -379,7 +383,7 @@ The executable source of truth is [`backend/stage_config.py`](../../backend/stag
 | 1 — River | `river` | `E01` | **`BRIDGE`, `BOAT`, `UNKNOWN`** |
 | 2 — Large Dog | `dog` | `E02` | **`FOOD`, `TOY`, `WEAPON`, `UNKNOWN`** |
 | 3 — Crows | `crows` | `E03` | **`BOW`, `MAGIC`, `DEFENCE`, `UNKNOWN`** |
-| 4 — Otter | `otter` | `E04` | **`GIFT`, `TOOL`, `UNKNOWN`** |
+| 4 — Otter | `otter` | `E04` | No `type`; returns a `reaction` animation key |
 
 These are separate allowed sets, not one combined enum. For example, `FOOD` is valid
 for Dog but invalid for Crows; `BOW` is valid for Crows but invalid for Dog. The AI
@@ -389,7 +393,7 @@ backend classification configuration yet.
 
 `UNKNOWN` means the identified or guessed object fits none of the stage's named
 categories. It has the usual item fields and continues through generation. Every
-stage must include this fallback. Low confidence alone does not stop generation.
+classified stage (1–3) must include this fallback. Low confidence alone does not stop generation.
 
 ### Request and routing
 
@@ -398,7 +402,7 @@ game challenge; response `stage` describes pipeline progress. Their meanings are
 different. `game_stage` and `encounter_id` must match the table above.
 
 The persistent Python listener validates the request and queues its job. The selected
-class set is passed through to OpenAI interpretation and checked in three places:
+class set for Stages 1–3 is passed through to OpenAI interpretation and checked in three places:
 
 1. The prompt lists the classes allowed for this game stage.
 2. The strict JSON schema sets `item.type.enum` to exactly that class set.
@@ -473,25 +477,27 @@ fails with `FIXTURE_NOT_AVAILABLE`. No paid generation is automatically retried.
 
 ### Item validation
 
-Interpretation returns exactly `{ "item": { ... } }`, without `status` or a null
-item. Items require exactly these fields; additional properties are rejected:
+Stages 1–3 return exactly `{ "item": { ... } }`. Stage 4 returns
+`{ "item": { ... }, "reaction": "Shrug" }`, omitting `item.type`. The reaction
+must be an exact key from the supplied animation options. Both forms omit
+`status` and require a non-null item; additional properties are rejected:
 
 | Field | Validation |
 |---|---|
 | `name` | Nonempty string, at most 40 characters |
 | `description` | String, at most 160 characters |
-| `type` | One class allowed by the selected stage |
+| `type` | Stages 1–3 only: one class allowed by the selected stage; absent in Stage 4 |
 | `movable` | Boolean: `true` for loose/portable objects, `false` for fixed structures |
-| `texture_key` | One key from the shared 16-material palette |
+| `texture_key` | One key from the shared 15-material palette |
 | `color` | Opaque hex tint matching `^#[0-9A-Fa-f]{6}$` |
 
 `attack_power`, `range`, `speed`, `durability`, and `tags` are removed from the
 schema and are no longer requested from OpenAI. The game validates the same
-six-field object. Saved historical results may contain the old fields; the
+six-field object for Stages 1–3 and five-field object for Stage 4. Saved historical results may contain the old fields; the
 fixture adapter projects its retained sample onto the current contract.
 
 The standalone interpretation CLI adds `schema_version: 2` and `request_id` to the
-item-only result. The desktop adapter separately supplies `status: recognized` to
+interpretation result. The desktop adapter separately supplies `status: recognized` to
 the existing Godot drawing-request interface; worker progress statuses such as
 `PENDING` and `SUCCEEDED` remain unchanged. The Meshy task manifest uses version 1. Neither is interchangeable with the
 worker's cumulative progress records. Preserve the originating request identity.
@@ -746,7 +752,7 @@ in `backend/stage_config.py`. Avoid new dependencies without a concrete need.
 - Keep stdout machine-readable JSON. Send human diagnostics and optional profiling to stderr.
 - Preserve request identity and the desktop adapter's version-2 game envelope;
   match the validator in `3d_game/scripts/river/drawing_request.gd`. The provider's
-  item-only response is separate from this game envelope. Unsupported values must fail validation.
+  interpretation response is separate from this game envelope. Unsupported values must fail validation.
 - Keep the model-job version-1 manifest separate from the narrative response. Persist the
   provider task ID immediately and retain request identity through status/download.
 - Never automatically retry paid task creation. Network failure can leave the provider

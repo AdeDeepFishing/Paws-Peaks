@@ -15,7 +15,7 @@ STAGES = {
             'These class meanings apply only after identifying the actual object from the sketch.'
         ),
     },
-    'otter': {'stage_number': 4, 'encounter_id': 'E04', 'classes': ('GIFT', 'TOOL', 'UNKNOWN')},
+    'otter': {'stage_number': 4, 'encounter_id': 'E04', 'classes': ()},
 }
 
 
@@ -23,6 +23,8 @@ def classes_for(game_stage):
     if game_stage not in STAGES:
         raise AppError('INVALID_REQUEST', 'Unknown game stage.')
     classes = STAGES[game_stage]['classes']
+    if game_stage == "otter":
+        return ()  # Stage 4 identifies an object and selects an animation, without classification.
     if not classes:
         raise AppError('STAGE_NOT_CONFIGURED', 'Define classification classes for this stage in backend/stage_config.py.')
     if (not isinstance(classes, (tuple, list))

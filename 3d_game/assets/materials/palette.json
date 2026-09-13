@@ -1,9 +1,4 @@
 {
-  "plain": {
-    "description": "Smooth neutral surface",
-    "roughness": 0.85,
-    "metallic": 0
-  },
   "wood": {
     "description": "Wood grain",
     "roughness": 0.8,

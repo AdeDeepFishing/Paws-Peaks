@@ -36,7 +36,7 @@ func start():
 	check(level.request.state == "PENDING" and level.presentation.phase == "focusing", "Submission starts the construction focus")
 func respond(valid_model := true):
 	var path := ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/model.glb") if valid_model else "res://project.godot"
-	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "item": {"name": "Dog Bone", "description": "A local model fixture.", "type": "FOOD", "movable": true, "texture_key": "plain", "color": "#D9C6A0"}, "model_path": path})
+	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "item": {"name": "Dog Bone", "description": "A local model fixture.", "type": "FOOD", "movable": true, "texture_key": "wood", "color": "#D9C6A0"}, "model_path": path})
 func wait_until(condition: Callable, seconds := 10.0):
 	var deadline := Time.get_ticks_msec() + int(seconds * 1000)
 	while not condition.call() and Time.get_ticks_msec() < deadline:

@@ -52,7 +52,8 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
   the object's position with a small sideways collection offset.
   Interpretation appears on the right until the model is revealed. The reference
   image replaces the submitted sketch preview and clears when the model is ready.
-  The draft remains available in the canvas for retries.
+  The draft clears when the model is revealed, so the next drawing starts empty.
+  Failed or canceled requests retain the sketch for retry.
 - Unclear, unrelated, timeout, cancellation and invalid-model outcomes preserve
   the sketch and permit retry. Weapons are not a solution. Repeated submissions,
   duplicate offers and late canceled results cannot repeat the resolution.

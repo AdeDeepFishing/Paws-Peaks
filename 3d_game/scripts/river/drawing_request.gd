@@ -13,6 +13,7 @@ signal request_failed(request_id: String, error_code: String, message: String)
 const GAME_STAGES := {"E01": "river", "E02": "dog", "E03": "crows", "E04": "otter"}
 const MaterialPalette = preload("res://scripts/river/material_palette.gd")
 const DraftStore = preload("res://scripts/river/draft_store.gd")
+var animation_options: Dictionary = {}
 var draft_directory := "user://drawings"
 var saved_draft_path := ""
 var state := "IDLE"
@@ -21,6 +22,7 @@ var encounter_id := ""
 var game_stage := ""
 var snapshot := PackedByteArray()
 var result: Dictionary = {}
+var reaction := ""
 var model_path := ""
 var message := ""
 var generation := 0
@@ -43,15 +45,19 @@ func submit(png: PackedByteArray, encounter: String, mock_outcome: int = 0) -> b
 	snapshot = png.duplicate()
 	saved_draft_path = DraftStore.save_latest(snapshot, draft_directory)
 	if saved_draft_path.is_empty(): push_warning("The latest draft could not be saved locally.")
+	reaction = ""
 	model_path = ""
 	result = {}
 	message = ""
 	deadline_ms = Time.get_ticks_msec() + int(timeout_seconds * 1000.0)
 	_set_state("PENDING")
-	request_prepared.emit({
+	var payload := {
 		"schema_version": 2, "request_id": active_id, "encounter_id": encounter_id,
 		"game_stage": game_stage, "locale": "en", "image_base64": Marshalls.raw_to_base64(snapshot)
-	})
+	}
+	if game_stage == "otter":
+		payload["animation_options"] = animation_options.duplicate(true)
+	request_prepared.emit(payload)
 	if mock_mode:
 		_deliver_mock(active_id, mock_outcome)
 	return true
@@ -107,29 +113,34 @@ func accept_response(response: Dictionary) -> bool:
 	if response.get("status") == "uncertain" and response.get("item") == null:
 		_fail("We could not make out the idea. Add a few details and try again.")
 		return true
-	if response.get("status") != "recognized" or not valid_item(response.get("item")):
+	if response.get("status") != "recognized" or not valid_item(response.get("item"), game_stage):
 		_fail("The response format was not valid. Try again.")
+		return false
+	if game_stage == "otter" and (not response.get("reaction") is String or not animation_options.has(response.get("reaction"))):
+		_fail("The otter reaction was not valid. Try again.")
 		return false
 	if not response.get("model_path", "") is String:
 		_fail("The model response was not valid.")
 		return false
 	model_path = response.get("model_path", "")
+	reaction = response.get("reaction", "")
 	result = response["item"].duplicate(true)
 	_set_state("READY")
 	return true
 
 ## Classification membership is validated by the backend stage configuration.
-static func valid_item(value: Variant) -> bool:
-	if not value is Dictionary or value.size() != 6:
+static func valid_item(value: Variant, stage: String = "river") -> bool:
+	if not value is Dictionary or value.size() != (5 if stage == "otter" else 6):
 		return false
 	if not MaterialPalette.valid_selection(value.get("texture_key"), value.get("color")):
 		return false
 	if not value.get("movable") is bool:
 		return false
-	for key in ["name", "description", "type"]:
+	var text_fields := ["name", "description"] if stage == "otter" else ["name", "description", "type"]
+	for key in text_fields:
 		if not value.get(key) is String:
 			return false
-	if value["name"].is_empty() or value["name"].length() > 40 or value["description"].length() > 160 or value["type"].strip_edges().is_empty() or value["type"].length() > 40:
+	if value["name"].is_empty() or value["name"].length() > 40 or value["description"].length() > 160 or (stage != "otter" and (value["type"].strip_edges().is_empty() or value["type"].length() > 40)):
 		return false
 	return true
 
@@ -141,6 +152,7 @@ func cancel() -> void:
 func reset() -> void:
 	cancel()
 	snapshot = PackedByteArray()
+	reaction = ""
 	model_path = ""
 	result = {}
 	message = ""
@@ -153,6 +165,7 @@ func _fail(reason: String, code: String = "GENERATION_FAILED") -> void:
 	var failed_id := active_id
 	message = reason
 	result = {}
+	reaction = ""
 	model_path = ""
 	_set_state("FAILED")
 	request_failed.emit(failed_id, code, reason)
