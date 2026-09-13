@@ -43,8 +43,8 @@ Godot's generated import cache is additional. The catalog is
 
 This is the item returned by the live Stage 2 interpretation check. The prompt
 lists all keys and their surface descriptions. It chooses the dominant material,
-uses `plain` if none fits, and selects a plausible natural color for monochrome
-sketches. Backend and game reject unknown keys and invalid hex colors.
+uses `plain` if none fits, and selects a suitable color based on the identified
+object. Backend and game reject unknown keys and invalid hex colors.
 
 Image edit receives the same material key and hex color. Its prompt requests that
 color across the whole object, subtle shading, and no contrasting part colors.
