@@ -113,6 +113,9 @@ func run():
 	root.add_child(level)
 	await frames(45)
 	check(level.player.visual.character != null, "River uses the same protagonist")
+	var environment: Environment = level.get_node("WorldEnvironment").environment
+	check(environment.ambient_light_source != Environment.AMBIENT_SOURCE_DISABLED, "Hero shadow sides receive ambient fill")
+	check(environment.ambient_light_source != Environment.AMBIENT_SOURCE_SKY or environment.sky != null, "Sky ambient lighting requires an actual sky resource")
 	check(level.player.visual.scale.is_equal_approx(Vector3.ONE * 2.0), "River displays the character at twice the original size")
 	level.player.respawn(Vector3(-4.1, 1.5, -6.3))
 	await frames(45)

@@ -44,13 +44,21 @@ ends that animation. Camera locks do not trigger it. Active clips loop and trans
 blend over 0.15 seconds.
 
 Stage 2 sets the shared player's `appearance_scale` to 1.2 for a twenty-percent larger
-visual. Stage 1 retains 1.0. Feet stay anchored to the existing capsule; collision
+visual. Stage 1 uses 2.0 as requested in #37. Feet stay anchored to the existing capsule; collision
 geometry and the designer camera remain unchanged.
 No jump clip was delivered: airborne movement temporarily holds the first idle pose,
 then resumes the appropriate grounded animation on landing. Drawing and camera
 locks suppress locomotion animation. Collision shape and level geometry retain their existing values.
 
 ## Verification
+
+September 13 river lighting correction: the river environment selected sky ambient
+lighting without a Sky resource, leaving the character's shadow sides black.
+It now uses color ambient lighting with neutral white at 0.5 energy, matching the
+later stages. Delivered character materials and the directional sun are preserved.
+A fixed close-up reproduced the black shadows before the change and confirmed
+readable shadow-side clothing afterward. The hero smoke check now rejects disabled
+ambient fill and sky ambient lighting without a Sky resource.
 
 September 13 Listening Gesture update: `hero_smoke.gd` and
 `hero_restart_smoke.gd` both passed headlessly. A desktop woodland capture verified

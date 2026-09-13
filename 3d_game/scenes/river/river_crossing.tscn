@@ -13,9 +13,9 @@
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.44, 0.54, 0.28, 1)
-ambient_light_source = 3
-ambient_light_color = Color(1, 0.95, 0.85, 1)
-ambient_light_energy = 0.8
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.5
 
 [sub_resource type="BoxShape3D" id="DrawingAreaShape"]
 size = Vector3(3, 4, 4)
