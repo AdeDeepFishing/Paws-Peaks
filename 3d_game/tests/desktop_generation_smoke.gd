@@ -18,6 +18,7 @@ func run() -> void:
 	level.auto_advance = false
 	level.get_node("EncounterPresentation").duration_scale = 0.01
 	root.add_child(level)
+	level.request.draft_directory = "user://test-drawings/desktop-generation"
 	await process_frame
 	var worker = root.get_node("GenerationWorker")
 	check(worker.is_running(), "Worker starts before any submission")

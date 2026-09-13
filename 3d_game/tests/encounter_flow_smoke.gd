@@ -31,7 +31,7 @@ func run():
 	level = Level.instantiate()
 	level.auto_advance = false
 	level.get_node("DesktopGeneration").mode = 0
-	level.drawing_export_directory = "user://test-drawings/encounter-flow"
+	level.get_node("DrawingRequest").draft_directory = "user://test-drawings/encounter-flow"
 	root.add_child(level)
 	await frames(30)
 	level.request.mock_mode = false

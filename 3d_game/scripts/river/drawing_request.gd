@@ -10,6 +10,9 @@ signal state_changed(state: String)
 @export var timeout_seconds := 20.0
 
 const GAME_STAGES := {"E01": "river", "E02": "dog", "E03": "crows", "E04": "otter"}
+const DraftStore = preload("res://scripts/river/draft_store.gd")
+var draft_directory := "user://drawings"
+var saved_draft_path := ""
 var state := "IDLE"
 var active_id := ""
 var encounter_id := ""
@@ -36,6 +39,8 @@ func submit(png: PackedByteArray, encounter: String, mock_outcome: int = 0) -> b
 	encounter_id = encounter
 	game_stage = GAME_STAGES[encounter]
 	snapshot = png.duplicate()
+	saved_draft_path = DraftStore.save_latest(snapshot, draft_directory)
+	if saved_draft_path.is_empty(): push_warning("The latest draft could not be saved locally.")
 	model_path = ""
 	result = {}
 	message = ""

@@ -19,6 +19,7 @@ var objective: Label
 var hud_root: Control
 var draw_button: Button
 var drawing_shine: Control
+var camera_follow_enabled := true
 
 func _ready() -> void:
 	var art := get_node(art_path)
@@ -46,6 +47,7 @@ func _process(delta: float) -> void:
 		player.respawn(spawn)
 		status.text = "Back on the path."
 	# Preserve the designer's lens and orientation; track only ground movement.
+	if not camera_follow_enabled: return
 	var offset: Vector3 = player.position - spawn
 	offset.y = 0
 	camera.position = camera.position.lerp(reference.origin + offset, 1.0 - exp(-delta * 4.0))

@@ -8,25 +8,38 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
 ## Playing the encounter
 
 - Entry: `res://scenes/woodland/woodland_path.tscn`.
-- Walk toward the dog: Idle changes to Idle Alert. Moving sideways makes it walk
-  or run across the route to intercept you. Retreating makes it return home.
+- On arrival, the dog immediately walks a continuous oval across the path, even
+  while the protagonist stands still. Approaching within 10 units of its post
+  interrupts patrol with Idle Alert, then it walks or runs sideways to intercept.
+  Retreating beyond 13 units resumes the circuit; advancing alongside the guard
+  still triggers interception regardless of lateral distance.
 - Press E / the mapped sketchbook controller button, or click **Draw**. Draw on
   the transparent scene canvas; Undo, Clear and Back preserve the familiar river
   controls. Back retains the current draft. Drafting can start away from the dog;
-  offering requires being within 16 horizontal world units of it.
+  offering requires being within 16 horizontal world units of the fixed guard post,
+  so circling does not move the interaction boundary away from a stationary player.
 - **AI drawing · Uses credits** uses the existing E02 / `dog` backend contract.
   Nothing is submitted until the player draws and explicitly offers it. The game
   passes the actual PNG to the persistent worker; FOOD and TOY are accepted.
 - **Offline playtest · No AI** exposes explicit sample outcomes: Food, Toy,
   Unclear, Service failure, Unsuitable. It does not recognize the drawing or
-  generate a mesh. It displays the actual sketch as the offered object.
-- While the canvas is open, protagonist input and dog movement are paused.
-  Submitting restores exploration; the forward route stays guarded while waiting.
+  generate a mesh. It uses a simple colored 3D stand-in for the offering.
+- While the canvas is open, protagonist input, dog movement and its walking clip are paused.
+  Exploration resumes after the initial camera movement; the forward route stays guarded while waiting.
   A result received far away waits for the player to return and press E.
-- FOOD or TOY appears at the authored left roadside spot, alongside the original
-  sketch. In AI mode the returned GLB is also displayed. The dog jumps once, runs
-  over, slows to a walk, and collects it. The three-field item response needs no
+- Submission places a small cream cloth cover on the road and focuses the camera
+  over two seconds. Exploration and Stop waiting return after the initial movement;
+  the close-up stays on the cover until generation finishes. The cover lifts away,
+  revealing only the 3D offering. The result holds for two seconds, then the camera
+  returns over one second. Only afterward does the dog show a heart, jump once and run
+  over, slow to a walk, and collect it. The three-field item response needs no
   durability; the dog state prevents repeated offerings. The dog stays off the path with a heart and **Thank you!**.
+  The offering is at world x=-2.8, z=0, with its base just above the terrain,
+  clear of the roadside plants. The dog stops to its left at x=-5.6, z=-0.6,
+  faces the offering and leaves the road
+  center open. The original drawing and name are not floating scene overlays;
+  the draft remains in the canvas for retries. This applies to all accepted generated
+  objects and offline stand-ins.
 - Unclear, unrelated, timeout, cancellation and invalid-model outcomes preserve
   the sketch and permit retry. Weapons are not a solution. Repeated submissions,
   duplicate offers and late canceled results cannot repeat the resolution.
@@ -68,6 +81,16 @@ runtime copies, leaving vertical motion intact while the physics body owns trave
 The model faces +Z and uses scale 3.1 (approximately 4.81 units tall), close to the
 previous large-dog size. The body retains unit scale and a simple box collider.
 Walk speed is 2.6 units/second; run speed is 10, with a slower collection approach.
+The entry patrol spans 6.4 units across the path and 3.6 units behind the original
+post. It starts at that post, follows an oval at walking speed, and turns toward
+travel. After interception it walks back to the paused circuit without teleporting.
+Approach distance is measured from the fixed post, with separate enter/release
+radii so the moving patrol cannot repeatedly trigger its own alert. The drawing
+pause also freezes the clip, avoiding walking in place. Distraction and collection
+take priority over patrol, and collection permanently stops it for that encounter.
+The woodland terrain additionally uses collision layer 2 for the dog's ground
+probe. Player collision remains on layer 1. Sampling only terrain prevents the
+oak's overhanging branches from lifting the circling dog into the air.
 This is an authored encounter movement system, not general navigation AI.
 
 Source SHA-256 checksums:
@@ -88,12 +111,18 @@ Keep the GLB, extracted PNG textures and import metadata together.
 
 Godot 4.7.2, Apple M1, desktop Forward+:
 
-- `dog_encounter_smoke.gd`: all six clips, idle/alert/interception, full-width
+- `dog_encounter_smoke.gd`: all six clips, immediate entry patrol, complete oval
+  with a stationary player, bounded motion, paused/resumed animation, retreat
+  to patrol, alert/interception, full-width
   airborne guard, drawing input lock, retained draft, empty and unsuitable
   submissions, uncertainty, failure, timeout, cancellation/stale results,
   distant completion, invalid model recovery, single-use offering, both food
   and toy routes, jump/run/walk, thank-you, collection-only unlock, real scene
   transition and fresh-scene reset.
+- `dog_presentation_smoke.gd`: real-time camera focus and result hold, covered
+  waiting with exploration, model-only reveal, heart/jump after zoom-out, fast
+  completion, cancellation during focus and reveal, timeout, invalid model and
+  scene removal. Desktop captures cover waiting, model reveal, reaction and collection.
 - `woodland_exit_smoke.gd`: guarded and solved exits at x=-59, 0, 6.5, 25, 59.
 - `woodland_smoke.gd`: terrain, collision, movement, framing, wind and shadows.
 - `river_smoke.gd`: existing river/drawing/request/crossing regression and the
@@ -105,7 +134,8 @@ Godot 4.7.2, Apple M1, desktop Forward+:
 - Desktop renders inspected for idle, alert, interception, drawing, jump and collection.
 
 Validation uses offline outcomes; no paid provider calls were made. The existing
-E02 AI route is wired, but live apple/bone recognition and real generated-model
-quality still require a live playtest. The existing desktop worker cannot run in
+E02 backend connection was confirmed working by the user on September 13.
+This patrol follow-up uses offline tests; it does not establish general recognition
+accuracy or generated-model quality. The existing desktop worker cannot run in
 Web exports. Stage 3/4 drawing mechanics and final encounter audio remain separate
 work. The complete game specification is not a claim of completed implementation.

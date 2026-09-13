@@ -316,21 +316,28 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 ### E02 — The Large Dog
 
 - **Confirmed September 13, issue #38:** this is a drawing-driven distraction encounter.
-  It supersedes the earlier sword/confrontation proposal. The dog normally plays Idle,
-  plays Idle Alert when the protagonist approaches, and walks or runs across the path
+  It supersedes the earlier sword/confrontation proposal. On arrival the dog walks
+  a continuous oval across the path, plays Idle Alert when the protagonist approaches,
+  and walks or runs across the path
   to intercept attempts to pass. There is no damage or combat requirement.
+  Retreating resumes patrol; drawing pauses both movement and the walking clip.
+  Collection stops patrol and leaves the dog idle beside the offering.
 - Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
   TOY (for example a toy bone) are the supported solutions.
   WEAPON and UNKNOWN give a contextual retry; they never open the route.
-- A successful object appears at the authored roadside offering spot with the original
-  sketch visible. The dog jumps once, runs toward it, slows to a walk, then collects
-  it and displays a heart and “Thank you!” while remaining off the path.
+- Submission places a small cloth cover on clear road surface, away from the plants.
+  The camera slowly focuses on it and holds until generation finishes. Reveal only
+  the 3D object, hold for two seconds, then restore the normal camera. The original
+  sketch stays in the canvas, not as an overlay beside the finished model.
+  Only after zoom-out does the dog show a heart, jump once, run toward it, slow to a
+  walk and collect it. It then displays “Thank you!” while remaining off the path.
 - The forward boundary is blocked at every lateral position and jump height until
   collection finishes. The E03 exit also checks encounter completion independently.
   Once cleared, the full-width z=-28 exit works as before.
 - One accepted offering starts the distraction once. Dog travel speed and the offering
   position are authored; no numeric item stats are required or consumed.
-- Drawing pauses protagonist input and dog pursuit. Processing restores exploration;
+- Drawing pauses protagonist input and dog pursuit. Processing restores exploration
+  after the initial camera movement;
   it cannot unlock passage. Failed, unclear and canceled results preserve the draft
   for retry, and stale/duplicate results cannot replay the resolution.
 - The drawing button stays visible during exploration and glows near an available
@@ -509,7 +516,10 @@ the same three-field item with clear manual provenance.
 - Keep provider keys in server-side environment variables, never in Git, Godot resources, or browser bundles.
 - Set upload limits, server-side request limits, and a spending ceiling before sharing a public URL. The account owner must choose the actual quota and budget.
 - Do not treat an embedded client token, CORS, or a freely recreated client ID as sufficient abuse prevention.
-- Avoid logging or permanently storing raw drawings by default; send only the image and necessary context.
+- Keep only the latest optional draft export across encounters (`user://drawings/latest.png`),
+  replacing it after a valid submission and removing old timestamped test exports.
+  Pending requests keep independent snapshots so another draft cannot alter their input.
+  Send only the image and necessary context.
 - Verify the provider's separate retention policy before making any privacy promise.
 - Briefly disclose near the first submission that the drawing is sent to an AI service. No personal information is required.
 
