@@ -58,7 +58,7 @@ func run():
 	await fresh()
 	var home_fov: float = level.camera.fov
 	start()
-	check(is_instance_valid(level.presentation.cover) and not level.player.input_enabled, "Cover appears while camera moves")
+	check(level.generation_preview.mist.active and not level.player.input_enabled, "Sketch mist appears while camera moves")
 	await create_timer(0.5).timeout
 	check(level.presentation.phase == "focusing" and level.camera.fov < home_fov and level.camera.fov > 32, "Camera zooms gradually")
 	await wait_until(func(): return level.presentation.phase == "waiting")
@@ -66,13 +66,13 @@ func run():
 	var focus: Transform3D = level.camera.transform
 	level.player.respawn(Vector3(1, 0.2, 3))
 	await frames(35)
-	check(level.camera.transform.is_equal_approx(focus), "Moving the player does not pull the camera off the cover")
+	check(level.camera.transform.is_equal_approx(focus), "Moving the player does not pull the camera off the generation location")
 	await capture("cover")
 	respond()
 	check(is_instance_valid(level.offered) and not level.offered.visible and not level.dog.distracted, "Model remains hidden during uncovering and dog waits")
 	await wait_until(func(): return level.offered.visible)
 	check(level.offered.find_children("*", "Sprite3D", true, false).is_empty(), "Completed model has no floating original drawing")
-	check(not is_instance_valid(level.presentation.cover), "Reveal removes the cloth")
+	check(not level.generation_preview.mist.active, "Reveal removes sketch mist")
 	check(not level.dog.has_node("ReactionHeart"), "Dog does not react before zoom-out")
 	await capture("model")
 	await create_timer(1.5).timeout
@@ -93,7 +93,7 @@ func run():
 	level.request.cancel()
 	await create_timer(0.4).timeout
 	check(not level.presentation.active and level.offered == null and not level.dog.distracted, "Cancellation invalidates an already queued reveal")
-	check(level.player.input_enabled and level.camera_follow_enabled and not is_instance_valid(level.presentation.cover), "Cancel restores controls, follow and cover")
+	check(level.player.input_enabled and level.camera_follow_enabled and not level.generation_preview.mist.active, "Cancel restores controls, follow and cover")
 	start()
 	await wait_until(func(): return level.presentation.phase == "waiting")
 	level.request.deadline_ms = Time.get_ticks_msec() - 1

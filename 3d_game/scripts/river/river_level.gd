@@ -160,6 +160,11 @@ func _submit() -> void:
 		status_label.text = "Drawing submitted, but the local PNG could not be saved."
 	_play("submit")
 	if request.state == "PENDING":
+		var camera: Camera3D = $StageCamera
+		var rect: Rect2 = surface.snapshot_screen_rect()
+		var screen := Vector2(rect.get_center().x, rect.end.y)
+		var anchor = Plane(Vector3.UP, bridge.global_position.y).intersects_ray(camera.project_ray_origin(screen), camera.project_ray_normal(screen))
+		if anchor is Vector3: generation_preview.anchor_to_world(camera, anchor)
 		presentation.begin(bridge.position)
 
 func _on_request_state(state: String) -> void:

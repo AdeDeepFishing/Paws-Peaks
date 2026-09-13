@@ -1,5 +1,9 @@
 # Stage 2: dog distraction (issue #38)
 
+Current global presentation: construction tents have been replaced by sketch-local
+particles and soft blur. See [Generation presentation](GENERATION_PRESENTATION.md).
+Existing camera timing and encounter reactions remain in place.
+
 Updated: 2026-09-13.
 
 The dog guards the woodland path until the protagonist draws food or a toy. This
@@ -27,15 +31,15 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
 - While the canvas is open, protagonist input, dog movement and its walking clip are paused.
   Exploration resumes after the initial camera movement; the forward route stays guarded while waiting.
   A result received far away waits for the player to return and press E.
-- Submission places a small cream cloth cover on the road and focuses the camera
+- Submission surrounds the sketch with particles and local blur and focuses the camera
   over two seconds. Exploration and Stop waiting return after the initial movement;
-  the close-up stays on the cover until generation finishes. The cover lifts away,
-  revealing only the 3D offering. The result holds for two seconds, then the camera
+  the close-up stays on its location until generation finishes. The particles and
+  sketch disappear when the 3D offering is revealed. The result holds for two seconds, then the camera
   returns over one second. Only afterward does the dog show a heart, jump once and run
   over, slow to a walk, and collect it. The four-field item response includes `movable` and needs no
   durability; the dog state prevents repeated offerings. The dog stays off the path with a heart and **Thank you!**.
   The sketch's bottom center is projected onto terrain when submitted. This world
-  anchor places the cover, reference overlay and model. Movable objects fall from
+  anchor places the particles, reference overlay and model. Movable objects fall from
   two units above it when revealed; fixed objects stay anchored. The dog approaches
   the object's position with a small sideways collection offset.
   Interpretation appears on the right until the model is revealed. The reference
@@ -120,7 +124,7 @@ Godot 4.7.2, Apple M1, desktop Forward+:
   distant completion, invalid model recovery, single-use offering, both food
   and toy routes, jump/run/walk, thank-you, collection-only unlock, real scene
   transition and fresh-scene reset.
-- `dog_presentation_smoke.gd`: real-time camera focus and result hold, covered
+- `dog_presentation_smoke.gd`: real-time camera focus and result hold, particle
   waiting with exploration, model-only reveal, heart/jump after zoom-out, fast
   completion, cancellation during focus and reveal, timeout, invalid model and
   scene removal. Desktop captures cover waiting, model reveal, reaction and collection.

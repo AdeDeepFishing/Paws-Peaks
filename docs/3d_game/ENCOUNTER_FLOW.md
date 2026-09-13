@@ -1,21 +1,25 @@
 # Construction, rewards, and accessible crossing
 
+Current global presentation: construction tents have been replaced by sketch-local
+particles and soft blur. See [Generation presentation](GENERATION_PRESENTATION.md).
+Existing camera timing and encounter reactions remain in place.
+
 ## Agreed flow (issue #37, September 13)
 
-Submitting a drawing starts generation immediately. The construction cloth now
-appears at the authored bridge location, so the waiting and final crossing shots
-share a focus. The camera keeps its overhead orientation and eases from normal
+Submitting a drawing starts generation immediately. Shared particles and local blur
+follow the submitted sketch. The camera focuses the authored bridge location so the
+waiting and final crossing shots share a focus. The camera keeps its overhead orientation and eases from normal
 size 18.6 to size 12 over two seconds. It holds that framing for the entire request;
 it no longer returns to exploration framing while the object is unfinished.
 After the opening move, normal controls and the Stop waiting action are available,
 but camera following remains suspended until the result or cancellation.
 
-Once the result is ready, the cloth is removed and the object is revealed. The
+Once the object is revealed, the sketch, particles and blur are removed. The
 finished object stays in closeup for two full seconds, followed by a one-second
 return to the captured normal framing. Fast results wait for the opening camera
 move before being revealed. An unsuitable generated object can be shown at its
 placement location before returning; an unsuitable mock result returns immediately.
-Failures and cancellation restore the camera and input and remove the cloth.
+Failures and cancellation restore the camera and input and remove the atmosphere.
 Escape also cancels during the opening shot or the held wait. Restart invalidates
 old camera continuations and resets the 18.6-unit overview.
 

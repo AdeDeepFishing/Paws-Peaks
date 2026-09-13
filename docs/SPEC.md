@@ -327,8 +327,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - Backend classes remain FOOD, TOY, WEAPON, UNKNOWN. FOOD (for example an apple) and
   TOY (for example a toy bone) are the supported solutions.
   WEAPON and UNKNOWN give a contextual retry; they never open the route.
-- Submission places a small cloth cover on clear road surface, away from the plants.
-  The camera slowly focuses on it and holds until generation finishes. Reveal only
+- Submission surrounds the sketch with shared pearl-white particles and local blur.
+  The camera slowly focuses on the generation location and holds until generation finishes. Reveal only
   the 3D object, hold for two seconds, then restore the normal camera. The original
   sketch stays in the canvas, not as an overlay beside the finished model.
   Only after zoom-out does the dog show a heart, jump once, run toward it, slow to a
@@ -359,7 +359,8 @@ E01–E05 now have these meanings in scene configuration, prompt context, fixtur
 - Draw a protective object such as an umbrella or shield. DEFENCE is the supported
   route for this implementation; BOW, MAGIC and UNKNOWN produce a contextual retry.
   The backend identity remains E03 / crows, with its existing class vocabulary.
-- Cover and focus the generation location, reveal the 3D model, hold two seconds,
+- Surround the sketch with particles and local blur, focus the generation location,
+  reveal the 3D model, hold two seconds,
   then restore the normal camera. The original sketch overlay disappears when the
   model is presented. Raise the protection, show the bird retreat and fly away,
   then unlock the path to Sunset Cove. Protection stays with the protagonist and
@@ -1011,3 +1012,11 @@ This supersedes earlier open-setting references for the visual ending only.
 The final boss loop, victory call site, ending narration/dialogue, full asset
 credits screen and Web validation remain unfinished. See
 [Ending integration](3d_game/ENDING_INTEGRATION.md).
+
+## September 13: shared sketch generation particles
+
+The global playtest revision replaces all construction tent geometry with pearl-white
+particles and soft local blur around the submitted sketch. River, Dog and Bird use
+the shared generation preview. Keep their focus, completed-model hold, zoom-out and
+reaction sequence; clear the atmosphere when the model appears or a request ends
+unsuccessfully. See [Generation presentation](3d_game/GENERATION_PRESENTATION.md).

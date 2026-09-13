@@ -1,5 +1,9 @@
 # Stage 3: giant bird encounter (#34)
 
+Current global presentation: construction tents have been replaced by sketch-local
+particles and soft blur. See [Generation presentation](GENERATION_PRESENTATION.md).
+Existing camera timing and encounter reactions remain in place.
+
 Updated September 13, 2026. This implements the bird encounter in Wind Hill.
 The user's latest direction is **one very large bird**, replacing the earlier
 multiple-crow premise. The backend stage identity remains `E03` / `crows`.
@@ -19,7 +23,7 @@ multiple-crow premise. The backend stage identity remains `E03` / `crows`.
 - Live generation uses the existing desktop worker and the four-field item
   contract. DEFENCE is the supported solution. BOW, MAGIC and UNKNOWN remain
   recognized backend categories but give a contextual retry in this encounter.
-- A cream cloth cover appears at the sketch's ground contact. The camera moves
+- Soft particles and local blur surround the sketch at its ground contact. The camera moves
   above the grass into a close-up over two seconds and holds while processing.
   Early interpretation/reference previews use the shared generation overlay.
   After the model appears, the view holds two seconds and returns over one second.
@@ -46,7 +50,7 @@ usage terms were not included with this delivery; no third-party license claim i
 made. Downloads is not needed to run the committed project.
 
 `bird_guard.gd` owns flight and reaction state. `bird_encounter.gd` owns drawing,
-protection and progression. The shared covered-reveal controller now accepts an
+protection and progression. The shared reveal controller now accepts an
 optional encounter pause hook and close-up transform; Stage 2 keeps its existing
 camera and pause behavior. Only terrain receives the drawing raycast layer, so
 swaying foliage and tree branches cannot become a placement surface.

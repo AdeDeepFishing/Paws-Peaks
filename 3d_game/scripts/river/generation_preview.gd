@@ -13,6 +13,7 @@ var card: PanelContainer
 var item_name: Label
 var description: Label
 var progress: Label
+var mist: Control
 
 static func attach(parent: Node, drawing_request: Node, generation: Node, drawing_surface: Control) -> Control:
 	var layer := CanvasLayer.new()
@@ -34,6 +35,12 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clip_contents = true
+	var atmosphere := CanvasLayer.new()
+	atmosphere.name = "GenerationAtmosphereLayer"
+	atmosphere.layer = -1
+	add_child(atmosphere)
+	mist = preload("res://scripts/river/generation_mist.gd").new()
+	atmosphere.add_child(mist)
 	image = TextureRect.new()
 	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -79,6 +86,7 @@ func _begin(payload: Dictionary) -> void:
 	if request.state != "PENDING":
 		return
 	active_id = payload.request_id
+	mist.set_active(true)
 	submitted_rect = surface.snapshot_screen_rect()
 	submitted_viewport = get_viewport_rect().size
 	var sketch := Image.new()
@@ -122,13 +130,14 @@ func _pixels_per_unit() -> float:
 		world_camera.unproject_position(world_anchor + world_camera.global_basis.x))
 
 func _process(_delta: float) -> void:
-	if visible and is_instance_valid(world_camera):
+	if visible:
 		_layout_image()
 
 func _layout_image() -> void:
 	if is_instance_valid(world_camera):
 		image.visible = not world_camera.is_position_behind(world_anchor)
 		if not image.visible:
+			mist.follow_rect(Rect2(), false)
 			return
 		image.size = submitted_rect.size * _pixels_per_unit() / submitted_pixels_per_unit
 		image.position = world_camera.unproject_position(world_anchor) - Vector2(image.size.x * 0.5, image.size.y)
@@ -137,6 +146,8 @@ func _layout_image() -> void:
 		var scale_factor := minf(viewport.x / submitted_viewport.x, viewport.y / submitted_viewport.y)
 		image.position = submitted_rect.position * scale_factor + (viewport - submitted_viewport * scale_factor) * 0.5
 		image.size = submitted_rect.size * scale_factor
+
+	mist.follow_rect(Rect2(image.position, image.size), image.visible)
 
 func _layout() -> void:
 	if not is_instance_valid(image):
@@ -156,13 +167,12 @@ func model_presented() -> void:
 
 func _on_state(state: String) -> void:
 	if state == "READY":
-		image.texture = null
-		world_camera = null
 		progress.text = "Your object is ready."
 	elif state != "PENDING":
 		_clear()
 
 func _clear() -> void:
+	if is_instance_valid(mist): mist.set_active(false)
 	active_id = ""
 	world_camera = null
 	image.show()
