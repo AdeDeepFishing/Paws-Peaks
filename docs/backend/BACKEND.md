@@ -217,8 +217,9 @@ identifies the Meshy job.
 
 Within the single interpretation call, first identify a reasonably common object
 from the sketch, making a best-effort guess even when confidence is low. The allowed
-classes must not influence that identity. Then classify the identified object using
-the game stage's allowed classes; use `UNKNOWN` if none fits. Ambiguity alone does
+classes must not influence that identity. In Stages 1–3, classify the identified
+object using the stage's allowed classes; use `UNKNOWN` if none fits. Stage 4
+selects an otter reaction instead, with no object class. Ambiguity alone does
 not stop generation. Also classify mobility from the identified object: portable
 or loose objects use `movable: true`; fixed structures use `movable: false`.
 API failures and invalid responses remain errors.

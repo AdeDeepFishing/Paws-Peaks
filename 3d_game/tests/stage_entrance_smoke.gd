@@ -11,6 +11,11 @@ func run():
 		root.add_child(level)
 		current_scene = level
 		check(level.entering and not level.player.input_enabled, stage + ": controls locked on entry")
+		level.player.entrance_finished.connect(func():
+			Input.action_release("move_right")
+			Input.action_release("jump")
+			Input.action_release("sprint")
+		, CONNECT_ONE_SHOT)
 		Input.action_press("move_right")
 		Input.action_press("jump")
 		Input.action_press("sprint")
