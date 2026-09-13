@@ -52,8 +52,8 @@ Also decide whether the identified object is movable: true for portable or loose
 objects such as food, toys, tools, or a freestanding chair; false for fixed structures
 such as a bridge or building. Base this on the object itself, not the stage class.
 Choose one texture_key from the material palette for the object's dominant material.
-Use plain if none fits. Choose color as an opaque #RRGGBB hex tint, based on visible
-sketch colors or a plausible natural color when the sketch is monochrome. Prefer
+Use plain if none fits. Choose color as an opaque #RRGGBB hex tint suitable for the
+identified object. Prefer
 warm, muted storybook colors. The saved textures are neutral grayscale; material
 and color are independent. Do not put color names or file paths in texture_key.
 Always return an item; do not return an uncertainty status or a null item.
