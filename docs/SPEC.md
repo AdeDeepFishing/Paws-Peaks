@@ -1022,3 +1022,19 @@ particles and soft local blur around the submitted sketch. River, Dog and Bird u
 the shared generation preview. Keep their focus, completed-model hold, zoom-out and
 reaction sequence; clear the atmosphere when the model appears or a request ends
 unsuccessfully. See [Generation presentation](3d_game/GENERATION_PRESENTATION.md).
+
+## September 13 playtest follow-up: group framing (#58, #59)
+
+Stage 2 and Stage 3 generation shots must include the protagonist, animal and
+drawn/generated object together. Use a gentle group close-up with space for the
+sketch mist. Stage 2 offerings settle on terrain and cannot be knocked away by
+the dog or protagonist. Stage 3's single bird is reduced 30% from its previous
+fourfold scale, continues flying while the canvas is open, and pitches downward
+toward the protagonist during its swoop. Successful generated models must appear
+even when unsuitable for protection; show why a different drawing is needed,
+retain the latest draft, and keep the route locked until DEFENCE succeeds.
+
+For Stage 3 classification, ordinary umbrellas and shields count as DEFENCE after
+the model identifies the object. This clarification must not steer the identity
+toward a solution. The successful-model display and the level's solve check remain
+separate, so an unsuitable classification never silently discards a generated GLB.

@@ -3,6 +3,8 @@ extends Node
 signal focused
 signal finished
 
+const Framing = preload("res://scripts/woodland/encounter_framing.gd")
+
 @export var duration_scale := 1.0
 var phase := "idle"
 var active := false
@@ -11,6 +13,7 @@ var epoch := 0
 var tween: Tween
 var home: Transform3D
 var home_fov := 49.0
+var focus_anchor := Vector3.ZERO
 @onready var level = get_parent()
 @onready var camera: Camera3D = level.camera
 
@@ -19,6 +22,7 @@ func begin(anchor: Vector3) -> void:
 	active = true
 	phase = "focusing"
 	var token := epoch
+	focus_anchor = anchor
 	home = camera.transform
 	home_fov = camera.fov
 	level.camera_follow_enabled = false
@@ -29,12 +33,17 @@ func begin(anchor: Vector3) -> void:
 		destination = level.presentation_camera_transform(anchor)
 	tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(camera, "transform", destination, 2.0 * duration_scale)
-	tween.tween_property(camera, "fov", 32.0, 2.0 * duration_scale)
+	tween.tween_property(camera, "fov", Framing.FOCUS_FOV, 2.0 * duration_scale)
 	await tween.finished
 	if token != epoch: return
 	phase = "waiting"
 	_lock(false)
 	focused.emit()
+
+func _process(delta: float) -> void:
+	if active and phase in ["waiting", "revealing"] and level.has_method("presentation_camera_transform"):
+		var destination: Transform3D = level.presentation_camera_transform(focus_anchor)
+		camera.transform = camera.transform.interpolate_with(destination, 1.0 - exp(-delta * 3.0))
 
 func reveal(model: Node3D) -> void:
 	if not active: begin(model.position)

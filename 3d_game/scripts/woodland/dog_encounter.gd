@@ -2,6 +2,7 @@ extends "res://scripts/woodland/woodland_level.gd"
 
 const DrawingSurface = preload("res://scripts/river/drawing_surface.gd")
 const GeneratedModel = preload("res://scripts/river/generated_model.gd")
+const Framing = preload("res://scripts/woodland/encounter_framing.gd")
 const Presentation = preload("res://scripts/woodland/dog_presentation.gd")
 const GUARD_Z := -4.8
 const DRAW_RADIUS := 16.0
@@ -172,20 +173,15 @@ func _offering_position() -> Vector3:
 	return to_local(sketch_anchor)
 
 func presentation_camera_transform(anchor: Vector3) -> Transform3D:
-	# Preserve the submitted sketch's scale, with room for its surrounding mist.
-	var preview = generation_preview
-	var viewport := get_viewport().get_visible_rect().size
-	var sketch_size: Vector2 = preview.submitted_rect.size
-	var pixels_per_unit: float = preview.submitted_pixels_per_unit
-	var available := viewport * Vector2(0.68, 0.64) - Vector2.ONE * 60.0
-	var magnification := minf(1.3, minf(available.x / (sketch_size.x * 1.44), available.y / (sketch_size.y * 1.44)))
-	var target_pixels := maxf(0.001, pixels_per_unit * magnification)
-	var lens_span := viewport.y if camera.keep_aspect == Camera3D.KEEP_HEIGHT else viewport.x
-	var distance := maxf(8.0, lens_span / (2.0 * tan(deg_to_rad(32.0) * 0.5) * target_pixels))
-	var world_height := sketch_size.y / maxf(pixels_per_unit, 0.001)
-	var focus := to_global(anchor) + camera.global_basis.y * world_height * 0.5
-	var destination := Transform3D(camera.global_basis, focus + camera.global_basis.z * distance)
-	return global_transform.affine_inverse() * destination
+	var basis: Basis = global_basis * presentation.home.basis
+	var points: Array[Vector3] = []
+	Framing.add_visual(points, player.visual)
+	Framing.add_visual(points, dog)
+	Framing.add_box(points, AABB(to_global(anchor), Vector3(0, 2, 0)))
+	if is_instance_valid(offered): Framing.add_visual(points, offered)
+	var centers: Array[Vector3] = points.duplicate()
+	Framing.add_sketch(points, generation_preview, basis)
+	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview)
 
 func _settle_offering(_ground: Node, body: RigidBody3D) -> void:
 	if not is_instance_valid(body) or body != offered: return

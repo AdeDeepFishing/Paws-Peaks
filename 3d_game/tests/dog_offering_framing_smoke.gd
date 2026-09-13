@@ -22,6 +22,11 @@ func run():
 		var viewport := Rect2(Vector2.ZERO, root.get_visible_rect().size)
 		check(viewport.encloses(Rect2(preview.mist.position, preview.mist.size)), "Entire sketch and mist fit the close-up: " + str(sketch_size))
 		check(preview.image.size.x <= preview.submitted_rect.size.x * 1.31, "Close-up does not inflate the submitted drawing: " + str(sketch_size))
+		for participant in [level.player.visual, level.dog]:
+			var points: Array[Vector3] = []
+			preload("res://scripts/woodland/encounter_framing.gd").add_visual(points, participant)
+			for point in points:
+				check(not level.camera.is_position_behind(point) and viewport.grow(-24).has_point(level.camera.unproject_position(point)), "The dog and protagonist remain fully framed")
 		if "--visual" in OS.get_cmdline_user_args():
 			await RenderingServer.frame_post_draw
 			root.get_texture().get_image().save_png("/private/tmp/paws-dog-fit-%d.png" % int(sketch_size.x))

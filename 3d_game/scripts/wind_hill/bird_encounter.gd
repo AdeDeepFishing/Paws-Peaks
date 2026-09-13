@@ -2,6 +2,7 @@ extends "res://scripts/woodland/woodland_level.gd"
 
 const DrawingSurface = preload("res://scripts/river/drawing_surface.gd")
 const GeneratedModel = preload("res://scripts/river/generated_model.gd")
+const Framing = preload("res://scripts/woodland/encounter_framing.gd")
 const Presentation = preload("res://scripts/woodland/dog_presentation.gd")
 const Sample = preload("res://scripts/wind_hill/defence_sample.gd")
 const GUARD_X := 6.0
@@ -47,25 +48,36 @@ func _ready() -> void:
 	presentation = Presentation.new()
 	presentation.name = "BirdPresentation"
 	add_child(presentation)
-	presentation.finished.connect(_raise_protection)
+	presentation.finished.connect(_finish_presentation)
 	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
 	status.text = "A giant bird is guarding the hill. An umbrella or a shield could help."
 
 func _process(delta: float) -> void:
 	super._process(delta)
 	draw_button.disabled = solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor()
-	draw_button.text = "Path is clear" if solved else ("Protected" if resolving else ("E · Use protection" if request.state == "READY" else "E · Draw"))
+	draw_button.text = "Path is clear" if solved else ("Protected" if resolving else ("E · Use protection" if request.state == "READY" and item.get("type") == "DEFENCE" else "E · Draw"))
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
 	modes.disabled = request.state == "PENDING" or resolving or solved or presentation.active
 
 func presentation_camera_transform(anchor: Vector3) -> Transform3D:
-	# Wind Hill's normal camera is almost horizontal; lift the close-up above grass.
-	var focus := anchor + Vector3.UP * 1.1
-	var back := camera.basis.z
-	back.y = 0.0
-	var position := focus + back.normalized() * 8.0 + Vector3.UP * 6.0
-	return Transform3D(Basis.IDENTITY, position).looking_at(focus, Vector3.UP)
+	var back: Vector3 = global_basis * presentation.home.basis.z
+	# Pulling back along the low authored lens can put the camera below the hill.
+	back.y = maxf(back.y, 0.22)
+	var basis := Transform3D(Basis.IDENTITY, back.normalized()).looking_at(Vector3.ZERO, Vector3.UP).basis
+	var points: Array[Vector3] = []
+	Framing.add_visual(points, player.visual)
+	Framing.add_box(points, AABB(to_global(anchor), Vector3(0, 3, 0)))
+	if is_instance_valid(offered): Framing.add_visual(points, offered)
+	var centers: Array[Vector3] = points.duplicate()
+	var bird_points: Array[Vector3] = []
+	Framing.add_visual(bird_points, bird.visual)
+	points.append_array(bird_points)
+	# A nearby bird belongs in the composition center; a distant arrival does not.
+	if bird.visual.global_position.distance_to(player.global_position) < 30:
+		centers.append_array(bird_points)
+	Framing.add_sketch(points, generation_preview, basis)
+	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview)
 
 func can_exit() -> bool:
 	return solved
@@ -78,7 +90,7 @@ func constrain_player(body: CharacterBody3D) -> void:
 			status.text = "The bird blocks the way. Draw something to protect yourself."
 
 func set_encounter_paused(value: bool) -> void:
-	bird.paused = value or drawing
+	bird.paused = value
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("sketchbook"):
@@ -92,11 +104,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _open_drawing() -> void:
 	if solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor(): return
-	if request.state == "READY" and not item.is_empty():
+	if request.state == "READY" and not item.is_empty() and not is_instance_valid(offered):
 		_offer_item()
 		return
 	drawing = true
-	bird.paused = true
+	bird.paused = false
 	player.visual.set_avoidance(0.0)
 	player.set_drawing_active(true)
 	player.set_input_enabled(false)
@@ -144,19 +156,23 @@ func _submit() -> void:
 
 func _on_request_state(state: String) -> void:
 	match state:
-		"PENDING": status.text = "Giving your protection shape..."
+		"PENDING":
+			if is_instance_valid(offered): offered.queue_free()
+			offered = null
+			item = {}
+			status.text = "Giving your drawing shape..."
 		"IDLE", "FAILED":
 			_clear_presentation()
 			status.text = request.message + " Your sketch is safe; try again." if state == "FAILED" else "Stopped waiting. Your sketch is safe."
 		"READY":
 			item = request.result.duplicate(true)
-			if item.get("type") != "DEFENCE":
+			if item.get("type") != "DEFENCE" and request.mock_mode:
 				request.fail_current("Try protection such as an umbrella or a shield to block the bird.")
 				return
 			if player.is_on_floor(): _offer_item()
 			else:
 				presentation.cancel()
-				status.text = "Your protection is ready. Land safely and press E to use it."
+				status.text = "Your object is ready. Land safely and press E to view it."
 
 func _clear_presentation() -> void:
 	resolution_epoch += 1
@@ -171,7 +187,6 @@ func _clear_presentation() -> void:
 
 func _offer_item() -> void:
 	if request.state != "READY" or resolving or solved or is_instance_valid(offered): return
-	if item.get("type") != "DEFENCE": return
 	if sketch_request_id != request.active_id:
 		request.fail_current("The drawing location was lost. Try another sketch.")
 		return
@@ -187,6 +202,14 @@ func _offer_item() -> void:
 	add_child(offered)
 	offered.global_position = sketch_anchor
 	presentation.reveal(offered)
+
+func _finish_presentation() -> void:
+	if request.state != "READY" or not is_instance_valid(offered): return
+	if item.get("type") == "DEFENCE":
+		_raise_protection()
+	else:
+		objective.text = "Try an umbrella or a shield to block the bird."
+		status.text = "Your object is ready, but it cannot block the bird. Try another drawing."
 
 func _raise_protection() -> void:
 	if request.state != "READY" or not is_instance_valid(offered) or resolving or solved: return

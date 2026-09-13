@@ -13,9 +13,11 @@ This supersedes older cloth-cover descriptions in the stage integration notes.
   and zooms. River now anchors its preview to the drawing plane as well; Dog and
   Bird retain their existing terrain anchors. The endpoint is the same location
   used by the drawing preview, not a separate tent or construction prop.
-- Woodland fits the camera to the submitted sketch, with at most 30% enlargement
-  and space for the feathered mist. Large drawings use a wider framing instead of
-  being cropped by a fixed-distance close-up.
+- Woodland and Wind Hill fit the camera to the protagonist, animal, model and
+  submitted sketch, with at most 30% sketch enlargement and space for the mist.
+  Their 40-degree close-up smoothly follows the group while waiting and revealing;
+  large drawings use a wider framing instead of being cropped. Wind Hill uses a
+  slightly elevated angle so the foreground hill does not hide the participants.
 - Early interpretation and reference images keep their existing lifecycle. The
   effect remains until the finished model is actually presented, including the
   short interval after the backend reports READY.

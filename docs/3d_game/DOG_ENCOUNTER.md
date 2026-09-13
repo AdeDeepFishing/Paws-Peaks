@@ -32,10 +32,11 @@ replaces the static dog and unrestricted Stage 2 exit from issue #28.
   Exploration resumes after the initial camera movement; the forward route stays guarded while waiting.
   A result received far away waits for the player to return and press E.
 - Submission surrounds the sketch with particles and local blur and focuses the camera
-  over two seconds. Framing uses the actual submitted sketch bounds, caps enlargement
-  at 30%, and reserves room for the surrounding mist; large, tall and wide drawings
-  stay completely in frame. Exploration and Stop waiting return after the initial movement;
-  the close-up stays on its location until generation finishes. The particles and
+  over two seconds. Framing fits the dog, protagonist, offering and actual submitted sketch
+  together through a gentle 40-degree lens. It caps sketch enlargement at 30% and
+  reserves room for the surrounding mist; large, tall and wide drawings stay
+  completely in frame. Exploration and Stop waiting return after the initial movement;
+  the close-up smoothly tracks the group until generation finishes. The particles and
   sketch disappear when the 3D offering is revealed. The result holds for two seconds, then the camera
   returns over one second. Only afterward does the dog show a heart, jump once and run
   over, slow to a walk, and collect it. The four-field item response includes `movable` and needs no
@@ -133,7 +134,7 @@ Godot 4.7.2, Apple M1, desktop Forward+:
   completion, cancellation during focus and reveal, timeout, invalid model and
   scene removal. Desktop captures cover waiting, model reveal, reaction and collection.
 - `dog_offering_framing_smoke.gd`: actual submissions at four sketch sizes/aspect
-  ratios, complete mist bounds, capped magnification, and an actual dog-body pass
+  ratios, complete mist and participant bounds, capped magnification, and an actual dog-body pass
   through the revealed offering without displacing it.
 - `woodland_exit_smoke.gd`: guarded and solved exits at x=-59, 0, 6.5, 25, 59.
 - `woodland_smoke.gd`: terrain, collision, movement, framing, wind and shadows.

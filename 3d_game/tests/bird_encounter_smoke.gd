@@ -44,7 +44,7 @@ func fresh():
 	return level
 func draw(level, outcome: int):
 	level._open_drawing()
-	check(level.drawing and not level.player.input_enabled and level.bird.paused, "Drawing pauses movement and bird")
+	check(level.drawing and not level.player.input_enabled and not level.bird.paused, "Drawing locks movement while the bird keeps flying")
 	sketch(level)
 	level.choices.select(outcome)
 	level._submit()
@@ -56,7 +56,7 @@ func run():
 	await capture("entry")
 	check(not level.can_exit(), "Entry remains gated")
 	check(level.bird.get_child_count() == 1 and level.bird.visual.visible, "Exactly one giant bird guards the hill")
-	check(level.bird.visual.get_child(0).scale.x == 4.0, "Bird is four times the delivered model size")
+	check(is_equal_approx(level.bird.visual.get_child(0).scale.x, 2.8), "Bird is 30 percent smaller than the previous giant")
 	check(level.bird.animators.size() == 1, "One bird uses the delivered flapping clip")
 	check(await wait_for(func(): return level.bird.phase == "swooping", 9.0), "Bird arrives, circles, then swoops")
 	await frames(45)
@@ -65,8 +65,8 @@ func run():
 	level._open_drawing()
 	var stopped: Vector3 = level.bird.visual.position
 	await frames(12)
-	check(level.bird.visual.position.is_equal_approx(stopped), "Drawing freezes bird flight")
-	check(level.bird.animators[0].speed_scale == 0, "Drawing freezes flap animation")
+	check(level.bird.visual.position.distance_to(stopped) > 0.01, "Drawing keeps bird flight active")
+	check(level.bird.animators[0].speed_scale == 1, "Drawing keeps flap animation active")
 	level._close_drawing()
 	# The physical guard covers the whole level, independent of height and depth.
 	var home: Vector3 = level.player.position

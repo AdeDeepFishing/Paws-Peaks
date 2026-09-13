@@ -11,7 +11,7 @@ func frame():
 	await process_frame
 func projected_height(level) -> float:
 	var feet: Vector3 = level.bird.visual.global_position
-	return level.camera.unproject_position(feet).distance_to(level.camera.unproject_position(feet + Vector3.UP * 6.8))
+	return level.camera.unproject_position(feet).distance_to(level.camera.unproject_position(feet + Vector3.UP * 4.76))
 func capture(level, label: String):
 	if "--visual" not in OS.get_cmdline_user_args(): return
 	level.bird.paused = true
@@ -42,7 +42,7 @@ func run():
 		var height := projected_height(level)
 		check(height >= last_height - 0.15, "Perspective grows continuously during arrival")
 		check(level.bird.visual.position.distance_to(previous) < 1.2, "Approach has no position pop")
-		check(level.bird.visual.get_child(0).scale.is_equal_approx(Vector3.ONE * 4), "Bird retains its full physical scale")
+		check(level.bird.visual.get_child(0).scale.is_equal_approx(Vector3.ONE * 2.8), "Bird retains its full physical scale")
 		previous = level.bird.visual.position
 		last_height = height
 		if i == 165: await capture(level, "middle")

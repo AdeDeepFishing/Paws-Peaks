@@ -4,7 +4,7 @@ signal swooping
 signal cleared
 
 const FLAP = preload("res://models/bird/flap.glb")
-const VISUAL_SCALE := 4.0
+const VISUAL_SCALE := 2.8
 const ARRIVAL_SECONDS := 5.5
 const ARRIVAL_DEPTH := 140.0
 var phase := "loading"
@@ -76,7 +76,7 @@ func _process(delta: float) -> void:
 		"circling":
 			_move(_orbit(center, elapsed), delta)
 			if elapsed >= 3.0:
-				swoop_target = center + Vector3(0.0, 2.4, 0.0)
+				swoop_target = center + Vector3(0.0, 1.1, 0.0)
 				_enter("swooping")
 				swooping.emit()
 		"swooping":
@@ -125,6 +125,9 @@ func _move(target: Vector3, delta: float) -> void:
 	var direction := target - visual.position
 	if Vector2(direction.x, direction.z).length() > 0.01:
 		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(direction.x, direction.z), 1.0 - exp(-delta * 8.0))
+		# The delivered model faces +Z; pitch its beak along the vertical flight path.
+		var pitch := -atan2(direction.y, Vector2(direction.x, direction.z).length())
+		visual.rotation.x = lerp_angle(visual.rotation.x, clampf(pitch, -0.7, 0.9), 1.0 - exp(-delta * 8.0))
 	visual.position = target
 
 func _curve(from: Vector3, middle: Vector3, to: Vector3, t: float) -> Vector3:
