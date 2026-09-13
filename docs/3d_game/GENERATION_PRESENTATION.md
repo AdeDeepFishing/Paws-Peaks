@@ -16,7 +16,7 @@ This supersedes older cloth-cover descriptions in the stage integration notes.
   used by the drawing preview, not a separate tent or construction prop.
 - Woodland fits its 40-degree close-up to the protagonist, dog, model and sketch,
   with at most 30% sketch enlargement and smooth group tracking. Wind Hill instead
-  uses a closer 32-degree shot with up to 65% sketch enlargement, fitted to the
+  uses a closer 32-degree shot with up to 90% sketch enlargement, fitted to the
   protagonist and drawing/model. After the initial move it stays fixed, regardless
   of bird movement, through processing and the result hold. Both retain mist margins
   and widen for large drawings; Wind Hill stays above the foreground hill.

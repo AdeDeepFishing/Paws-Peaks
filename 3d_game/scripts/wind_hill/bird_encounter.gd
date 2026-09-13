@@ -75,7 +75,7 @@ func presentation_camera_transform(anchor: Vector3) -> Transform3D:
 	var centers: Array[Vector3] = points.duplicate()
 	# The generation close-up belongs to the sketch and protagonist, not the flight path.
 	Framing.add_sketch(points, generation_preview, basis)
-	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview, presentation.focus_fov, 1.65, 0.72)
+	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview, presentation.focus_fov, 1.9, 0.83)
 
 func can_exit() -> bool:
 	return solved

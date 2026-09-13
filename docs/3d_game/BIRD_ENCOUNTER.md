@@ -33,7 +33,9 @@ multiple-crow premise. The backend stage identity remains `E03` / `crows`.
   Mock unsupported outcomes have no generated asset and retain their retry response.
 - Soft particles and local blur surround the sketch at its ground contact. The camera moves
   above the grass into a closer 32-degree shot over two seconds, fitted to the
-  protagonist, sketch/mist and generated object. The camera stays fixed throughout
+  protagonist, sketch/mist and generated object. The latest playtest adjustment
+  tightens this framing by approximately 15% where the sketch margins permit.
+  The camera stays fixed throughout
   processing and the result hold, independent of the bird flight path. The bird
   may pass out of this close-up; it no longer determines the generation framing. The elevated angle avoids putting the camera below
   the foreground hill when it pulls back.
