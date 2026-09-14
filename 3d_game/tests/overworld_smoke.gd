@@ -76,14 +76,20 @@ func run() -> void:
 		check(journey.phase == "start", "Every later arrival waits for confirmation")
 		var waiting := current_scene
 		check(waiting.start_button.text == "Play" and waiting.start_button.visible, "Later maps offer the Play CTA")
-		check(waiting.zoom_controls.visible and not journey.input_blocker.visible, "Map browsing is available while waiting")
+		check(not journey.input_blocker.visible, "Map browsing is available while waiting")
 		await frames(90)
 		check(current_scene == waiting and journey.phase == "start", "Waiting never enters the next chapter automatically")
-		waiting.zoom_slider.value = 2.0
+		var zoom := InputEventMouseButton.new()
+		zoom.position = Vector2(400, 180)
+		zoom.button_index = MOUSE_BUTTON_WHEEL_DOWN
+		zoom.pressed = true
+		zoom.factor = 20
+		root.push_input(zoom, true)
 		await frames(60)
 		check(waiting.zoom_target == 1.0 and waiting.zoom_amount <= 1.0, "Zoom out is bounded at the full map")
 		check(waiting.camera.position.distance_to(waiting._full_transform().origin) < 0.05, "Zoom out shows the full map")
-		waiting.zoom_slider.value = -1.0
+		zoom.button_index = MOUSE_BUTTON_WHEEL_UP
+		root.push_input(zoom, true)
 		await frames(60)
 		check(waiting.zoom_target == 0.0 and waiting.zoom_amount >= 0.0, "Zoom in is bounded at the player")
 		check(waiting.camera.position.distance_to(waiting._close_transform(stage).origin) < 0.05, "Zoom in returns to the current chapter")

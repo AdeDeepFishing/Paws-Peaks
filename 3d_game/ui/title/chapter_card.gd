@@ -1,7 +1,8 @@
 extends Control
 
-## Shared chapter paper, with live Cormorant text and a real keyboard CTA.
-const FONT = preload("res://ui/title/cormorant.ttf")
+## Shared chapter paper, with live Cormorant Upright text and a real keyboard CTA.
+const FONT = preload("res://ui/title/cormorant_upright_semibold.ttf")
+const BOLD = preload("res://ui/title/cormorant_upright_bold.ttf")
 const TITLES := ["The Other Side", "A Growling Welcome", "Trouble Overhead", "A Friend by the Water", "Just One More Page"]
 const NUMERALS := ["I", "II", "III", "IV", "V"]
 var paper: TextureRect
@@ -17,14 +18,15 @@ func _ready() -> void:
 	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(paper)
-	chapter = label(28)
-	title = label(52)
+	chapter = label(30)
+	chapter.add_theme_font_override("font", BOLD)
+	title = label(56)
 	play = Button.new()
 	play.name = "Play"
 	play.text = "Play"
 	play.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	play.add_theme_font_override("font", FONT)
-	play.add_theme_font_size_override("font_size", 34)
+	play.add_theme_font_override("font", BOLD)
+	play.add_theme_font_size_override("font_size", 40)
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var paint := StyleBoxTexture.new()
 		paint.texture = preload("res://ui/title/play_paper.svg")
@@ -66,8 +68,8 @@ func _layout() -> void:
 	chapter.size = Vector2(size.x, 40 * factor)
 	title.position = Vector2(0, height * .32)
 	title.size = Vector2(size.x, 74 * factor)
-	chapter.add_theme_font_size_override("font_size", maxi(16, roundi(28 * factor)))
-	title.add_theme_font_size_override("font_size", maxi(24, roundi(52 * factor)))
+	chapter.add_theme_font_size_override("font_size", maxi(16, roundi(30 * factor)))
+	title.add_theme_font_size_override("font_size", maxi(24, roundi(56 * factor)))
 	play.size = Vector2(202, 92) * factor
 	play.position = Vector2((size.x - play.size.x) * .5, height * .63)
-	play.add_theme_font_size_override("font_size", maxi(20, roundi(34 * factor)))
+	play.add_theme_font_size_override("font_size", maxi(20, roundi(40 * factor)))

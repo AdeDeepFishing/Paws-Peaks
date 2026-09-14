@@ -1,7 +1,7 @@
 # Title and chapter presentation (#81)
 
 The opening uses the supplied **The Tale / We Draw** composition and bundled
-Cormorant fonts. It holds the full map for 2.5 seconds, then zooms toward Chapter I
+Cormorant Upright fonts. It holds the full map for 2.5 seconds, then zooms toward Chapter I
 for 1.65 seconds while the title shrinks into the upper-left corner and the curved
 chapter paper, live text, and painted Play button rise together. The traveler
 walks from below the paper to the first marker in 1.2 seconds. Play becomes
@@ -13,6 +13,13 @@ on the night map.
 Chapter II–V retain route travel and the day/evening/night palette changes before
 showing the same paper entrance. Map browsing still returns to the existing
 chapter instance and uses **Return** on its card.
+
+The map has no You/Map buttons or zoom slider. While waiting on any chapter
+card, including Chapter I, use the mouse wheel, trackpad pinch, or +/− keys
+(including the numeric keypad) to zoom between the player and the full map.
+Zoom stays bounded and is disabled during chapter entrance/exit animations.
+`title_ui_smoke.gd`, `overworld_smoke.gd`, and `map_return_smoke.gd` verify
+keyboard, scroll, and pinch input, camera limits, and retained chapter state.
 
 | Chapter | Supplied title |
 | --- | --- |
@@ -37,10 +44,22 @@ derived from `Frame 4.svg`, removing outlined lettering so the real Godot button
 can display Play or Return. Chapter titles are live labels matching the supplied
 chapter composites. The source Downloads files are unchanged.
 
-Cormorant regular and italic variable fonts are from the official Google Fonts
-repository: <https://github.com/google/fonts/tree/main/ofl/cormorant>.
-Copyright Christian Thalmann; distributed under the SIL Open Font License 1.1.
+Cormorant Upright SemiBold (600) and Bold (700) are from the official Google Fonts
+repository: <https://github.com/google/fonts/tree/main/ofl/cormorantupright>.
+Copyright The Cormorant Project Authors; distributed under the SIL Open Font License 1.1.
 The complete license is in [Cormorant-OFL.txt](assets/title/Cormorant-OFL.txt).
+
+### Font correction
+
+The supplied chapter SVG outlines match Upright Bold at 30 px for the chapter
+number, Upright SemiBold at 56 px for the title, and Upright Bold at 40 px for
+Play. Live cards use these values at the 1280 × 800 reference size. The two-line
+map title uses Upright SemiBold on both lines, with no italic substitution.
+End-page actions and the keepsake spread also use Upright.
+The supplied The End lettering remains in its original vector artwork.
+The earlier Cormorant Light/Italic variable fonts have been removed.
+The font correction passes `title_ui_smoke.gd`; native Forward+ captures verify
+the opening occlusion, all five chapter titles, end-page buttons and recap.
 
 ## Verification
 
