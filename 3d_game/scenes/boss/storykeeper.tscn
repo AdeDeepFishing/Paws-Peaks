@@ -1,11 +1,11 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/boss/storykeeper.gd" id="1"]
-[ext_resource type="PackedScene" path="res://models/boss/storykeeper.glb" id="2"]
+[ext_resource type="PackedScene" path="res://models/boss/storykeeper_page_cycle.glb" id="2"]
 
-[sub_resource type="CapsuleShape3D" id="Body"]
-radius = 2.1
-height = 9.6
+
+[sub_resource type="BoxShape3D" id="Body"]
+size = Vector3(4.2, 9.6, 1.0)
 
 [node name="Storykeeper" type="StaticBody3D"]
 script = ExtResource("1")

@@ -40,7 +40,7 @@ func _ready() -> void:
 	bird.departure_started.connect(_release_protection)
 	bird.swooping.connect(func():
 		if not resolving and request.state != "PENDING":
-			status.text = "Watch out! Draw an umbrella or a shield to block the bird."
+			status.text = "Watch out! Draw something to protect yourself."
 			status.set_meta("narrator_guidance", status.text)
 	)
 	draw_button.pressed.connect(_open_drawing)
@@ -117,7 +117,7 @@ func _open_drawing() -> void:
 	hud_root.hide()
 	overlay.show()
 	choices.visible = request.mock_mode
-	hint.text = "Draw an umbrella or a shield to block the bird."
+	hint.text = "Draw something to protect yourself."
 	submit_button.disabled = not surface.has_drawing()
 
 func _close_drawing() -> void:
@@ -169,13 +169,9 @@ func _on_request_state(state: String) -> void:
 		"READY":
 			item = request.result.duplicate(true)
 			if item.get("type") != "DEFENCE" and request.mock_mode:
-				request.fail_current("Try protection such as an umbrella or a shield to block the bird.")
+				request.fail_current("Try something that could protect you from the bird.")
 				return
-			if player.is_on_floor(): _offer_item()
-			else:
-				presentation.cancel()
-				status.text = "Your object is ready. Land safely and press E to view it."
-				status.set_meta("narrator_guidance", status.text)
+			_offer_item()
 
 func _clear_presentation() -> void:
 	resolution_epoch += 1
@@ -211,7 +207,7 @@ func _finish_presentation() -> void:
 	if item.get("type") == "DEFENCE":
 		_raise_protection()
 	else:
-		objective.text = "Try an umbrella or a shield to block the bird."
+		objective.text = "Try something that could protect you from the bird."
 		status.text = "Your object is ready, but it cannot block the bird. Try another drawing."
 		status.set_meta("narrator_guidance", status.text)
 
@@ -308,7 +304,7 @@ func _build_drawing() -> void:
 	surface.excluded_control = toolbar
 	var stack := VBoxContainer.new()
 	toolbar.add_child(stack)
-	hint = _label(stack, "Draw an umbrella or a shield to block the bird.", 18)
+	hint = _label(stack, "Draw something to protect yourself.", 18)
 	choices = OptionButton.new()
 	for choice in ["NO AI · Umbrella", "NO AI · Shield", "NO AI · Unclear", "NO AI · Service failure", "NO AI · Unsuitable"]:
 		choices.add_item(choice)
@@ -323,7 +319,7 @@ func _build_drawing() -> void:
 	surface.changed.connect(func():
 		submit_button.disabled = not surface.has_drawing()
 		if surface.has_drawing():
-			hint.text = "Draw an umbrella or a shield to block the bird."
+			hint.text = "Draw something to protect yourself."
 	)
 	overlay.hide()
 

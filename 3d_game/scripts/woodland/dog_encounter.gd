@@ -32,7 +32,7 @@ func _ready() -> void:
 	generation.progress_changed.connect(func(message: String): status.text = message)
 	dog.collected.connect(_on_collected)
 	draw_button.pressed.connect(_open_drawing)
-	draw_button.tooltip_text = "Draw food or a toy to lead the dog off the path."
+	draw_button.tooltip_text = "Draw something to draw its attention away from the path."
 	objective.text = "Draw a distraction for the dog."
 	_build_drawing()
 	presentation = Presentation.new()
@@ -40,14 +40,14 @@ func _ready() -> void:
 	add_child(presentation)
 	presentation.finished.connect(_react_to_offering)
 	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
-	status.text = "The dog guards this path. Try drawing food or a toy."
+	status.text = "The dog guards this path. Draw something to distract it."
 	status.set_meta("narrator_guidance", status.text)
 
 func _process(delta: float) -> void:
 	super._process(delta)
 	var near := near_dog()
 	draw_button.disabled = entering or dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor()
-	draw_button.text = "Path is clear" if dog.solved else ("E · Offer drawing" if request.state == "READY" and not is_instance_valid(offered) and not dog.distracted else "E · Draw")
+	draw_button.text = "Path is clear" if dog.solved else "E · Draw"
 	drawing_shine.set_active(not drawing and near and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
 	modes.disabled = request.state == "PENDING" or dog.distracted or presentation.active
@@ -77,7 +77,7 @@ func constrain_player(body: CharacterBody3D) -> void:
 		body.position.z = GUARD_Z
 		body.velocity.z = maxf(body.velocity.z, 0.0)
 		if request.state != "PENDING" and not dog.distracted:
-			status.text = "The dog keeps blocking the way. Draw food or a toy to distract it."
+			status.text = "The dog keeps blocking the way. Try another way to distract it."
 			status.set_meta("narrator_guidance", status.text)
 
 func near_dog() -> bool:
@@ -98,7 +98,7 @@ func _open_drawing() -> void:
 	hud_root.hide()
 	overlay.show()
 	choices.visible = request.mock_mode
-	hint.text = "Draw food (like an apple) or a toy (like a bone)."
+	hint.text = "Draw something that might catch its attention."
 	submit_button.disabled = not surface.has_drawing()
 
 func _close_drawing() -> void:
@@ -158,12 +158,7 @@ func _on_request_state(state: String) -> void:
 			status.text = request.message + " Your sketch is safe; try again."
 		"READY":
 			item = request.result.duplicate(true)
-			if near_dog() and player.is_on_floor():
-				_offer_item()
-			else:
-				presentation.cancel()
-				status.text = "Your drawing is ready. Return to the dog and press E to offer it."
-				status.set_meta("narrator_guidance", status.text)
+			_offer_item()
 
 func _clear_presentation() -> void:
 	presentation.cancel()
@@ -179,10 +174,10 @@ func presentation_camera_transform(anchor: Vector3) -> Transform3D:
 	var basis: Basis = global_basis * presentation.home.basis
 	var points: Array[Vector3] = []
 	Framing.add_visual(points, player.visual)
-	Framing.add_visual(points, dog)
 	Framing.add_box(points, AABB(to_global(anchor), Vector3(0, 2, 0)))
 	if is_instance_valid(offered): Framing.add_visual(points, offered)
-	var centers: Array[Vector3] = points.duplicate()
+	var centers: Array[Vector3] = []
+	Framing.add_visual(centers, player.visual)
 	Framing.add_sketch(points, generation_preview, basis)
 	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview)
 
@@ -193,10 +188,6 @@ func _settle_offering(_ground: Node, body: RigidBody3D) -> void:
 
 func _offer_item() -> void:
 	if request.state != "READY" or dog.distracted or is_instance_valid(offered):
-		return
-	if not near_dog():
-		status.text = "Return to the dog to offer your drawing."
-		status.set_meta("narrator_guidance", status.text)
 		return
 	if sketch_request_id != request.active_id:
 		request.fail_current("The drawing location was lost. Try another sketch.")
@@ -233,7 +224,7 @@ func _offer_item() -> void:
 func _react_to_offering() -> void:
 	if request.state != "READY" or not is_instance_valid(offered) or dog.distracted: return
 	if item.get("type") not in ["FOOD", "TOY"]:
-		status.text = "Your object is here, but it won't distract the dog. Draw food or a toy."
+		status.text = "Your object is here, but it hasn't caught the dog's attention. Try another idea."
 		status.set_meta("narrator_guidance", status.text)
 		return
 	# React to the final physical position after the covered reveal and drop.
@@ -301,7 +292,7 @@ func _build_drawing() -> void:
 	surface.excluded_control = toolbar
 	var stack := VBoxContainer.new()
 	toolbar.add_child(stack)
-	hint = _label(stack, "Draw food or a toy for the dog.", 18)
+	hint = _label(stack, "Draw something to distract the dog.", 18)
 	choices = OptionButton.new()
 	for choice in ["NO AI · Food", "NO AI · Toy", "NO AI · Unclear", "NO AI · Service failure", "NO AI · Unsuitable"]:
 		choices.add_item(choice)
@@ -316,7 +307,7 @@ func _build_drawing() -> void:
 	surface.changed.connect(func():
 		submit_button.disabled = not surface.has_drawing()
 		if surface.has_drawing():
-			hint.text = "Draw food (like an apple) or a toy (like a bone)."
+			hint.text = "Draw something that might catch its attention."
 	)
 	overlay.hide()
 

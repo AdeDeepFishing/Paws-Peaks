@@ -1,23 +1,27 @@
 extends StaticBody3D
 
 ## Visual reactions only; dialogue and decisions live in the narrator service.
-const IDLE_CLIP := "Storykeeper_RightHandLift_BodySway"
 var animator: AnimationPlayer
 var grounded := false
+var anger_clip := ""
+var moved_aside := false
 
 func _ready() -> void:
 	animator = $Character.find_child("AnimationPlayer", true, false)
 	if animator:
-		for name in animator.get_animation_list():
-			if IDLE_CLIP in name:
-				var clip: Animation = animator.get_animation(name).duplicate(true)
-				clip.loop_mode = Animation.LOOP_LINEAR
-				var library := AnimationLibrary.new()
-				library.add_animation("idle", clip)
-				animator.add_animation_library("boss", library)
-				animator.play("boss/idle")
-				break
+		for clip in animator.get_animation_list():
+			if "BlockPageCycle" in clip:
+				anger_clip = clip
+				animator.get_animation(clip).loop_mode = Animation.LOOP_NONE
+		animator.animation_finished.connect(func(_clip): _idle())
+		_idle()
 	_place_on_ground.call_deferred()
+
+func _idle() -> void:
+	if anger_clip.is_empty(): return
+	animator.play(anger_clip)
+	animator.seek(0.0,true)
+	animator.pause()
 
 func _place_on_ground() -> void:
 	await get_tree().physics_frame
@@ -28,22 +32,17 @@ func _place_on_ground() -> void:
 		global_position.y = hit.position.y
 		grounded = true
 
-var moved_aside := false
-
 func express(emotion: String) -> void:
-	# Use delivered clips when available; current asset safely retains its idle.
-	var preferred: String = {"warm": "TalkWarm", "curious": "Listen", "amused": "Amused", "worried": "Plead", "hesitant": "Hesitate", "accepting": "Release"}.get(emotion, "Idle")
-	for clip in animator.get_animation_list():
-		if clip.get_file() == preferred:
-			animator.play(clip, 0.25)
-			return
-	animator.play("boss/idle", 0.25)
+	if emotion == "angry" and not moved_aside and not anger_clip.is_empty():
+		animator.play(anger_clip,0.2)
+		animator.seek(0.0,true)
+	elif not animator.is_playing():
+		_idle()
 
 func make_way() -> void:
 	if moved_aside: return
 	moved_aside = true
-	express("accepting")
-	# The game moves the wrapper; the delivered skeleton keeps its authored motion.
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(self, "position:x", position.x - 3.0, 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property($Character, "rotation:y", -0.35, 1.8).set_trans(Tween.TRANS_SINE)
+	_idle()
+	# Rotate the body and its thin collider together; retain the authored position.
+	var tween := create_tween()
+	tween.tween_property(self,"rotation:y",PI/2.0,1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

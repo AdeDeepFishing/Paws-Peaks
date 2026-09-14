@@ -279,6 +279,9 @@ class Service:
             otter_dialogue = context["state"]["stage"] == 4 and context["input"]["trigger"] == "dialogue"
             actor, metric = self.caller(self.config, model.OTTER if otter_dialogue else model.ACTOR, context, model.ACTOR_SCHEMA, image)
             metrics.append(metric)
+            if context["state"]["stage"] == 5:
+                if delta < 0: actor["emotion"] = "angry"
+                elif actor["emotion"] == "angry": actor["emotion"] = "hesitant"
             require(set(actor["evidence"]) <= evidence_ids and actor["emotion"] in model.EMOTIONS, "INVALID_MODEL_OUTPUT")
             require(isinstance(actor["text"], str) and 0 < len(actor["text"]) <= 600, "INVALID_MODEL_OUTPUT")
             if guidance and context["input"]["trigger"] != "dialogue":

@@ -85,3 +85,19 @@ godot --path 3d_game --script res://tests/moonlit_forest_smoke.gd
 godot --headless --path 3d_game --script res://tests/ending_smoke.gd
 godot --path 3d_game --script res://tests/boss_visual.gd
 ```
+
+## September 14 evening update (#72, partial)
+
+The active model is now the team-delivered `Storykeeper-CharacterPageCycle-v05.glb`,
+stored as `3d_game/models/boss/storykeeper_page_cycle.glb`. It retains the giant
+1.6 visual scale and includes the 6.2-second `BlockPageCycle` flying-paper clip.
+Negative Chapter 5 mood results use the `angry` emotion and play this clip once;
+then the model returns to its authored first-frame pose. The prior rig's idle is
+not retargeted to this different skeleton. Additional idle/turn clips remain a
+future designer delivery.
+
+Release rotates the entire body 90 degrees over 1.8 seconds without translation.
+A thin box collider rotates with it, opening space beside the boss. No synthetic
+skeletal turn is claimed. Earlier-stage narrator tone remains warm; Stage 5 is
+proud and easily irritated, with negative mood changes for dismissiveness or
+hostility, not for drawing quality or innocent misunderstandings.
