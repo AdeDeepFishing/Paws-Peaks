@@ -74,7 +74,7 @@ static func apply_palette(visual: Node3D, item: Dictionary) -> bool:
 		mesh.material_override = material
 	return true
 
-static func physics_body(visual: Node3D, movable: bool) -> PhysicsBody3D:
+static func physics_body(visual: Node3D, movable: bool, fit_mesh := false) -> PhysicsBody3D:
 	var body: PhysicsBody3D
 	if movable:
 		var dynamic := RigidBody3D.new()
@@ -87,10 +87,20 @@ static func physics_body(visual: Node3D, movable: bool) -> PhysicsBody3D:
 	body.add_child(visual)
 	var bounds := _bounds(visual)
 	var collider := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = bounds.size.max(Vector3.ONE * 0.05)
-	collider.shape = shape
-	collider.position = bounds.get_center()
+	if fit_mesh:
+		# Bake mesh transforms into a single convex hull in body-local space.
+		var points := PackedVector3Array()
+		for mesh in visual.get_children():
+			for point in mesh.mesh.get_faces():
+				points.append(mesh.transform * point)
+		var shape := ConvexPolygonShape3D.new()
+		shape.points = points
+		collider.shape = shape
+	else:
+		var shape := BoxShape3D.new()
+		shape.size = bounds.size.max(Vector3.ONE * 0.05)
+		collider.shape = shape
+		collider.position = bounds.get_center()
 	body.add_child(collider)
 	return body
 
