@@ -30,7 +30,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	super._process(delta)
 	draw_button.disabled = entering or stay_presented
-	if released and not entering and player.position.z <= -12 and not preview_ending_enabled:
+	if released and not entering and player.position.z <= -12 and not preview_ending_enabled and not get_node("/root/Narrator").panel.opened:
 		get_node("/root/Narrator").crossed_exit()
 
 func constrain_player(body: CharacterBody3D) -> void:

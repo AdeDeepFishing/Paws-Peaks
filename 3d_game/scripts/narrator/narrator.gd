@@ -46,7 +46,7 @@ func _ready() -> void:
 	layer.add_child(panel)
 	audio = AudioStreamPlayer.new()
 	add_child(audio)
-	audio.finished.connect(func(): panel.hide_caption())
+	audio.finished.connect(panel.speech_finished)
 	get_tree().scene_changed.connect(_scene_changed)
 	get_node("/root/Journey").finished.connect(func(_stage): _scene_changed())
 	_scene_changed.call_deferred()
@@ -172,12 +172,16 @@ func _process(delta: float) -> void:
 	var playable: bool = is_instance_valid(scene) and chapter > 0 and not get_node("/root/Journey").busy
 	if playable:
 		playable = scene.get("entering") != true and scene.process_mode != Node.PROCESS_MODE_DISABLED
-	panel.entry.visible = playable and chapter in [4, 5] and not panel.opened and state.get("ending") == null
-	panel.entry.disabled = playable and chapter == 4 and scene.has_method("near_otter") and not scene.near_otter()
+	panel.entry.visible = playable and chapter in [4, 5] and not panel.canvas_panel.visible and state.get("ending") == null
+	panel.entry.disabled = panel.busy or (playable and chapter == 4 and scene.has_method("near_otter") and not scene.near_otter())
 	panel.entry.tooltip_text = "Approach the otter to talk." if panel.entry.disabled else "Speak with the character."
 	if not enabled: return
 	if playable and not panel.opened: _observe_guidance()
-	if caption_deadline > 0 and Time.get_ticks_msec() > caption_deadline and not audio.playing:
+	if playable and panel.opened:
+		var current_guidance := _current_guidance()
+		if is_instance_valid(guidance_status) and not current_guidance.is_empty():
+			guidance_status.visible = not panel.caption.visible
+	if caption_deadline > 0 and Time.get_ticks_msec() > caption_deadline and not audio.playing and not panel.opened and panel.reveal_text.is_empty():
 		panel.hide_caption()
 		caption_deadline = 0
 	poll += delta
@@ -253,7 +257,7 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 		return
 	if not response.get("ok", false):
 		if request.op == "voice":
-			panel.voice_note.text = "Voice unavailable · subtitles are still here."
+			pass # Continue with paced subtitles when voice is unavailable.
 			panel.start_speech(0.0)
 		elif request.op == "transcribe" and request.get("partial", false): return
 		else: _fail(str(response.get("message", "The Storykeeper could not respond. Try again.")))
@@ -345,7 +349,7 @@ func transcribe(wav: PackedByteArray, partial := false) -> void:
 	_enqueue({"op": "transcribe", "partial": partial, "dialogue_epoch": panel.dialogue_epoch, "audio_base64": Marshalls.raw_to_base64(wav)})
 	if not partial:
 		panel.set_busy(true)
-		panel.voice_note.text = "Listening to your words…"
+
 
 
 func _drawing_is_current(id: String) -> bool:

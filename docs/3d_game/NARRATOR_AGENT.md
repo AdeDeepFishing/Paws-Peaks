@@ -149,3 +149,18 @@ live heard-text row after adding one transcript entry. Waiting for a response us
 three staggered bouncing dots. Drawing submissions receive an immediate best-effort
 interpretation and mood evaluation (including zero when appropriate), without a
 clarification turn; later voluntary corrections remain accepted.
+
+### Shared in-world captions (supersedes the conversation panel above)
+
+The large dialogue/history panel is removed. All narrator and character speech
+uses one translucent cream caption at the bottom of the screen. It shows only
+the current speaker; player recognition replaces the previous character line.
+The scene microphone CTA starts capture directly with no intermediate menu.
+Waiting uses three dots; character speech retains progressive word groups.
+Speech and listening leave the world running. Chapter 5 drawing still pauses
+the scene and uses the existing Draw CTA.
+
+The active conversation ends when speech playback (or paced text fallback)
+finishes. In particular, the 95% release reply closes automatically and the exit
+waits for that reply before beginning the sunrise/final page. The separate
+explicit confirmation for choosing a stay ending remains inside the caption.
