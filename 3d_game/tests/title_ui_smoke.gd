@@ -44,6 +44,16 @@ func run() -> void:
 		check(not map.start_button.disabled and map.start_button.text == "Play", "Each chapter waits with an enabled Play")
 		check(map.chapter_card.title.text == map.chapter_card.TITLES[stage - 1], "Each chapter uses its supplied title")
 		check(map.chapter_card.paper.get_global_rect().encloses(map.start_button.get_global_rect()), "Play stays within the curved paper")
+		check(map.find_children("*", "HSlider", true, false).is_empty(), "Map has no visible zoom slider")
+		var zoom_key := InputEventKey.new()
+		zoom_key.keycode = KEY_MINUS
+		zoom_key.pressed = true
+		root.push_input(zoom_key, true)
+		check(map.zoom_target > 0, "Keyboard zoom works in every chapter, including Chapter I")
+		var pinch := InputEventMagnifyGesture.new()
+		pinch.factor = 2.0
+		root.push_input(pinch, true)
+		check(map.zoom_target == 0, "Pinching returns to the player without passing the close limit")
 		map.start_button.pressed.emit()
 		await process_frame
 	map.queue_free()

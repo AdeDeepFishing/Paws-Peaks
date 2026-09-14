@@ -1253,6 +1253,8 @@ then zoom toward Chapter I as curved paper, chapter text and Play enter together
 The hero walks up from below to the first marker. Apply the same chapter card
 presentation to all five chapters while retaining the established route travel
 and time-of-day progression. Wait for Play before entering gameplay.
+Remove the visible You/Map zoom controls; retain mouse-wheel, trackpad-pinch,
+and +/− keyboard zoom on every chapter map.
 
 Use the supplied The End artwork for the epilogue, retaining access to the
 existing journey recap, replay, and continued exploration. See

@@ -14,6 +14,13 @@ Chapter II–V retain route travel and the day/evening/night palette changes bef
 showing the same paper entrance. Map browsing still returns to the existing
 chapter instance and uses **Return** on its card.
 
+The map has no You/Map buttons or zoom slider. While waiting on any chapter
+card, including Chapter I, use the mouse wheel, trackpad pinch, or +/− keys
+(including the numeric keypad) to zoom between the player and the full map.
+Zoom stays bounded and is disabled during chapter entrance/exit animations.
+`title_ui_smoke.gd`, `overworld_smoke.gd`, and `map_return_smoke.gd` verify
+keyboard, scroll, and pinch input, camera limits, and retained chapter state.
+
 | Chapter | Supplied title |
 | --- | --- |
 | I | The Other Side |
@@ -48,7 +55,7 @@ The supplied chapter SVG outlines match Upright Bold at 30 px for the chapter
 number, Upright SemiBold at 56 px for the title, and Upright Bold at 40 px for
 Play. Live cards use these values at the 1280 × 800 reference size. The two-line
 map title uses Upright SemiBold on both lines, with no italic substitution.
-Map zoom labels, end-page actions, and the keepsake spread also use Upright.
+End-page actions and the keepsake spread also use Upright.
 The supplied The End lettering remains in its original vector artwork.
 The earlier Cormorant Light/Italic variable fonts have been removed.
 The font correction passes `title_ui_smoke.gd`; native Forward+ captures verify

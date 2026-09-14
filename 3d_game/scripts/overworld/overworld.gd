@@ -22,8 +22,6 @@ var traveler_offset := 0.0
 var motion_time := 0.0
 var stars: Array[Node] = []
 var start_button: Button
-var zoom_controls: HBoxContainer
-var zoom_slider: HSlider
 var review_stage := 1
 var browsing_current := false
 var zoom_amount := 0.0
@@ -39,7 +37,6 @@ func _ready() -> void:
 	_build_hero()
 	_build_caption()
 	_build_start_button()
-	_build_zoom_controls()
 	_build_title()
 	_prepare_art()
 	configure(0, 1)
@@ -122,71 +119,24 @@ func _layout_title() -> void:
 		line.global_transform = Transform3D(camera.global_basis, camera.project_position(origin + Vector2(0, spacing * index), depth))
 		line.pixel_size = 2.0 * depth * tan(deg_to_rad(camera.fov * .5)) / viewport.y * size_px / 160.0
 
-func _build_zoom_controls() -> void:
-	zoom_controls = HBoxContainer.new()
-	caption.get_parent().add_child(zoom_controls)
-	zoom_controls.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	zoom_controls.offset_left = -330
-	zoom_controls.offset_right = -28
-	zoom_controls.offset_top = 152
-	zoom_controls.add_theme_constant_override("separation", 12)
-	var near := Button.new()
-	near.name = "ZoomToPlayer"
-	near.text = "You"
-	near.tooltip_text = "Zoom to your chapter"
-	zoom_controls.add_child(near)
-	near.pressed.connect(func(): zoom_slider.value = 0.0)
-	zoom_slider = HSlider.new()
-	zoom_slider.min_value = 0.0
-	zoom_slider.max_value = 1.0
-	zoom_slider.step = 0.01
-	zoom_slider.custom_minimum_size = Vector2(150, 36)
-	zoom_slider.tooltip_text = "Zoom between your chapter and the full map"
-	zoom_controls.add_child(zoom_slider)
-	zoom_slider.value_changed.connect(func(value: float): zoom_target = value)
-	var far := Button.new()
-	far.name = "ZoomToMap"
-	far.text = "Map"
-	far.tooltip_text = "See the whole map"
-	zoom_controls.add_child(far)
-	far.pressed.connect(func(): zoom_slider.value = 1.0)
-	for button in [near, far]:
-		button.custom_minimum_size = Vector2(58, 36)
-		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		button.add_theme_font_override("font", TITLE_FONT)
-		button.add_theme_font_size_override("font_size", 20)
-		for state in ["normal", "hover", "pressed", "focus"]:
-			var style := StyleBoxFlat.new()
-			style.bg_color = Color("34584e")
-			style.set_corner_radius_all(10)
-			style.content_margin_left = 10
-			style.content_margin_right = 10
-			button.add_theme_stylebox_override(state, style)
-		for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-			button.add_theme_color_override(state, Color("fff4da"))
-	zoom_controls.hide()
-
 func await_start(stage: int = 1, resume_chapter: bool = false) -> void:
 	phase = "start"
 	review_stage = stage
 	browsing_current = resume_chapter
 	zoom_amount = 0.0
 	zoom_target = 0.0
-	zoom_slider.value = 0.0
 	chapter_card.configure(stage, resume_chapter)
 	chapter_card.set_progress(1.0)
 	caption.text = "Draw something, help someone, and have fun ✨" if stage == 1 else "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
 	if resume_chapter:
 		start_button.text = "Return"
 		caption.text = "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
-	zoom_controls.visible = stage > 1 or resume_chapter
 	start_button.disabled = false
 	start_button.show()
 	start_button.grab_focus()
 	await start_requested
 	phase = "leaving"
 	start_button.hide()
-	zoom_controls.hide()
 	caption.text = "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
 
 func _start() -> void:
@@ -195,17 +145,26 @@ func _start() -> void:
 	start_requested.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if phase != "start" or (review_stage == 1 and not browsing_current): return
+	if phase != "start": return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			zoom_slider.value -= 0.12
+			_zoom_by(-0.12 * event.factor)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			zoom_slider.value += 0.12
+			_zoom_by(0.12 * event.factor)
 		else: return
-		get_viewport().set_input_as_handled()
 	elif event is InputEventMagnifyGesture:
-		zoom_slider.value -= (event.factor - 1.0) * 2.0
-		get_viewport().set_input_as_handled()
+		_zoom_by(-(event.factor - 1.0) * 2.0)
+	elif event is InputEventKey and event.pressed:
+		if event.keycode in [KEY_PLUS, KEY_EQUAL, KEY_KP_ADD]:
+			_zoom_by(-0.12)
+		elif event.keycode in [KEY_MINUS, KEY_KP_SUBTRACT]:
+			_zoom_by(0.12)
+		else: return
+	else: return
+	get_viewport().set_input_as_handled()
+
+func _zoom_by(amount: float) -> void:
+	zoom_target = clampf(zoom_target + amount, 0.0, 1.0)
 
 func _prepare_art() -> void:
 	var copies := {}
@@ -318,7 +277,7 @@ func _set_camera(value: Transform3D) -> void:
 
 func _process(delta: float) -> void:
 	_layout_title()
-	if phase == "start" and (review_stage > 1 or browsing_current):
+	if phase == "start":
 		zoom_amount = lerpf(zoom_amount, zoom_target, 1.0 - exp(-delta * 9.0))
 		_set_camera(_close_transform(review_stage).interpolate_with(_full_transform(), zoom_amount))
 	motion_time += delta

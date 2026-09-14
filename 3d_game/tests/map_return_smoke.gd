@@ -38,11 +38,14 @@ func run() -> void:
 			if journey.phase == "start": break
 		check(current_scene.name == "Overworld" and is_instance_valid(river), "Map browsing retains the existing chapter")
 		check(not river.visible and not river.hud.visible and river.process_mode == Node.PROCESS_MODE_DISABLED, "The retained chapter is hidden and paused")
-		check(current_scene.start_button.text == "Return" and current_scene.zoom_controls.visible, "Map offers return and zoom even in Chapter 1")
+		check(current_scene.start_button.text == "Return", "Map offers return even in Chapter 1")
 		check(journey.page_material.get_shader_parameter("previous_page") == true, "Back to map turns to the previous page from the left")
 		var map := current_scene
-		map.zoom_slider.value = 1.0
+		var pinch := InputEventMagnifyGesture.new()
+		pinch.factor = .1
+		root.push_input(pinch, true)
 		await frames(60)
+		check(map.camera.position.distance_to(map._full_transform().origin) < .05, "Pinching zooms out while browsing Chapter 1")
 		check(journey.phase == "start" and river.player.position == position, "Browsing waits without advancing or moving the player")
 		if visual:
 			await RenderingServer.frame_post_draw
