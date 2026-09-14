@@ -1,6 +1,7 @@
 extends Node
 
 signal recorded(wav: PackedByteArray)
+signal partial_recorded(wav: PackedByteArray)
 signal failed(message: String)
 var recording := false
 var capture: AudioEffectCapture
@@ -10,12 +11,18 @@ var sample_cursor := 0.0
 var bus_index := -1
 var elapsed := 0.0
 var peak := 0
+var silence := 0.0
+var voiced := 0.0
+var partial_at := 3.0
 const LIMIT := 16000 * 20 * 2
 
 func start() -> void:
 	if recording: return
 	pcm.clear()
 	elapsed = 0.0
+	silence = 0.0
+	voiced = 0.0
+	partial_at = 3.0
 	peak = 0
 	sample_cursor = 0.0
 	bus_index = AudioServer.bus_count
@@ -42,6 +49,9 @@ func _process(delta: float) -> void:
 	var available := capture.get_frames_available()
 	if available == 0: return
 	var frames := capture.get_buffer(available)
+	var energy := 0.0
+	for frame in frames: energy += pow((frame.x + frame.y) * 0.5, 2)
+	var rms := sqrt(energy / maxf(frames.size(), 1))
 	var step := AudioServer.get_mix_rate() / 16000.0
 	while sample_cursor < frames.size() and pcm.size() < LIMIT:
 		var frame := frames[int(sample_cursor)]
@@ -51,7 +61,20 @@ func _process(delta: float) -> void:
 		pcm.append((value >> 8) & 255)
 		sample_cursor += step
 	sample_cursor -= frames.size()
-	if pcm.size() >= LIMIT: stop(true)
+	if pcm.size() >= LIMIT or speech_ended(rms, frames.size() / AudioServer.get_mix_rate()):
+		stop(true)
+	elif voiced >= .25 and elapsed >= partial_at:
+		partial_at = elapsed + 3.0
+		partial_recorded.emit(snapshot_wav())
+
+## Accumulate captured audio duration so rendering stalls do not alter turn detection.
+func speech_ended(rms: float, duration: float) -> bool:
+	if rms > 0.012:
+		voiced += duration
+		silence = 0.0
+	else:
+		silence += duration
+	return voiced >= .25 and silence >= 1.35
 
 func stop(submit := true) -> void:
 	if not recording: return
@@ -65,8 +88,13 @@ func stop(submit := true) -> void:
 		return
 	if pcm.size() < 3200 or peak < 100:
 		pcm.clear()
-		failed.emit("No recording yet. Check microphone permission, or type instead.")
+		failed.emit("No speech heard. Check microphone permission and try again.")
 		return
+	var wav := snapshot_wav()
+	pcm.clear()
+	recorded.emit(wav)
+
+func snapshot_wav() -> PackedByteArray:
 	var wav := PackedByteArray()
 	wav.resize(44)
 	for i in 4: wav[i] = "RIFF".to_ascii_buffer()[i]
@@ -82,8 +110,7 @@ func stop(submit := true) -> void:
 	for i in 4: wav[36 + i] = "data".to_ascii_buffer()[i]
 	wav.encode_u32(40, pcm.size())
 	wav.append_array(pcm)
-	pcm.clear()
-	recorded.emit(wav)
+	return wav
 
 func _exit_tree() -> void:
 	stop(false)

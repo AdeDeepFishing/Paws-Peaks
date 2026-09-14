@@ -9,8 +9,10 @@ func run() -> void:
 	await scene_changed
 	await create_timer(3).timeout
 	var guide := root.get_node("Narrator")
+	guide.voice_enabled = false
 	guide.panel.present({"text": "Your umbrella kept you safe. Follow the path to the right."}, false)
 	current_scene.status.hide()
+	await create_timer(.7).timeout
 	await capture("guidance")
 	change_scene_to_file("res://scenes/moonlit_forest/moonlit_forest.tscn")
 	await scene_changed
@@ -19,6 +21,7 @@ func run() -> void:
 	await capture("boss-mood")
 	narrator.panel.open_dialogue()
 	narrator.panel.present({"text": "I thought that if the last page stayed unturned, none of our little adventures could disappear. But perhaps a story can end and still be yours."})
+	await create_timer(2.0).timeout
 	await capture("dialogue")
 	narrator.panel._draw_idea()
 	await process_frame

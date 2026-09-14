@@ -250,6 +250,11 @@ func _run_ending() -> void:
 		_recover(source, old_mode, "The last page could not be loaded. Try again.")
 		return
 	var packed: PackedScene = ResourceLoader.load_threaded_get(ENDING)
+	if source.has_method("finish_daybreak"):
+		source.process_mode = old_mode
+		phase = "daybreak"
+		await source.finish_daybreak(duration_scale)
+		source.process_mode = Node.PROCESS_MODE_DISABLED
 	# Let the night scene breathe, then turn its last page without a bright flash.
 	var hud: Control = source.hud_root
 	var fade := create_tween()

@@ -263,6 +263,8 @@ class Service:
             require(judge["decision"] in model.DECISIONS and set(judge["evidence"]) <= evidence_ids, "INVALID_MODEL_OUTPUT")
             delta = judge.get("mood_delta")
             require(type(delta) is int and -100 <= delta <= 100, "INVALID_MODEL_OUTPUT")
+            if image and judge["decision"] == "NEEDS_CLARIFICATION":
+                judge["decision"] = "PARTIAL_PROGRESS" if delta else "NO_CHANGE"
             mood_after = max(0, min(100, context["state"]["mood"] + delta))
             judge["mood_before"], judge["mood_after"] = context["state"]["mood"], mood_after
             judge["exit_open_after"] = context["state"]["exit_open"] or (context["state"]["stage"] == 5 and mood_after >= 95)
