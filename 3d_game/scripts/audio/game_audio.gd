@@ -190,16 +190,19 @@ func _build_controls() -> void:
 	menu.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	menu.offset_left = -248
 	menu.offset_right = 248
-	menu.offset_top = -278
-	menu.offset_bottom = 278
+	menu.offset_top = -300
+	menu.offset_bottom = 300
+	menu.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	menu.grow_vertical = Control.GROW_DIRECTION_BOTH
 	var paper := StyleBoxTexture.new()
 	paper.texture = load("res://ui/storybook/menu_paper.png")
 	paper.content_margin_left = 62
 	paper.content_margin_right = 62
-	paper.content_margin_top = 60
-	paper.content_margin_bottom = 48
+	paper.content_margin_top = 100
+	paper.content_margin_bottom = 76
 	menu.add_theme_stylebox_override("panel", paper)
 	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 10)
 	menu.add_child(stack)
 	var serif := SystemFont.new()

@@ -16,7 +16,9 @@ Draw/Talk controls and permanent instruction labels. This is the UI portion of
   automatic final-transcript submission are retained. Drawing is disabled during
   the conversation. These changes do not add a typed chat or a transcript history.
 - The menu is centered, with Music, Sound and Voice sliders and the three supplied
-  Return to Title button states. Opening it hides all chapter canvas layers and
+  Return to Title button states. The content stack is vertically centered, with
+  extra top/bottom paper padding; the panel grows equally around its center when
+  font metrics or the unmute control increase its minimum size. Opening it hides all chapter canvas layers and
   the narrator/player UI, leaving the menu and its top-right toggle visible.
   Closing it restores prior visibility and input modes, including active drawing.
   Narration pauses while the menu is open. An in-progress microphone recording is
@@ -76,6 +78,12 @@ Godot 4.7.2, desktop Forward+ on Apple M1, using offline scripted fixtures only:
 - `narrator_smoke.gd`, `voice_conversation_smoke.gd`, `input_hints_smoke.gd`,
   `game_audio_smoke.gd`, and `otter_repeat_submit_smoke.gd`: passing after updating
   assertions that intentionally referred to the replaced UI.
+- `stage_transition_smoke.gd`: starts at the opening map, submits an offline bridge
+  drawing, opens/closes the menu during drawing, walks across the bridge and the
+  authored exit, checks the Chapter 2 map label/position/Next page button, then
+  enters Woodland Path. `map_return_smoke.gd` also passes. The reported return to
+  the opening Start screen after Chapter 1 has not reproduced in these paths;
+  the exact player action remains to be confirmed. No progression fix is claimed.
 - Visual captures are under `docs/3d_game/assets/storybook-ui/`.
 
 The older `dog_encounter_smoke.gd` still fails expectations for manual offering,
