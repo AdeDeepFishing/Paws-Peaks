@@ -43,6 +43,52 @@ class NarratorTests(unittest.TestCase):
         response = self.service.handle(request)
         if "state" in response: self.state = response["state"]
         return response
+    def test_fixed_opening_replays_without_a_model_call(self):
+        direction = "Follow the path to the right."
+        self.send("event", type="guidance_changed", stage=5, payload={"text": direction})
+        first = self.send("guide", guidance=direction)
+        self.assertIn("last page", first["utterance"]["text"])
+        self.assertTrue(first["utterance"]["text"].endswith(direction))
+        self.send("presented", utterance_id=first["input_id"])
+        second = self.send("guide", guidance=direction)
+        self.assertEqual(second["utterance"]["text"], direction)
+        self.assertEqual(self.model.calls, [])
+        self.assertIsNone(self.state["ending"])
+
+    def test_fixed_speech_cache_survives_new_journey(self):
+        self.service.config = {"ELEVENLABS_API_KEY": "test-only", "ELEVENLABS_NARRATOR_VOICE_ID": "narrator", "ELEVENLABS_MODEL": "eleven_multilingual_v2"}
+        class Response:
+            headers = {"Content-Type": "audio/mpeg"}
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def read(self, n): return b"ID3" + b"x" * 200
+        with patch("speech.service.provider_urlopen", return_value=Response()) as provider:
+            for _ in range(2):
+                self.state = self.service.new(True)
+                self.send("event", type="stage_entered", stage=1, payload={})
+                self.send("event", type="guidance_changed", stage=1, payload={"text": "Follow the pink path to the river."})
+                line = self.send("guide", guidance="Follow the pink path to the river.")
+                audio = self.send("voice", utterance_id=line["input_id"])
+                self.assertTrue(Path(audio["audio_path"]).is_file())
+                self.assertIn(self.state["run_id"], audio["audio_path"])
+            self.assertEqual(provider.call_count, 1)
+        self.assertEqual(self.model.calls, [])
+
+    def test_authored_guidance_is_spoken_without_referee_or_completion(self):
+        self.send("event", type="stage_entered", stage=3, payload={})
+        direction = "Your drawing kept you safe. Follow the path to the right."
+        self.send("event", type="guidance_changed", stage=3, payload={"text": direction})
+        response = self.send("respond", text="", trigger="event", guidance=direction)
+        self.assertTrue(response["utterance"]["text"].endswith(direction))
+        self.assertEqual(self.model.calls[-1]["current_guidance"], direction)
+        self.assertEqual(len(self.model.calls), 1)
+        self.assertIsNone(response["state"]["ending"])
+
+    def test_stale_or_unrecorded_guidance_is_rejected(self):
+        with self.assertRaises(AppError):
+            self.send("respond", text="", trigger="event", guidance="Take an invented exit.")
+        self.assertEqual(self.model.calls, [])
+
     def test_open_exit_does_not_end_until_crossing(self):
         self.model.decision = "OPEN_EXIT"
         self.send("respond", text="This album can hold our memories.")

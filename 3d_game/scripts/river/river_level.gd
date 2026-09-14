@@ -101,6 +101,7 @@ func _on_drawing_area(body: Node3D) -> void:
 	if not unlocked:
 		unlocked = true
 		status_label.text = "Could you draw a way across? %s · Draw" % book_key
+		status_label.set_meta("narrator_guidance", status_label.text)
 	_update_drawing_entry()
 
 func _on_leaving_drawing_area(body: Node3D) -> void:
@@ -120,12 +121,14 @@ func _open_book() -> void:
 		return
 	if not player.is_on_floor():
 		status_label.text = "Land on solid ground before drawing."
+		status_label.set_meta("narrator_guidance", status_label.text)
 		return
 	_show_panel("draw")
 
 func _show_panel(mode: String) -> void:
 	if mode == "draw" and (not near_crossing() or not player.is_on_floor() or bridge_built or request.state == "PENDING"):
 		status_label.text = "Return to the left riverbank to draw."
+		status_label.set_meta("narrator_guidance", status_label.text)
 		return
 	if mode != "draw": return
 	panel_mode = mode
@@ -204,6 +207,7 @@ func _finish_generation(id: String) -> void:
 			presentation.cancel()
 			generation_preview.model_presented()
 		status_label.text = "That idea cannot support a crossing. Return to the riverbank and draw again."
+		status_label.set_meta("narrator_guidance", status_label.text)
 	_update_hud()
 
 func assist_crossing(direction: Vector3) -> Vector3:
@@ -269,6 +273,7 @@ func build_bridge() -> bool:
 	bridge.show()
 	$Bridge/Deck/CollisionShape3D.set_deferred("disabled", false)
 	status_label.text = "Your bridge is ready. Walk across to the far bank!"
+	status_label.set_meta("narrator_guidance", status_label.text)
 	_play("bridge")
 	_update_hud()
 	return true
@@ -279,6 +284,7 @@ func _finish() -> void:
 	_update_hud()
 	_play("bridge")
 	status_label.text = "Follow the path into the woodland."
+	status_label.set_meta("narrator_guidance", status_label.text)
 	player.set_input_enabled(true)
 
 func _enter_woodland() -> void:
@@ -306,6 +312,7 @@ func restart() -> void:
 	$Bridge/Deck/CollisionShape3D.set_deferred("disabled", true)
 	player.respawn(SPAWN)
 	status_label.text = "Follow the pink path to the river."
+	status_label.set_meta("narrator_guidance", status_label.text)
 	_close_panel(true)
 	_update_hud()
 
@@ -443,6 +450,7 @@ func _build_ui() -> void:
 	map_button.offset_top = 144
 	map_button.offset_bottom = 188
 	status_label = _label(root, "Follow the pink path to the river.", 19)
+	status_label.set_meta("narrator_guidance", status_label.text)
 	status_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status_label.position += Vector2(28, -154)
 	status_label.size = Vector2(690, 64)

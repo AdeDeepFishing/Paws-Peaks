@@ -9,6 +9,8 @@ var book: Control
 func _ready() -> void:
 	super._ready()
 	objective.text = "Meet the Storykeeper. Share an idea, a drawing, or a goodbye."
+	status.text = objective.text
+	status.set_meta("narrator_guidance", status.text)
 	var narrator := get_node("/root/Narrator")
 	narrator.state_changed.connect(_story_changed)
 	narrator.reply_ready.connect(_reply)
@@ -37,6 +39,8 @@ func _story_changed(state: Dictionary) -> void:
 	if state.get("exit_open", false) and not released:
 		released = true
 		objective.text = "The way is open. Cross the clearing when you are ready."
+		status.text = objective.text
+		status.set_meta("narrator_guidance", status.text)
 		$Storykeeper.make_way()
 	if state.get("ending") == "stay" and not stay_presented:
 		stay_presented = true

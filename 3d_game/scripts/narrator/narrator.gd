@@ -29,8 +29,10 @@ var audio: AudioStreamPlayer
 var last_error := ""
 var caption_deadline := 0
 var checkpoint := ""
-var idle_seconds := 0.0
-var previous_position := Vector3.ZERO
+var guidance_text := ""
+var guidance_due := false
+var reaction_due := false
+var guidance_status: Label
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -52,6 +54,11 @@ func _ready() -> void:
 func _scene_changed() -> void:
 	var current := get_tree().current_scene
 	if current == scene: return
+	if is_instance_valid(guidance_status): guidance_status.show()
+	guidance_status = null
+	guidance_text = ""
+	guidance_due = false
+	reaction_due = false
 	panel.close_dialogue()
 	epoch += 1
 	audio.stop()
@@ -59,7 +66,6 @@ func _scene_changed() -> void:
 	scene = current
 	chapter = get_node("/root/Journey").stage_for_scene(scene.scene_file_path) if scene else 0
 	comment_due = false
-	idle_seconds = 0.0
 	if chapter == 0: return
 	if enabled:
 		_ensure_worker()
@@ -79,6 +85,7 @@ func _interpreted(id: String, item: Dictionary) -> void:
 func record(kind: String, payload: Dictionary) -> void:
 	if not enabled or chapter == 0: return
 	event_serial += 1
+	if kind in ["npc_interaction_resolved", "encounter_completed", "object_use_resolved", "object_spawned"]: reaction_due = true
 	_enqueue({"op": "event", "type": kind, "stage": chapter, "payload": payload})
 	if kind in ["stage_entered", "npc_interaction_resolved", "encounter_completed", "object_use_resolved", "object_spawned"]:
 		comment_due = true
@@ -122,6 +129,9 @@ func ask(text: String, drawing: PackedByteArray = PackedByteArray(), automatic :
 	_enqueue(request)
 	panel.set_busy(true)
 	comment_due = false
+	if automatic:
+		guidance_due = false
+		reaction_due = false
 
 func confirm_stay() -> void:
 	_enqueue({"op": "confirm_stay", "candidate": state.get("candidate")})
@@ -160,6 +170,7 @@ func _process(delta: float) -> void:
 		playable = scene.get("entering") != true and scene.process_mode != Node.PROCESS_MODE_DISABLED
 	panel.entry.visible = playable and not panel.opened and state.get("ending") == null
 	if not enabled: return
+	if playable and not panel.opened: _observe_guidance()
 	if caption_deadline > 0 and Time.get_ticks_msec() > caption_deadline and not audio.playing:
 		panel.hide_caption()
 		caption_deadline = 0
@@ -181,19 +192,17 @@ func _process(delta: float) -> void:
 		active = {}
 		_fail("The Storykeeper is taking too long. Your words and drawing are safe; try again.")
 	if active.is_empty() and not queue.is_empty(): _dispatch()
-	if playable and not panel.opened and auto_narration and verbosity != "quiet" and queue.is_empty() and active.is_empty():
+	if playable and not panel.opened and auto_narration and (guidance_due or verbosity != "quiet") and queue.is_empty() and active.is_empty():
 		var player = scene.get("player")
 		var occupied: bool = player == null or not player.input_enabled or player.drawing_active
-		if not occupied and comment_due and Time.get_ticks_msec() / 1000.0 >= next_comment:
-			ask("", PackedByteArray(), true)
-		elif not occupied and verbosity == "talkative" and not state.get("ending"):
-			if player.position.distance_to(previous_position) < 0.1: idle_seconds += 0.15
-			else: idle_seconds = 0.0
-			previous_position = player.position
-			if idle_seconds > 45:
-				idle_seconds = 0.0
-				record("player_idle", {"result": "Paused briefly; not an ending choice."})
-				comment_due = true
+		if not occupied and (comment_due or guidance_due) and Time.get_ticks_msec() / 1000.0 >= next_comment:
+			if guidance_due and (not reaction_due or verbosity == "quiet"):
+				_enqueue({"op": "guide", "trigger": "event", "guidance": guidance_text})
+				guidance_due = false
+				reaction_due = false
+				comment_due = false
+			else:
+				ask("", PackedByteArray(), true)
 
 func _dispatch() -> void:
 	if process_id <= 0 or not OS.is_process_running(process_id):
@@ -207,6 +216,8 @@ func _dispatch() -> void:
 		if state.is_empty(): return
 		request["run_id"] = state.run_id
 		request["revision"] = state.revision
+	if request.op == "respond":
+		request["guidance"] = guidance_text if _current_guidance() == guidance_text else ""
 	var directory := worker_dir.path_join(request.input_id)
 	DirAccess.make_dir_recursive_absolute(directory)
 	var file := FileAccess.open(directory.path_join("request.tmp"), FileAccess.WRITE)
@@ -225,7 +236,7 @@ func _dispatch() -> void:
 
 func _consume(request: Dictionary, response: Dictionary) -> void:
 	if request.epoch != epoch and request.op != "new": return
-	if request.op == "respond" and request.get("event_serial", event_serial) != event_serial:
+	if request.op in ["respond", "guide"] and request.get("event_serial", event_serial) != event_serial:
 		panel.set_busy(false)
 		return
 	if not response.get("ok", false):
@@ -239,13 +250,14 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 		panel.refresh_state()
 		state_changed.emit(state)
 	if response.has("checkpoint"): checkpoint = response.checkpoint
-	if request.op == "respond":
+	if request.op in ["respond", "guide"]:
 		panel.set_busy(false)
 		last_utterance = request.input_id
 		if request.get("trigger") == "event":
 			var player = scene.get("player") if is_instance_valid(scene) else null
 			if get_node("/root/Journey").busy or panel.opened or player == null or player.drawing_active or not player.input_enabled:
 				return
+		guidance_due = false
 		panel.present(response.utterance, request.get("trigger") != "event")
 		caption_deadline = Time.get_ticks_msec() + maxi(12000, str(response.utterance.text).length() * 65)
 		reply_ready.emit(response)
@@ -272,3 +284,26 @@ func _fail(message: String) -> void:
 
 func _exit_tree() -> void:
 	if process_id > 0 and OS.is_process_running(process_id): OS.kill(process_id)
+
+
+func _current_guidance() -> String:
+	if not is_instance_valid(scene) or chapter == 0: return ""
+	var label = scene.get("status_label") if chapter == 1 else scene.get("status")
+	if not label is Label: return ""
+	guidance_status = label
+	var text := str(label.get_meta("narrator_guidance", ""))
+	return text if text == label.text else ""
+
+func _observe_guidance() -> void:
+	var latest := _current_guidance()
+	if is_instance_valid(guidance_status):
+		# Keep errors and loading status visible; avoid two copies of spoken guidance.
+		guidance_status.visible = latest.is_empty() or not panel.caption.visible
+	if latest == guidance_text: return
+	guidance_text = latest
+	guidance_due = not latest.is_empty()
+	# Every change invalidates an in-flight line, including a cleared instruction.
+	record("guidance_changed", {"text": latest})
+	if guidance_due:
+		comment_due = true
+		next_comment = Time.get_ticks_msec() / 1000.0 + 0.6

@@ -867,7 +867,7 @@ Tickets #63 and #66 add a separate local desktop service. The `Narrator` Godot
 autoload starts `backend/narrator_agent/run.py --serve <mailbox> --parent-pid <pid>`.
 It retains one journal across scene changes. This does not use OpenAI's hosted
 Agents UI: the game owns state and the Python service makes stateless Responses
-calls with strict JSON output. Stages 1–4 use one performer call; Stage 5 dialogue
+calls with strict JSON output. Fixed opening/guidance lines use no model call. Contextual reactions in Stages 1–4 use one performer call; Stage 5 dialogue
 or a drawing uses a neutral referee followed by the performer. No model has
 filesystem, shell or arbitrary game-action tools.
 
@@ -901,7 +901,10 @@ by the teammate's existing implementation. This feature does not call music gene
 
 Speech is generated only from a saved narrator utterance, capped at 600 characters.
 `POST /v1/text-to-speech/{voice}` returns MP3; cache identity includes text, speaker
-voice, model and settings. Cache storage is per journey. Failed speech leaves
+voice, model and settings. Interactive cache storage is per journey. Fixed authored speech uses a shared
+`backend/output/narrator_agent/_authored_speech/` cache across journeys and is copied
+into the requesting journey for playback. Only fixed game lines enter this shared
+cache; deleting a private run removes its interactive speech. Failed speech leaves
 subtitles usable. Skip, Voice off, scene changes and replay stop playback; stale
 utterances cannot play in a different chapter. Provider calls time out and do not
 automatically retry. Credential-bearing redirects are refused for both providers.
@@ -941,6 +944,7 @@ and the current `revision`. No keys or provider-selected URLs are accepted.
 |---|---|
 | `new` | Creates a separate run; optional authoring `simulated` flag |
 | `event` | Whitelisted type, stage and bounded payload; appends verified game evidence |
+| `guide` | Current authored `guidance_changed` event text; returns a fixed chapter introduction or direction without a model call |
 | `respond` | Text up to 2,000 characters, optional PNG/JPEG Base64 up to 1 MiB; returns validated decision, utterance and current state |
 | `presented` | A saved utterance ID; records what was actually shown |
 | `voice` | A saved utterance ID; returns a local MP3 path, or Base64 in the bench |
@@ -983,3 +987,15 @@ no user account, cloud synchronization, or browser-hosted backend in this delive
   captures were inspected. The map smoke completed its assertions but also reported
   an otter grounding diagnostic during accelerated transitions; it is not a clean
   map validation. Existing ObjectDB cleanup warnings also remain in some scene tests.
+
+
+September 14 playtest follow-up: fixed introductions are authored in
+`backend/narrator_agent/authored.py`; directions come from the active chapter's
+marked gameplay hint. New fixed guidance uses `guide`, while creation/encounter
+reactions can still combine contextual commentary with the exact authored direction.
+Loading and error messages do not become narrator lines. Only actual interactions
+use dynamic model responses; idle-time model calls have been removed. Essential
+fixed guidance remains available in Guidance only mode. Updated verification: 51
+offline backend tests passed, including no-model introductions and one speech call
+across two journeys. Godot checks cover translucent subtitles without Skip and
+scene drawing, toolbar exclusion, image export and draft preservation.

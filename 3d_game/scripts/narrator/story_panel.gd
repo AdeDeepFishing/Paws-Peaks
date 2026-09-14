@@ -10,7 +10,7 @@ var transcript: RichTextLabel
 var input: TextEdit
 var send: Button
 var surface: Control
-var canvas_panel: PanelContainer
+var canvas_panel: Control
 var voice_note: Label
 var confirmation: VBoxContainer
 var opened := false
@@ -32,16 +32,25 @@ func _ready() -> void:
 	caption = PanelContainer.new()
 	add_child(caption)
 	caption.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	caption.offset_left = 235
-	caption.offset_right = -265
-	caption.offset_top = -175
-	caption.offset_bottom = -45
-	caption.add_theme_stylebox_override("panel", _paper())
+	caption.offset_left = 200
+	caption.offset_right = -255
+	caption.offset_top = -115
+	caption.offset_bottom = -20
+	var subtitle_style := _paper()
+	subtitle_style.bg_color = Color(0.06, 0.13, 0.12, 0.68)
+	subtitle_style.shadow_size = 0
+	subtitle_style.set_content_margin_all(16)
+	caption.add_theme_stylebox_override("panel", subtitle_style)
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var stack := VBoxContainer.new()
 	caption.add_child(stack)
 	caption_text = _label(stack, "", 18)
 	caption_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_button(stack, "Skip voice and subtitle", story.skip)
+	caption_text.add_theme_color_override("font_color", Color("fff9ed"))
+	caption_text.add_theme_color_override("font_outline_color", Color(0.02, 0.05, 0.04, 0.8))
+	caption_text.add_theme_constant_override("outline_size", 2)
+	caption_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	caption.hide()
 	drawer = PanelContainer.new()
 	add_child(drawer)
@@ -94,8 +103,8 @@ func _ready() -> void:
 	voice.toggled.connect(story.set_voice)
 	actions.add_child(voice)
 	var frequency := OptionButton.new()
-	for label in ["Normal comments", "Quiet", "Talkative"]: frequency.add_item(label)
-	frequency.item_selected.connect(func(index): story.verbosity = ["normal", "quiet", "talkative"][index])
+	for label in ["Guidance + reactions", "Guidance only"]: frequency.add_item(label)
+	frequency.item_selected.connect(func(index): story.verbosity = ["normal", "quiet"][index])
 	actions.add_child(frequency)
 	frequency.add_theme_color_override("font_color", INK)
 	frequency.add_theme_stylebox_override("normal", field)
@@ -222,28 +231,41 @@ func refresh_state() -> void:
 	if story.state.get("ending") != null: close_dialogue()
 
 func _build_canvas() -> void:
-	canvas_panel = PanelContainer.new()
+	canvas_panel = Control.new()
+	canvas_panel.name = "SceneDrawingOverlay"
 	add_child(canvas_panel)
-	canvas_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	canvas_panel.offset_left = -300
-	canvas_panel.offset_right = 300
-	canvas_panel.offset_top = -300
-	canvas_panel.offset_bottom = 300
-	canvas_panel.add_theme_stylebox_override("panel", _paper())
-	var stack := VBoxContainer.new()
-	canvas_panel.add_child(stack)
-	_label(stack, "Draw an idea for the Storykeeper", 23)
-	_label(stack, "Explain its meaning or correct its name in your message.", 15)
+	canvas_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	surface = preload("res://scripts/river/drawing_surface.gd").new()
-	surface.custom_minimum_size = Vector2(512, 460)
-	surface.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_child(surface)
+	canvas_panel.add_child(surface)
+	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var toolbar := PanelContainer.new()
+	canvas_panel.add_child(toolbar)
+	toolbar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	toolbar.offset_left = 20
+	toolbar.offset_right = -20
+	toolbar.offset_top = -126
+	toolbar.offset_bottom = -20
+	toolbar.add_theme_stylebox_override("panel", _paper())
+	surface.excluded_control = toolbar
+	var stack := VBoxContainer.new()
+	toolbar.add_child(stack)
+	_label(stack, "Draw your idea here, in the world.", 20)
 	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
 	stack.add_child(actions)
 	_button(actions, "Undo", surface.undo)
 	_button(actions, "Clear", surface.clear)
-	_button(actions, "Use drawing", func(): canvas_panel.hide(); drawer.show())
+	_button(actions, "Back · Esc", _finish_drawing)
+	var use := _button(actions, "Use drawing", _finish_drawing)
+	use.disabled = true
+	surface.changed.connect(func(): use.disabled = not surface.has_drawing())
 	canvas_panel.hide()
+
+func _finish_drawing() -> void:
+	canvas_panel.hide()
+	drawer.show()
+	if surface.has_drawing(): voice_note.text = "Your drawing is ready. Add a thought, or send it as it is."
+	input.grab_focus()
 
 func _draw_idea() -> void:
 	if story.chapter != 5:
@@ -254,5 +276,6 @@ func _draw_idea() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if opened and event.is_action_pressed("ui_cancel"):
-		close_dialogue()
+		if canvas_panel.visible: _finish_drawing()
+		else: close_dialogue()
 		get_viewport().set_input_as_handled()

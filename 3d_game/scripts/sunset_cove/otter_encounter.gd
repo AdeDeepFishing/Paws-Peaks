@@ -23,6 +23,8 @@ func _ready() -> void:
 	draw_button.pressed.connect(_open_drawing)
 	draw_button.tooltip_text = "Approach the otter to show it a drawing."
 	objective.text = "Meet the otter. Draw something to show it."
+	status.text = "Follow the beach to meet the otter. Draw something to show it."
+	status.set_meta("narrator_guidance", status.text)
 	_build_drawing()
 	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
 
@@ -116,6 +118,7 @@ func _on_request_state(state: String) -> void:
 			otter.play_option(request.reaction)
 			get_node("/root/Narrator").record("npc_interaction_resolved", {"result": "Showed a generated drawing to the otter; its reaction animation played. No gift transfer is implied.", "item": request.result, "reaction": request.reaction})
 			status.text = "Your drawing is here. You can show the otter another."
+			status.set_meta("narrator_guidance", status.text)
 
 func _build_drawing() -> void:
 	cancel_button = Button.new()

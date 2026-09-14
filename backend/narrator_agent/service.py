@@ -9,9 +9,10 @@ import time
 from uuid import uuid4
 from utils.common import AppError, image_input
 from narrator_agent import model
+from narrator_agent.authored import OPENINGS
 from speech.service import Speech
 
-EVENTS = {"stage_entered", "drawing_submitted", "drawing_interpreted", "drawing_corrected", "object_spawned", "object_use_resolved",
+EVENTS = {"guidance_changed", "stage_entered", "drawing_submitted", "drawing_interpreted", "drawing_corrected", "object_spawned", "object_use_resolved",
           "npc_interaction_resolved", "encounter_completed", "player_stuck", "player_idle", "boss_gate_reached"}
 
 def identifier(value):
@@ -126,6 +127,20 @@ class Service:
                 state["requests"][request_id] = result
                 self.write(state)
                 return result
+            if op == "guide":
+                require(state["ending"] is None, "ENDING_LOCKED")
+                require(request.get("revision") == state["revision"], "STALE_RESULT")
+                guidance = request.get("guidance", "")
+                require(isinstance(guidance, str) and 0 < len(guidance) <= 300)
+                event = next((e for e in reversed(state["events"]) if e["type"] == "guidance_changed"), None)
+                require(event is not None and event["stage"] == state["stage"] and event["payload"].get("text") == guidance, "STALE_RESULT")
+                introduced = any(e["stage"] == state["stage"] and e["type"] == "narration_presented" and e["payload"].get("authored") for e in state["events"])
+                text = guidance if introduced else OPENINGS.get(state["stage"], "") + " " + guidance
+                actor = {"text": text.strip(), "emotion": "warm", "channel": "direct_dialogue", "addressed_to": "player", "evidence": [event["id"]], "speaker": "narrator", "authored": True}
+                result = {"state": self.public(state), "utterance": actor, "input_id": request_id, "provider_calls": 0}
+                state["requests"][request_id] = result
+                self.write(state)
+                return result
             if op == "presented":
                 utterance = state["requests"].get(request.get("utterance_id"), {})
                 require("utterance" in utterance)
@@ -138,6 +153,7 @@ class Service:
                 utterance = state["requests"].get(request.get("utterance_id"), {}).get("utterance")
                 require(isinstance(utterance, dict))
                 text, speaker = utterance["text"], utterance.get("speaker", "narrator")
+                authored = utterance.get("authored", False)
             elif op in ("confirm_stay", "cancel_stay", "leave"):
                 require(request.get("revision") == state["revision"], "STALE_RESULT")
                 require(state["stage"] == 5 and state["ending"] is None, "ENDING_LOCKED")
@@ -178,13 +194,29 @@ class Service:
                     self.add_event(state, "player_input", {"text": text, "drawing": request_id if image else None, "verified_action": False})
                 revision = state["revision"]
                 context = self.context(state)
+                guidance = request.get("guidance", "")
+                require(isinstance(guidance, str) and len(guidance) <= 300)
+                # Directions come from authored game events, never the player's claims.
+                if guidance:
+                    latest = next((e for e in reversed(state["events"]) if e["type"] == "guidance_changed"), None)
+                    require(latest is not None and latest["payload"].get("text") == guidance, "STALE_RESULT")
+                context["current_guidance"] = guidance
                 context["input"] = {"text": text, "has_drawing": bool(image), "trigger": request.get("trigger", "dialogue")}
                 state["requests"][request_id] = {"pending": True}
                 self.write(state)
             else: raise AppError("INVALID_REQUEST", "Unknown story operation.")
         if op == "voice":
             with self.voice_lock:
-                path = Speech(self.config, self.path(run).parent / "speech").generate(text, speaker)
+                run_cache = self.path(run).parent / "speech"
+                shared_cache = self.directory / "_authored_speech"
+                path = Speech(self.config, shared_cache if authored else run_cache).generate(text, speaker)
+                if authored:
+                    # Only fixed game lines are shared. Private interactive speech stays per run.
+                    import shutil
+                    run_cache.mkdir(parents=True, exist_ok=True)
+                    local = run_cache / path.name
+                    if not local.exists(): shutil.copyfile(path, local)
+                    path = local
             return {"audio_path": str(path), "utterance_id": request["utterance_id"]}
         started = time.monotonic()
         try:
@@ -203,6 +235,10 @@ class Service:
             metrics.append(metric)
             require(set(actor["evidence"]) <= evidence_ids and actor["emotion"] in model.EMOTIONS, "INVALID_MODEL_OUTPUT")
             require(isinstance(actor["text"], str) and 0 < len(actor["text"]) <= 600, "INVALID_MODEL_OUTPUT")
+            if guidance and context["input"]["trigger"] != "dialogue":
+                # Preserve exact direction and action even when the performer paraphrases.
+                if guidance not in actor["text"]:
+                    actor["text"] = actor["text"][:max(0, 590-len(guidance))].rstrip() + " " + guidance
             require((actor["channel"], actor["addressed_to"]) in (("direct_dialogue", "player"), ("book_narration", "protagonist")), "INVALID_MODEL_OUTPUT")
             with self.lock:
                 state = self.read(run)

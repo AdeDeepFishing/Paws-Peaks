@@ -7,15 +7,25 @@ The draft describes a broader target, not a claim that all tooling is delivered.
 
 ## Player experience
 
+Fixed chapter introductions and authored route hints do not call the language model.
+Their first speech synthesis is cached across journeys; text, voice or settings
+changes select a new cache entry. Actual player dialogue, drawings and contextual
+reactions use the model. Waiting idly no longer triggers paid model calls.
+Subtitles use a translucent dark panel at the bottom, without a Skip button; Stop
+voice remains inside the dialogue panel. Duplicate bottom HUD guidance is hidden
+while subtitles are shown.
+
 In Chapters 1–4, the narrator responds to chapter arrivals, drawings and confirmed
 encounter outcomes. Short subtitles and optional speech accompany these events.
 The **Talk to the narrator** button opens a paper dialogue panel. It pauses movement
-while open; closing restores the scene. Normal, Quiet and Talkative settings control
-spontaneous comments; Voice and Stop voice control spoken playback independently.
+while open; closing restores the scene. Guidance + reactions and Guidance only settings control
+contextual reactions; Voice and Stop voice control spoken playback independently.
 
 The narrator is warm, curious, verbose and fond of the world. Chapter 5 reveals the
 same voice as the towering Storykeeper, who fears the final page. The player can
-write freely or **Draw an idea**, explain its meaning, and correct misunderstandings.
+write freely or **Draw an idea** directly over the game scene, explain its meaning,
+and correct misunderstandings. The drawing layer shares the earlier chapters'
+transparent canvas, with a bottom toolbar and no separate paper sketch panel.
 The referee evaluates intent and feasible effects without a fixed keyword/item list.
 The performer supplies the character's response, while game code applies only the
 permitted transition. Earlier encounter mechanics remain authoritative.
@@ -81,3 +91,6 @@ for repeatable layout inspection, not a fabricated record of a real model reply.
 
 ![Dialogue fixture](../assets/narrator/dialogue.png)
 ![Stay ending fixture](../assets/narrator/stay.png)
+
+![Scene drawing fixture](../assets/narrator/drawing.png)
+![Translucent guidance fixture](../assets/narrator/guidance.png)
