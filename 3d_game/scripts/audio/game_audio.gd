@@ -309,6 +309,10 @@ func open_menu() -> void:
 	menu.find_child("MusicVolume", true, false).grab_focus()
 
 func close_menu() -> void:
+	# The persistent toggle must not consume the next jump as UI accept.
+	var focus := get_viewport().gui_get_focus_owner()
+	if controls != null and is_instance_valid(focus) and controls.is_ancestor_of(focus):
+		focus.release_focus()
 	if menu and menu.visible:
 		var narrator = get_node("/root/Narrator")
 		narrator.panel.process_mode = panel_previous_mode
