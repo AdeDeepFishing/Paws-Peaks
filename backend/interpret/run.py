@@ -28,6 +28,8 @@ ITEM_PROPERTIES = {
     "description": {"type": "string", "maxLength": 160},
     "type": {"type": "string", "enum": TYPES},
     "movable": {"type": "boolean"},
+    "mass_kg": {"type": "number", "minimum": 0.05, "maximum": 1000},
+    "placement": {"type": "string", "enum": ["drop", "fixed", "float"]},
     "texture_key": {"type": "string", "enum": TEXTURE_KEYS},
     "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
 }
@@ -48,6 +50,14 @@ context influence the object's identity.
 Also decide whether the identified object is movable: true for portable or loose
 objects such as food, toys, tools, or a freestanding chair; false for fixed structures
 such as a bridge or building. Base this on the object itself, not the game context.
+Estimate mass_kg in kilograms from the object identity, apparent size, and material.
+Use a plausible physical mass between 0.05 and 1000; clamp extreme estimates to these
+limits. For example, a bone is lighter than a chair, and a stone is heavier than a
+similarly sized plush toy. Do not change the estimate to solve the challenge.
+Choose placement based on the object: drop for loose objects that fall and settle
+(e.g. bones, stones, toys); fixed for ground-attached objects (e.g. trees, bridges,
+buildings); float for objects naturally suspended in air (e.g. clouds or balloons).
+This controls initial placement, before any scripted pickup or equipment action.
 Choose one texture_key from the material palette for the object's dominant material.
 Choose the closest suitable material from the palette.
 Choose color as an opaque #RRGGBB hex tint suitable for the identified object.
@@ -108,6 +118,10 @@ def validate_interpretation(value, game_stage="river", animation_options=None):
     if not isinstance(item["name"], str) or not 1 <= len(item["name"].strip()) or len(item["name"]) > 40:
         raise invalid
     if not isinstance(item["description"], str) or len(item["description"]) > 160 or (game_stage != "otter" and item["type"] not in allowed_types):
+        raise invalid
+    if type(item["mass_kg"]) not in (int, float) or not 0.05 <= item["mass_kg"] <= 1000:
+        raise invalid
+    if item["placement"] not in ("drop", "fixed", "float"):
         raise invalid
     if type(item["movable"]) is not bool:
         raise invalid

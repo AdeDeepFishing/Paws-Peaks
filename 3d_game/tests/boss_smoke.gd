@@ -20,7 +20,9 @@ func run() -> void:
 	await scene_changed
 	var level = current_scene
 	level.preview_ending_enabled = false
-	await frames(45)
+	for i in 600:
+		await frames(1)
+		if not level.entering and level.boss_revealed and level.player.input_enabled: break
 	var boss = level.get_node("Storykeeper")
 	check(boss.grounded, "The Storykeeper settles on the forest terrain")
 	check(boss.get_node("Character").scale.is_equal_approx(Vector3.ONE*1.6), "Boss retains giant scale")
@@ -38,11 +40,11 @@ func run() -> void:
 	check(level.player.position.z > boss.position.z + .5, "The player cannot walk through the boss body")
 	check(level.player.is_on_floor(), "Approaching the boss keeps the player grounded")
 	var start_position: Vector3 = boss.position
+	level.released = true
 	boss.make_way()
 	await frames(130)
-	check(boss.position.is_equal_approx(start_position), "Release does not move the boss")
+	check(is_equal_approx(boss.position.x, start_position.x - 1.5) and is_equal_approx(boss.position.z, start_position.z), "Release shifts the boss left by 1.5 units")
 	check(absf(boss.rotation.y-PI/2)<.01, "Release turns the boss ninety degrees")
-	level.released = true
 	level.preview_ending_enabled = false
 	level.player.position = Vector3(1.2,level.player.position.y,0)
 	Input.action_press("move_up")

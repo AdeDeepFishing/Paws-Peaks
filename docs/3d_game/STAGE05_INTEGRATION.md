@@ -112,3 +112,12 @@ It writes `/private/tmp/paws-stage04-cave-exit.png` and
 pixels. Web export, browser performance and the final boss encounter have not been tested
 or implemented by this scene integration; the large asset still needs a Web
 delivery budget pass.
+
+## Drawings become objects
+
+Submitting a Stage 5 sketch now starts live 3D generation and the existing boss
+narrative response. The shared sketch/reference mist stays visible while generation
+runs, and Stop generating object cancels the model request independently of dialogue.
+The completed object appears on nearby terrain using AI mass and placement. A new
+successful result replaces the previous object. Failure or cancellation retains the
+sketch for retry. Spawning an object does not itself clear the boss.

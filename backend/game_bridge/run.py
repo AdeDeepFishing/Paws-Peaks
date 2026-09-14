@@ -62,23 +62,57 @@ def collect_results(pending):
         write_status(job_dir, status)
 
 
+def replay_otter_request(response_dir, emit, animation_options=None):
+    """Replay the newest complete local Stage 4 live request without provider calls."""
+    output = (ROOT / "output").resolve()
+    candidates = sorted((output / "game_bridge").glob("**/status.json"),
+                        key=lambda path: path.stat().st_mtime, reverse=True)
+    for path in candidates:
+        try:
+            saved = json.loads(path.read_text())
+            if (saved.get("game_stage") != "otter" or saved.get("mode") != "live"
+                    or saved.get("status") != "SUCCEEDED"):
+                continue
+            model = Path(saved["model_path"]).resolve()
+            reference = Path(saved["reference_path"]).resolve()
+            if not all(p.is_file() and output in p.parents for p in (model, reference)):
+                continue
+            sample = {key: saved[key] for key in ("item", "reaction", "otter_happy", "otter_response")}
+            sample["item"] = dict(sample["item"])
+            sample["item"].setdefault("mass_kg", 1.0)
+            sample["item"].setdefault("placement", "drop" if sample["item"].get("movable") else "fixed")
+            validate_interpretation(sample, "otter", animation_options)
+        except (OSError, ValueError, KeyError, TypeError, AppError):
+            continue
+        target = response_dir / "model.glb"
+        image = response_dir / ("reference" + reference.suffix)
+        shutil.copyfile(model, target)
+        shutil.copyfile(reference, image)
+        emit({"stage": "complete", "status": "SUCCEEDED", **sample,
+              "model_path": str(target), "reference_path": str(image)})
+        return 0
+    raise AppError("FIXTURE_NOT_AVAILABLE", "No completed local Stage 4 request is available. Run Live AI once first.")
+
+
 def generate(job_dir, mode, emit, game_stage, animation_options=None):
     response_dir = job_dir / "response"
     if mode == "fixture":
+        if game_stage == "otter":
+            return replay_otter_request(response_dir, emit, animation_options)
         stage_number = STAGES[game_stage]["stage_number"]
         if stage_number == 1:
             fixture = ROOT.parent / "docs/test-artifacts/sketch-to-model-2026-09-12"
             sample = json.loads((fixture / "description.json").read_text())
             # Project the retained sample onto the current fixed-crossing contract.
             sample["item"] = {key: sample["item"][key] for key in ("name", "description", "type")}
-            sample["item"].update(type="BRIDGE", movable=False, texture_key="wood", color="#B88755")
+            sample["item"].update(type="BRIDGE", movable=False, mass_kg=200, placement="fixed", texture_key="wood", color="#B88755")
             reference_name = "reference.png"
         elif stage_number == 2:
             fixture = ROOT.parent / "docs/test-artifacts/stage2-2026-09-13"
             # Authored fixture metadata for the retained generated bone assets.
             sample = {"item": {"name": "Dog Bone",
                                "description": "A dog bone that could attract or reward the dog.",
-                               "type": "FOOD", "movable": True, "texture_key": "bone", "color": "#E8D9B7"}}
+                               "type": "FOOD", "movable": True, "mass_kg": 0.5, "placement": "drop", "texture_key": "bone", "color": "#E8D9B7"}}
             reference_name = "reference.jpg"
         else:
             raise AppError("FIXTURE_NOT_AVAILABLE", "No offline sample exists for this stage.")

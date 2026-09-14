@@ -243,3 +243,20 @@ The first presented otter dialogue reply answers the player and naturally invite
 them to continue the journey to the right. The backend supplies
 this route and a first-reply flag to the otter prompt. Later replies do not repeat
 the invitation unless asked about the route; unpresented replies do not consume it.
+
+
+### Microphone lifetime
+
+Every new game process starts without the microphone, including direct stage
+launches. Earning it from the otter unlocks speaking across subsequent chapters
+in that run. Beginning a new journey also clears the unlock. Prior saved unlock
+files are no longer read or written.
+
+### Saved Stage 4 request mode
+
+The otter's default **Saved otter request · No AI** mode replays the newest complete
+local Stage 4 live request from `backend/output/game_bridge/`. It reuses that request's
+model, reference image, reaction and happiness response without provider calls or
+preview rendering. Every submitted sketch receives that saved result. Missing
+local data produces an error; it never switches to Live AI automatically. Select
+**Live AI · Uses credits** to generate a new offering. Saved artifacts remain ignored.

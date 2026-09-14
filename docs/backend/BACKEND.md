@@ -1062,3 +1062,30 @@ They complete immediately after the GLB download, omitting the local PNG render,
 itself. Reference-image generation is still required and is unchanged.
 Standalone CLI runs retain preview rendering by default for inspection/testing;
 pass `--skip-preview` to opt out. Offline fixture test mode retains its preview.
+
+
+### Generated object mass
+
+Interpretation now requires numeric `item.mass_kg` (0.05–1000 kg) in every stage,
+estimated from object identity, size, and material in the existing interpretation
+call. Booleans, nonfinite numbers, and out-of-range values are rejected. The bridge
+passes this field unchanged. Godot uses it for rigid-body mass; fixed objects remain
+static. Older responses without the field retain a 1 kg default.
+
+### Generated object placement
+
+Interpretation also requires `item.placement`: `drop`, `fixed`, or `float`. Choose
+from the object's identity, not whether it solves the encounter. Drops spawn 2 units
+above the ground anchor and use gravity and `mass_kg`; fixed objects stay on the
+anchor; floating objects stay 1.5 units above it. Fixed and floating objects use
+static collision. This governs initial appearance; authored bridge construction
+and later Stage 3 equipment actions still govern their respective interactions.
+Only fixed BRIDGE objects become the authored crossing. Older responses infer
+`drop` from `movable: true`, otherwise `fixed`. No additional AI call is needed.
+
+### Stage 5 object generation
+
+`storykeeper` / `E05` now uses the live sketch-to-model pipeline in addition to the
+existing boss drawing dialogue. Its item class is `UNKNOWN`: generation identifies
+the object, material, mass and placement, while the narrator remains responsible
+for boss mood and completion. No Stage 5 offline fixture is configured.

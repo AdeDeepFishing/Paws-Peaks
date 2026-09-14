@@ -41,7 +41,12 @@ func run() -> void:
 	check(not level.preview_ending_enabled and not level.can_exit(), "Boss gate is closed in real play")
 	level.player.position.z = -13
 	level.constrain_player(level.player)
-	check(level.player.position.z > -12, "Walking around the boss cannot bypass its gate")
+	check(is_equal_approx(level.player.position.z, level.get_node("Storykeeper").position.z), "Closed path stops at the boss position")
+	level.released = true
+	level.player.position.z = -13
+	level.constrain_player(level.player)
+	check(is_equal_approx(level.player.position.z, -13), "Cleared boss allows movement past the boundary")
+	level.released = false
 	level.player.position = Vector3(0, 1, -2)
 	var real_mic = narrator.panel.mic
 	var fake_mic := CaptureStub.new()
@@ -72,7 +77,7 @@ func run() -> void:
 	check(level.process_mode != Node.PROCESS_MODE_DISABLED, "Closing dialogue restores the encounter")
 	level._story_changed({"stage": 5, "exit_open": true, "ending": null})
 	await frames(120)
-	check(level.released and is_equal_approx(level.get_node("Storykeeper").position.x, 0.0) and absf(level.get_node("Storykeeper").rotation.y - PI/2) < .01, "Confirmed release rotates the boss in place")
+	check(level.released and is_equal_approx(level.get_node("Storykeeper").position.x, -1.5) and absf(level.get_node("Storykeeper").rotation.y - PI/2) < .01, "Confirmed release turns the boss and shifts it left")
 	level._story_changed({"stage": 5, "exit_open": false, "ending": null})
 	check(level.released, "Later dialogue cannot reclose the exit")
 	# Transport responses from an old scene must not change state or play speech.

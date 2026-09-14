@@ -74,11 +74,21 @@ static func apply_palette(visual: Node3D, item: Dictionary) -> bool:
 		mesh.material_override = material
 	return true
 
-static func physics_body(visual: Node3D, movable: bool, fit_mesh := false) -> PhysicsBody3D:
+static func placement(item: Dictionary) -> String:
+	return item.get("placement", "drop" if item.get("movable", false) else "fixed")
+
+static func placement_height(item: Dictionary) -> float:
+	match placement(item):
+		"drop": return 2.0
+		"float": return 1.5
+	return 0.0
+
+static func physics_body(visual: Node3D, item: Dictionary, fit_mesh := false) -> PhysicsBody3D:
 	var body: PhysicsBody3D
-	if movable:
+	if placement(item) == "drop":
 		var dynamic := RigidBody3D.new()
 		dynamic.continuous_cd = true
+		dynamic.mass = clampf(item.get("mass_kg", 1.0), 0.05, 1000.0)
 		body = dynamic
 	else:
 		body = StaticBody3D.new()

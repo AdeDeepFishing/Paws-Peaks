@@ -29,6 +29,13 @@ class StageClassTests(unittest.TestCase):
                 run.validate_interpretation({'item': ITEM}, 'dog')
             self.assertNotIn('DOG_DISTRACTION', run.schema_for('river')['properties']['item']['properties']['type']['enum'])
 
+    def test_storykeeper_identifies_objects_without_deciding_boss_outcome(self):
+        value = {"item": {**ITEM, "type": "UNKNOWN", "name": "Candle", "movable": True, "placement": "drop", "mass_kg": 0.4}}
+        with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response(value)).encode())) as transport:
+            self.assertEqual(run.interpret('image', CONFIG, game_stage='storykeeper'), value)
+        transport.assert_called_once()
+        self.assertEqual(run.STAGES['storykeeper']['encounter_id'], 'E05')
+
     def test_crows_explains_defence_after_object_identification(self):
         value = {'item': {**ITEM, 'name': 'Umbrella', 'type': 'DEFENCE', 'movable': True}}
         with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response(value)).encode())) as http:

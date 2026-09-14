@@ -29,6 +29,7 @@ func _ready() -> void:
 	draw_button.tooltip_text = "Share an idea with the Storykeeper."
 	draw_button.pressed.connect(func(): narrator.panel.open_dialogue(); narrator.panel._draw_idea())
 	_build_mood()
+	$ObjectGeneration.setup()
 	$Storykeeper/Character.hide()
 	mood_layer.hide()
 
@@ -44,13 +45,13 @@ func _process(delta: float) -> void:
 		reveal_started = true
 		player.set_input_enabled(false)
 		get_node("/root/Narrator").panel.animate_boss_reveal(_reveal_boss)
-	draw_button.disabled = entering or stay_presented or not boss_revealed
+	draw_button.disabled = entering or stay_presented or not boss_revealed or $ObjectGeneration.request.state == "PENDING"
 	if released and not entering and player.position.z <= -12 and not preview_ending_enabled and not get_node("/root/Narrator").panel.opened:
 		get_node("/root/Narrator").crossed_exit()
 
 func constrain_player(body: CharacterBody3D) -> void:
 	if not preview_ending_enabled and not released:
-		body.position.z = maxf(body.position.z, -10.8)
+		body.position.z = maxf(body.position.z, $Storykeeper.position.z)
 
 func can_exit() -> bool:
 	return preview_ending_enabled

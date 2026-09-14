@@ -16,7 +16,7 @@ from interpret import run as app
 
 ITEM = {
     "name": "A little bridge", "description": "A sturdy little bridge with a long adventure ahead.",
-    "type": "BRIDGE", "movable": False, "texture_key": "wood", "color": "#D9C6A0",
+    "type": "BRIDGE", "movable": False, "mass_kg": 200, "placement": "fixed", "texture_key": "wood", "color": "#D9C6A0",
 }
 CONFIG = {"OPENAI_API_KEY": "fake-key-for-offline-test", "OPENAI_MODEL": "gpt-4.1-mini"}
 
@@ -32,6 +32,9 @@ class InterpretTests(unittest.TestCase):
 
     def test_invalid_item_fields(self):
         mutations = [
+            ("placement", "fly"), ("placement", None), ("placement", True),
+            ("mass_kg", True), ("mass_kg", "8"), ("mass_kg", 0), ("mass_kg", -1),
+            ("mass_kg", 1001), ("mass_kg", float("nan")), ("mass_kg", float("inf")),
             ("texture_key", "plain"), ("texture_key", "../wood"), ("texture_key", "unknown_material"), ("color", "brown"), ("color", "#12345G"), ("color", "#12345678"), ("movable", "true"), ("movable", 1), ("type", "SWORD"), ("type", None), ("name", " "), ("name", "x" * 41),
             ("description", "x" * 161), ("description", None),
         ]
@@ -47,6 +50,24 @@ class InterpretTests(unittest.TestCase):
             with self.assertRaises(app.AppError):
                 app.validate_interpretation(value)
 
+
+    def test_placement_modes_and_required_field(self):
+        for placement in ("drop", "fixed", "float"):
+            item = dict(ITEM, placement=placement)
+            self.assertEqual(app.validate_interpretation({"item": item})["item"]["placement"], placement)
+        item = dict(ITEM)
+        del item["placement"]
+        with self.assertRaises(app.AppError):
+            app.validate_interpretation({"item": item})
+
+    def test_mass_limits_and_required_field(self):
+        for mass in (0.05, 0.5, 8, 1000):
+            item = dict(ITEM, mass_kg=mass)
+            self.assertEqual(app.validate_interpretation({"item": item})["item"]["mass_kg"], mass)
+        item = dict(ITEM)
+        del item["mass_kg"]
+        with self.assertRaises(app.AppError):
+            app.validate_interpretation({"item": item})
 
     def test_one_api_call_and_game_envelope(self):
         body = json.dumps(provider_response({"item": ITEM})).encode()

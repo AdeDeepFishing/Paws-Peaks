@@ -85,6 +85,8 @@ func _drawing_submitted(payload: Dictionary) -> void:
 	record("drawing_submitted", {"request_id": payload.request_id, "result": "Submitted; not yet created or used."})
 
 func _interpreted(id: String, item: Dictionary) -> void:
+	# The boss already receives the sketch; background generation must not stale its reply.
+	if chapter == 5: return
 	record("drawing_interpreted", {"request_id": id, "item": item, "result": "AI interpretation only; use has not been confirmed."})
 	if enabled: _enqueue({"op": "read_drawing", "drawing_id": id})
 
@@ -132,7 +134,8 @@ func ask(text: String, drawing: PackedByteArray = PackedByteArray(), automatic :
 	var request := {"op": "respond", "text": text, "trigger": "event" if automatic else "dialogue"}
 	if not drawing.is_empty():
 		request["image_base64"] = Marshalls.raw_to_base64(drawing)
-		get_node("/root/Journey").sketches_shared += 1
+		if not scene.has_node("ObjectGeneration"):
+			get_node("/root/Journey").sketches_shared += 1
 	_enqueue(request)
 	panel.set_busy(true)
 	comment_due = false

@@ -41,6 +41,7 @@ func run():
 	var facing: Vector3 = otter.global_basis.z
 	check(facing.dot(Vector3.BACK) > 0.98, "Otter turns to face the approaching player")
 	check(narrator.panel.entry.disabled, "Talk stays disabled near the sad otter")
+	check(not narrator.panel.microphone_shine.active, "Microphone does not glow before the gift")
 	narrator.panel._talk()
 	check(not narrator.panel.mic.recording, "Locked Talk cannot start recording")
 	check(otter.heart.visible and otter.mood_revealed, "Approaching reveals the broken heart")
@@ -192,6 +193,7 @@ func run():
 	await create_timer(0.6).timeout
 	check(journey.microphone_unlocked and not level.gift_pending and not is_instance_valid(level.microphone_gift), "After three seconds the gift disappears and speaking unlocks")
 	check(not narrator.panel.entry.disabled, "Nearby player can now use Talk")
+	check(narrator.panel.microphone_shine.active, "Available microphone uses the pen shine after the gift")
 	check(narrator.panel.reveal_text.ends_with("looks like the otter want to talk to you! use the mic to speak"), "Combined gift narration ends with the requested speaking invitation")
 	check(narrator.panel.reveal_time >= 3.0, "Gift removal does not restart or split the combined narration")
 	level._give_microphone()

@@ -11,6 +11,7 @@ func run():
 		root.add_child(level)
 		current_scene = level
 		check(level.entering and not level.player.input_enabled, stage + ": controls locked on entry")
+		check(not level.player.visible, stage + ": elevated setup spawn is hidden")
 		level.player.entrance_finished.connect(func():
 			Input.action_release("move_right")
 			Input.action_release("jump")
@@ -26,7 +27,7 @@ func run():
 				if "--visual" in OS.get_cmdline_user_args():
 					await RenderingServer.frame_post_draw
 					root.get_texture().get_image().save_png("/private/tmp/entrance-walk-" + level.chapter + ".png")
-				check(level.player.walking_in, stage + ": scripted walk active")
+				check(level.player.walking_in and level.player.visible, stage + ": grounded scripted walk is visible")
 				if level.has_method("_open_drawing"):
 					level._open_drawing()
 					check(not level.drawing, stage + ": drawing blocked during entrance")
