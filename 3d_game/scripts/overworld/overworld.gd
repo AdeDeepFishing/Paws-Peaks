@@ -28,6 +28,12 @@ var review_stage := 1
 var browsing_current := false
 var zoom_amount := 0.0
 var zoom_target := 0.0
+var chapter_card: Control
+var title_lines: Array[Label3D] = []
+var title_progress := 0.0
+const INTRO_HOLD := 2.5
+const TITLE_FONT = preload("res://ui/title/cormorant.ttf")
+const TITLE_ITALIC = preload("res://ui/title/cormorant_italic.ttf")
 
 func _ready() -> void:
 	_build_route()
@@ -35,6 +41,7 @@ func _ready() -> void:
 	_build_caption()
 	_build_start_button()
 	_build_zoom_controls()
+	_build_title()
 	_prepare_art()
 	configure(0, 1)
 	var journey := get_node("/root/Journey")
@@ -76,42 +83,48 @@ func _build_caption() -> void:
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _build_start_button() -> void:
-	start_button = Button.new()
-	start_button.name = "Start"
-	start_button.text = "Start the journey  →"
-	caption.get_parent().add_child(start_button)
-	start_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	start_button.offset_left = -180
-	start_button.offset_right = 180
-	start_button.offset_top = -150
-	start_button.offset_bottom = -82
-	start_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	start_button.add_theme_font_size_override("font_size", 28)
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("34584e")
-	paper.set_corner_radius_all(18)
-	paper.border_color = Color("f3ebda")
-	paper.set_border_width_all(2)
-	paper.shadow_color = Color(0.05, 0.12, 0.09, 0.25)
-	paper.shadow_size = 8
-	paper.shadow_offset = Vector2(0, 3)
-	start_button.add_theme_stylebox_override("normal", paper)
-	var hover := paper.duplicate()
-	hover.bg_color = Color("466b5e")
-	start_button.add_theme_stylebox_override("hover", hover)
-	var pressed := paper.duplicate()
-	pressed.bg_color = Color("29463e")
-	start_button.add_theme_stylebox_override("pressed", pressed)
-	var focus := StyleBoxFlat.new()
-	focus.draw_center = false
-	focus.border_color = Color("f4d69a")
-	focus.set_border_width_all(3)
-	focus.set_corner_radius_all(18)
-	start_button.add_theme_stylebox_override("focus", focus)
-	for state in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
-		start_button.add_theme_color_override(state, Color("fff4da"))
+	chapter_card = preload("res://ui/title/chapter_card.gd").new()
+	caption.get_parent().add_child(chapter_card)
+	chapter_card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	start_button = chapter_card.play
 	start_button.pressed.connect(_start)
 	start_button.hide()
+	caption.hide()
+
+func _build_title() -> void:
+	for index in 2:
+		var line := Label3D.new()
+		line.text = "The Tale" if index == 0 else "We Draw"
+		var font := FontVariation.new()
+		font.base_font = TITLE_FONT if index == 0 else TITLE_ITALIC
+		font.variation_opentype = {"wght": 500}
+		line.font = font
+		line.font_size = 160
+		line.outline_size = 0
+		line.modulate = Color("303632")
+		line.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		line.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		line.shaded = false
+		line.no_depth_test = false
+		line.alpha_cut = Label3D.ALPHA_CUT_OPAQUE_PREPASS
+		add_child(line)
+		title_lines.append(line)
+
+func _set_title_progress(value: float) -> void:
+	title_progress = value
+	_layout_title()
+
+func _layout_title() -> void:
+	var viewport := get_viewport().get_visible_rect().size
+	var scale_factor := minf(viewport.x / 1280.0, viewport.y / 800.0)
+	var depth := lerpf(72.0, 1.0, title_progress)
+	var size_px := lerpf(138.0, 46.0, title_progress) * scale_factor
+	var origin := Vector2(viewport.x * .07, viewport.y * .075)
+	var spacing := lerpf(142.0, 49.0, title_progress) * scale_factor
+	for index in title_lines.size():
+		var line := title_lines[index]
+		line.global_transform = Transform3D(camera.global_basis, camera.project_position(origin + Vector2(0, spacing * index), depth))
+		line.pixel_size = 2.0 * depth * tan(deg_to_rad(camera.fov * .5)) / viewport.y * size_px / 160.0
 
 func _build_zoom_controls() -> void:
 	zoom_controls = HBoxContainer.new()
@@ -119,7 +132,7 @@ func _build_zoom_controls() -> void:
 	zoom_controls.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	zoom_controls.offset_left = -330
 	zoom_controls.offset_right = -28
-	zoom_controls.offset_top = 28
+	zoom_controls.offset_top = 152
 	zoom_controls.add_theme_constant_override("separation", 12)
 	var near := Button.new()
 	near.name = "ZoomToPlayer"
@@ -146,7 +159,8 @@ func _build_zoom_controls() -> void:
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		button.add_theme_font_size_override("font_size", 17)
 		for state in ["normal", "hover", "pressed", "focus"]:
-			var style: StyleBoxFlat = start_button.get_theme_stylebox(state).duplicate()
+			var style := StyleBoxFlat.new()
+			style.bg_color = Color("34584e")
 			style.set_corner_radius_all(10)
 			style.content_margin_left = 10
 			style.content_margin_right = 10
@@ -162,10 +176,11 @@ func await_start(stage: int = 1, resume_chapter: bool = false) -> void:
 	zoom_amount = 0.0
 	zoom_target = 0.0
 	zoom_slider.value = 0.0
-	start_button.text = "Start the journey  →" if stage == 1 else "Next page  →"
+	chapter_card.configure(stage, resume_chapter)
+	chapter_card.set_progress(1.0)
 	caption.text = "Draw something, help someone, and have fun ✨" if stage == 1 else "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
 	if resume_chapter:
-		start_button.text = "Return to chapter  →"
+		start_button.text = "Return"
 		caption.text = "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
 	zoom_controls.visible = stage > 1 or resume_chapter
 	start_button.disabled = false
@@ -224,14 +239,18 @@ func configure(from_stage: int, to_stage: int) -> void:
 	_set_palette(_weights_for_stage(maxi(from_stage, 1)))
 	_set_traveler(stage_offsets[maxi(from_stage, 1) - 1])
 	hero.set_motion(false, false, true)
-	caption.text = "PAWS & PEAKS" if from_stage == 0 else "CHAPTER %02d  ·  %s" % [to_stage, TITLES[to_stage - 1]]
+	caption.text = "CHAPTER %02d  ·  %s" % [to_stage, TITLES[to_stage - 1]]
+	chapter_card.configure(to_stage)
+	chapter_card.set_progress(0.0)
+	_set_title_progress(0.0 if from_stage == 0 else 1.0)
+	hero.visible = from_stage != 0
 	_set_camera(_full_transform() if from_stage == 0 else _close_transform(from_stage))
 	phase = "overview" if from_stage == 0 else "return"
 
 func play_route(from_stage: int, to_stage: int, duration_scale: float) -> void:
 	if from_stage == 0:
 		phase = "overview"
-		await get_tree().create_timer(maxf(0.01, 1.3 * duration_scale)).timeout
+		await get_tree().create_timer(maxf(0.01, INTRO_HOLD * duration_scale)).timeout
 	else:
 		phase = "travel"
 		hero.set_motion(true, false, true)
@@ -246,9 +265,25 @@ func play_route(from_stage: int, to_stage: int, duration_scale: float) -> void:
 		await get_tree().create_timer(maxf(0.01, 0.35 * duration_scale)).timeout
 	phase = "zoom_in"
 	caption.text = "CHAPTER %02d  ·  %s" % [to_stage, TITLES[to_stage - 1]]
-	var closeup := create_tween()
+	var closeup := create_tween().set_parallel(true)
+	closeup.tween_method(_set_title_progress, title_progress, 1.0, 1.65 * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	closeup.tween_method(chapter_card.set_progress, 0.0, 1.0, 1.65 * duration_scale).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	start_button.disabled = true
+	start_button.show()
 	closeup.tween_method(_set_camera, camera.transform, _close_transform(to_stage), 1.65 * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await closeup.finished
+	if from_stage == 0:
+		hero.show()
+		hero.set_motion(true, false, true)
+		var goal: Vector3 = route.sample_baked(stage_offsets[0])
+		var entry := goal + Vector3(0, -.1, 10.0)
+		hero.position = entry
+		hero.rotation.y = 0.0
+		var walk := create_tween()
+		walk.tween_property(hero, "position", goal, 1.2 * duration_scale)
+		await walk.finished
+		_set_traveler(stage_offsets[0])
+		hero.set_motion(false, false, true)
 	phase = "arrival"
 	await get_tree().create_timer(maxf(0.01, 0.3 * duration_scale)).timeout
 
@@ -261,6 +296,8 @@ func _set_palette(value: Vector3) -> void:
 	palette_weights = value
 	for material in materials:
 		material.set_shader_parameter("weights", value)
+	for line in title_lines:
+		line.modulate = Color("303632").lerp(Color("f3ebda"), value.z)
 
 func _set_traveler(offset: float) -> void:
 	traveler_offset = offset
@@ -276,13 +313,14 @@ func _full_transform() -> Transform3D:
 	return Transform3D(Basis.IDENTITY, FULL_TARGET + (FULL_POSITION - FULL_TARGET) * pullback).looking_at(FULL_TARGET)
 
 func _close_transform(stage: int) -> Transform3D:
-	var focus: Vector3 = RouteData.STAGES[stage - 1] + Vector3.UP * 0.9
-	return Transform3D(Basis.IDENTITY, focus + (FULL_POSITION - FULL_TARGET).normalized() * 14.0).looking_at(focus)
+	var focus: Vector3 = RouteData.STAGES[stage - 1] + Vector3.DOWN * 1.2
+	return Transform3D(Basis.IDENTITY, focus + (FULL_POSITION - FULL_TARGET).normalized() * 25.0).looking_at(focus)
 
 func _set_camera(value: Transform3D) -> void:
 	camera.transform = value
 
 func _process(delta: float) -> void:
+	_layout_title()
 	if phase == "start" and (review_stage > 1 or browsing_current):
 		zoom_amount = lerpf(zoom_amount, zoom_target, 1.0 - exp(-delta * 9.0))
 		_set_camera(_close_transform(review_stage).interpolate_with(_full_transform(), zoom_amount))

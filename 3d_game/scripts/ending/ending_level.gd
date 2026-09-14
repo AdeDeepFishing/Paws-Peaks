@@ -95,23 +95,20 @@ func show_book(timing: float = 1.0) -> void:
 	exploration.hide()
 	book.show()
 	book.modulate.a = 0.0
-	book.replay.disabled = true
-	book.explore.disabled = true
+	book.set_actions_enabled(false)
 	if book_tween: book_tween.kill()
 	book_tween = create_tween().set_parallel(true)
-	book_tween.tween_property(veil, "modulate:a", 0.48, 0.8 * timing).set_trans(Tween.TRANS_SINE)
+	book_tween.tween_property(veil, "modulate:a", 0.0, 0.8 * timing).set_trans(Tween.TRANS_SINE)
 	book_tween.tween_property(book, "modulate:a", 1.0, 0.8 * timing).set_trans(Tween.TRANS_SINE)
 	await book_tween.finished
 	presentation_phase = "book"
-	book.replay.disabled = false
-	book.explore.disabled = false
+	book.set_actions_enabled(true)
 	book.replay.grab_focus()
 
 func _explore() -> void:
 	if presentation_phase != "book": return
 	presentation_phase = "closing_book"
-	book.replay.disabled = true
-	book.explore.disabled = true
+	book.set_actions_enabled(false)
 	book_tween = create_tween().set_parallel(true)
 	book_tween.tween_property(book, "modulate:a", 0.0, 0.25)
 	book_tween.tween_property(veil, "modulate:a", 0.0, 0.35)
@@ -124,8 +121,7 @@ func _explore() -> void:
 func _replay() -> void:
 	if presentation_phase != "book": return
 	presentation_phase = "leaving"
-	book.replay.disabled = true
-	book.explore.disabled = true
+	book.set_actions_enabled(false)
 	get_node("/root/Journey").start_intro()
 
 func _unhandled_input(event: InputEvent) -> void:

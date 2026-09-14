@@ -10,11 +10,13 @@ func check(ok: bool, message: String) -> void:
 		push_error(message)
 
 func run() -> void:
+	create_timer(45).timeout.connect(func(): push_error("Journey journal test timed out"); quit(1))
 	var journey := root.get_node("Journey")
 	JourneyTest.fast(self)
 	change_scene_to_file(journey.STAGES[0])
 	await scene_changed
 	var request: Node = current_scene.get_node("DrawingRequest")
+	request.draft_directory = OS.get_environment("TMPDIR").path_join("title81-journal-%d" % OS.get_process_id())
 	current_scene.get_node("DesktopGeneration").mode = 0
 	request.mock_mode = false
 	check(journey.visited_chapters == [1], "A direct chapter launch records only that chapter")
@@ -34,9 +36,9 @@ func run() -> void:
 	change_scene_to_file(journey.STAGES[4])
 	await scene_changed
 	check(journey.visited_chapters == [1, 5], "Skipped chapters are never invented in the recap")
+	while current_scene.entering: await process_frame
 	current_scene.complete_boss_encounter()
-	await process_frame
-	await JourneyTest.complete(self)
+	await journey.finished
 	check(current_scene.book.chapters_value.text == "2 / 5", "Victory uses the actual visited chapter count")
 	check(current_scene.book.sketches_value.text == "2", "Victory displays actual shared submissions")
 	current_scene.book.replay.pressed.emit()
