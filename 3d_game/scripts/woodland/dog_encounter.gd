@@ -36,6 +36,7 @@ func _ready() -> void:
 	objective.text = "Draw a distraction for the dog."
 	_build_drawing()
 	presentation = Presentation.new()
+	presentation.focus_when_ready = true
 	presentation.name = "DogPresentation"
 	add_child(presentation)
 	presentation.finished.connect(_react_to_offering)

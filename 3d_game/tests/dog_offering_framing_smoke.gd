@@ -18,7 +18,9 @@ func run():
 		level._submit()
 		check(level.request.state == "PENDING", "Sketch reaches the actual submission flow")
 		await wait_until(func(): return level.presentation.phase == "waiting")
-		await frames(2)
+		check(level.camera_follow_enabled and not level.presentation.focus_started, "Waiting preserves normal player follow")
+		respond()
+		await wait_until(func(): return level.presentation.phase == "revealing")
 		var preview = level.generation_preview
 		var viewport := Rect2(Vector2.ZERO, root.get_visible_rect().size)
 		check(viewport.encloses(Rect2(preview.mist.position, preview.mist.size)), "Entire sketch and mist fit the close-up: " + str(sketch_size))
@@ -34,7 +36,6 @@ func run():
 
 	# Allow the actual gravity/reveal sequence to finish before the dog approaches.
 	level.presentation.duration_scale = 1.0
-	respond()
 	await wait_until(func(): return level.dog.distracted)
 	var landing: Vector3 = level.offered.global_position
 	level.dog.paused = true

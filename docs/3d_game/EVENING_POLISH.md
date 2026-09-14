@@ -4,9 +4,9 @@
   left the original interaction area. There is no second E-to-offer action.
 - Chapter 3 likewise presents completed protection without a second E press after
   an airborne completion. Chapters 1 and 4 already present generated results.
-- Chapter 2's construction camera centers on the protagonist and tracks their
-  movement while retaining the sketch/model in frame; dog patrol is not a camera
-  subject during construction.
+- Chapter 2 keeps its normal player-follow camera while generating. Only once
+  the 3D model is ready does the camera move closer for the reveal, then return
+  to the view captured at completion. Dog patrol is not a reveal camera subject.
 - Unsolved encounter prompts describe goals (distract, protect, cross, connect)
   rather than naming example objects or solution categories. Item descriptions
   may still identify what the player actually drew.

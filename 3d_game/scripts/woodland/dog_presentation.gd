@@ -8,6 +8,8 @@ const Framing = preload("res://scripts/woodland/encounter_framing.gd")
 @export var duration_scale := 1.0
 @export var focus_fov := Framing.FOCUS_FOV
 @export var track_subjects := true
+@export var focus_when_ready := false
+var focus_started := false
 var phase := "idle"
 var active := false
 var busy := false
@@ -22,9 +24,17 @@ var focus_anchor := Vector3.ZERO
 func begin(anchor: Vector3) -> void:
 	cancel()
 	active = true
-	phase = "focusing"
-	var token := epoch
 	focus_anchor = anchor
+	if focus_when_ready:
+		phase = "waiting"
+		return
+	_focus()
+
+func _focus() -> void:
+	phase = "focusing"
+	focus_started = true
+	var token := epoch
+	var anchor := focus_anchor
 	home = camera.transform
 	home_fov = camera.fov
 	level.camera_follow_enabled = false
@@ -43,14 +53,16 @@ func begin(anchor: Vector3) -> void:
 	focused.emit()
 
 func _process(delta: float) -> void:
-	if active and track_subjects and phase in ["waiting", "revealing"] and level.has_method("presentation_camera_transform"):
+	if active and focus_started and track_subjects and phase in ["waiting", "revealing"] and level.has_method("presentation_camera_transform"):
 		var destination: Transform3D = level.presentation_camera_transform(focus_anchor)
 		camera.transform = camera.transform.interpolate_with(destination, 1.0 - exp(-delta * 3.0))
 
 func reveal(model: Node3D) -> void:
 	if not active: begin(model.position)
 	var token := epoch
-	# Fast responses still let the initial camera movement finish.
+	if not focus_started:
+		_focus()
+	# Completed models wait for the reveal camera to arrive.
 	if phase == "focusing": await focused
 	if token != epoch or not is_instance_valid(model): return
 	phase = "revealing"
@@ -70,6 +82,7 @@ func reveal(model: Node3D) -> void:
 	await tween.finished
 	if token != epoch: return
 	active = false
+	focus_started = false
 	phase = "idle"
 	level.camera_follow_enabled = true
 	_lock(false)
@@ -80,10 +93,11 @@ func cancel() -> void:
 	if tween and tween.is_valid():
 		tween.kill()
 		tween.finished.emit()
-	if active:
+	if active and focus_started:
 		camera.transform = home
 		camera.fov = home_fov
 	active = false
+	focus_started = false
 	phase = "idle"
 	level.camera_follow_enabled = true
 	_lock(false)
