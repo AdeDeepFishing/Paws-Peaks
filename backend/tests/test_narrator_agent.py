@@ -44,6 +44,16 @@ class NarratorTests(unittest.TestCase):
         response = self.service.handle(request)
         if "state" in response: self.state = response["state"]
         return response
+    def test_drawing_scores_without_a_clarification_turn(self):
+        import base64
+        self.model.decision = "NEEDS_CLARIFICATION"
+        self.model.delta = 12
+        image = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"x" * 32).decode()
+        result = self.send("respond", text="", image_base64=image)
+        self.assertEqual(result["decision"]["decision"], "PARTIAL_PROGRESS")
+        self.assertEqual(result["state"]["mood"], 49)
+        self.assertEqual(self.model.calls[-1]["authoritative_result"]["decision"], "PARTIAL_PROGRESS")
+
     def test_fixed_opening_replays_without_a_model_call(self):
         direction = "Follow the path to the right."
         self.send("event", type="guidance_changed", stage=5, payload={"text": direction})

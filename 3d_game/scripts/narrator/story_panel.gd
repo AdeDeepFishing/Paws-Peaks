@@ -7,6 +7,9 @@ var drawer: PanelContainer
 var caption: PanelContainer
 var caption_text: Label
 var transcript: RichTextLabel
+var thinking: Control
+var thinking_dots: Array[Label] = []
+var thinking_time := 0.0
 var heard: Label
 var draw_idea: Button
 var reveal_text := ""
@@ -99,29 +102,19 @@ func _ready() -> void:
 	transcript.text = ""
 	heard = _label(content, "Tap the microphone and speak. Pause when you are done.", 17)
 	heard.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var field := StyleBoxFlat.new()
-	field.bg_color = Color(0.90,0.87,0.79,0.5)
-	field.set_corner_radius_all(8)
-	field.set_content_margin_all(8)
 	var actions := HBoxContainer.new()
 	content.add_child(actions)
 	draw_idea = _button(actions, "Draw an idea", _draw_idea)
 	record_button = _button(actions, "Speak", _toggle_recording)
 	record_button.icon = load("res://ui/microphone.svg")
-	_button(actions, "Stop voice", story.skip)
-	var voice := CheckButton.new()
-	voice.text = "Voice"
-	for color_name in ["font_color", "font_pressed_color", "font_hover_color", "font_hover_pressed_color"]:
-		voice.add_theme_color_override(color_name, INK)
-	voice.button_pressed = true
-	voice.toggled.connect(story.set_voice)
-	actions.add_child(voice)
-	var frequency := OptionButton.new()
-	for label in ["Guidance + reactions", "Guidance only"]: frequency.add_item(label)
-	frequency.item_selected.connect(func(index): story.verbosity = ["normal", "quiet"][index])
-	actions.add_child(frequency)
-	frequency.add_theme_color_override("font_color", INK)
-	frequency.add_theme_stylebox_override("normal", field)
+	thinking = Control.new()
+	thinking.custom_minimum_size = Vector2(70, 24)
+	content.add_child(thinking)
+	for i in 3:
+		var dot := _label(thinking, "●", 15)
+		dot.position = Vector2(i * 18, 4)
+		thinking_dots.append(dot)
+	thinking.hide()
 	voice_note = _label(content, "", 13)
 	confirmation = VBoxContainer.new()
 	content.add_child(confirmation)
@@ -232,7 +225,9 @@ func set_busy(value: bool) -> void:
 	busy = value
 	if record_button: record_button.disabled = value
 	if draw_idea: draw_idea.disabled = value
-	if voice_note: voice_note.text = partner + " is thinking…" if value else ""
+	if thinking: thinking.visible = value
+	if value: thinking_time = 0.0
+	if voice_note: voice_note.text = ""
 
 func reset_story() -> void:
 	close_dialogue()
@@ -270,6 +265,10 @@ func finish_reveal() -> void:
 	if caption_text: caption_text.visible_characters = -1
 
 func _process(delta: float) -> void:
+	if busy:
+		thinking_time += delta
+		for i in thinking_dots.size():
+			thinking_dots[i].position.y = 4.0 - 5.0 * maxf(0, sin(thinking_time * 6.0 - i * .8))
 	if reveal_text.is_empty(): return
 	reveal_wait += delta
 	if speech_started and story.audio.playing:
@@ -340,6 +339,7 @@ func _share_drawing() -> void:
 	if busy or mic.recording or not surface.has_drawing(): return
 	_finish_drawing()
 	finish_reveal()
+	heard.text = ""
 	transcript.text += "\n\nYou shared a drawing."
 	story.ask("", surface.snapshot_png())
 
@@ -388,6 +388,7 @@ func receive_transcript(text: String, partial := false) -> void:
 		return
 	heard.text = "You: " + text
 	if partial: return
+	heard.text = ""
 	finish_reveal()
 	transcript.text += "\n\nYou: " + text
 	story.ask(text)

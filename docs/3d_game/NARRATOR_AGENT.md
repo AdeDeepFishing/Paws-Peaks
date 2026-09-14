@@ -141,3 +141,11 @@ range. The first Speak click offers a short explanation, remembered locally;
 recording always requires an explicit Speak/Start recording click. System permission
 is handled by the platform. Otter drawings that project onto sky/water use grounded nearby sand
 for placement; the second Show drawing action is covered by a regression test.
+
+### Conversation polish
+
+The action row contains only Draw an idea and Speak. Final recognition clears the
+live heard-text row after adding one transcript entry. Waiting for a response uses
+three staggered bouncing dots. Drawing submissions receive an immediate best-effort
+interpretation and mood evaluation (including zero when appropriate), without a
+clarification turn; later voluntary corrections remain accepted.
