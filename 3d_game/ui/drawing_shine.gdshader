@@ -21,7 +21,7 @@ float sparkle(vec2 point, vec2 center, float strength) {
 void fragment() {
 	vec2 extent = button_size + vec2(36.0);
 	vec2 p = UV * extent - extent * 0.5;
-	float distance = rounded_box(p, button_size * 0.5, 15.0);
+	float distance = rounded_box(p, button_size * 0.5, min(button_size.x, button_size.y) * 0.5);
 	float fill = 1.0 - smoothstep(-0.8, 0.8, distance);
 	float pulse = 0.5 + 0.5 * sin(TIME * 2.3);
 	vec3 spectrum = rainbow(p.x * 0.031 + p.y * 0.047 - TIME * 1.3);

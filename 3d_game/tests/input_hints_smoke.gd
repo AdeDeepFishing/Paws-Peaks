@@ -13,7 +13,7 @@ func run() -> void:
 	root.add_child(level)
 	current_scene = level
 	await process_frame
-	check(level.book.text == "E · Draw", "Keyboard entry shows only E")
+	check(level.book.tooltip_text == "E · Draw", "Keyboard entry shows only E")
 	check(not "Square" in level.controls.text and not "D-pad" in level.controls.text, "Keyboard hints omit controller labels")
 	var joy := InputEventJoypadMotion.new()
 	joy.device = 0
@@ -31,7 +31,7 @@ func run() -> void:
 	check(level.book_key == "E", "Mouse input restores keyboard hints")
 	level.hint_device = 0
 	level._update_controller_hints(0, false)
-	check(level.book.text == "E · Draw", "Disconnect restores keyboard hints")
+	check(level.book.tooltip_text == "E · Draw", "Disconnect restores keyboard hints")
 	check(level.controller_labels("Xbox Wireless Controller").draw == "X", "Xbox uses X")
 	check(level.controller_labels("DualSense Wireless Controller").draw == "□", "PlayStation uses a square glyph")
 	check(level.controller_labels("Nintendo Switch Pro Controller").draw == "Y", "Switch uses Y")

@@ -42,6 +42,8 @@ func set_active(enabled: bool) -> void:
 		return
 	active = enabled
 	visible = enabled
+	if button.get_script() == preload("res://ui/storybook/illustrated_button.gd"):
+		return
 	for state in STATES:
 		if enabled:
 			# Retain content margins so the label never moves when the cue appears.

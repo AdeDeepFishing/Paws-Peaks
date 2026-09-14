@@ -59,6 +59,8 @@ func _scene_changed() -> void:
 	guidance_text = ""
 	guidance_due = false
 	reaction_due = false
+	panel.cancel_boss_reveal()
+	panel.last_status = ""
 	panel.close_dialogue()
 	epoch += 1
 	audio.stop()
@@ -157,10 +159,11 @@ func reset_journey() -> void:
 		_ensure_worker()
 		_enqueue({"op": "new"})
 
-func skip() -> void:
+func skip(keep_caption := false) -> void:
 	audio.stop()
 	last_utterance = ""
-	panel.hide_caption()
+	if keep_caption: panel.finish_reveal()
+	else: panel.hide_caption()
 
 func set_voice(value: bool) -> void:
 	voice_enabled = value
@@ -169,10 +172,10 @@ func set_voice(value: bool) -> void:
 		panel.finish_reveal()
 
 func _process(delta: float) -> void:
-	var playable: bool = is_instance_valid(scene) and chapter > 0 and not get_node("/root/Journey").busy
+	var playable: bool = is_instance_valid(scene) and scene.is_inside_tree() and chapter > 0 and not get_node("/root/Journey").busy
 	if playable:
 		playable = scene.get("entering") != true and scene.process_mode != Node.PROCESS_MODE_DISABLED
-	panel.entry.visible = playable and chapter in [4, 5] and not panel.canvas_panel.visible and state.get("ending") == null
+	panel.entry.visible = playable and chapter in [4, 5] and get_node("/root/Journey").microphone_unlocked and not panel.canvas_panel.visible and state.get("ending") == null
 	panel.entry.disabled = panel.busy or (playable and chapter == 4 and scene.has_method("near_otter") and not scene.near_otter())
 	panel.entry.tooltip_text = "Approach the otter to talk." if panel.entry.disabled else "Speak with the character."
 	if not enabled: return
@@ -180,7 +183,7 @@ func _process(delta: float) -> void:
 	if playable and panel.opened:
 		var current_guidance := _current_guidance()
 		if is_instance_valid(guidance_status) and not current_guidance.is_empty():
-			guidance_status.visible = not panel.caption.visible
+			guidance_status.hide()
 	if caption_deadline > 0 and Time.get_ticks_msec() > caption_deadline and not audio.playing and not panel.opened and panel.reveal_text.is_empty():
 		panel.hide_caption()
 		caption_deadline = 0
@@ -202,7 +205,7 @@ func _process(delta: float) -> void:
 		active = {}
 		_fail("The Storykeeper is taking too long. Your words and drawing are safe; try again.")
 	if active.is_empty() and not queue.is_empty(): _dispatch()
-	if playable and not panel.opened and auto_narration and (guidance_due or verbosity != "quiet") and queue.is_empty() and active.is_empty():
+	if playable and not panel.opened and not panel.revealing_boss and auto_narration and (guidance_due or verbosity != "quiet") and queue.is_empty() and active.is_empty():
 		var player = scene.get("player")
 		var occupied: bool = player == null or not player.input_enabled or player.drawing_active
 		if not occupied and (comment_due or guidance_due) and Time.get_ticks_msec() / 1000.0 >= next_comment:
@@ -329,7 +332,7 @@ func _observe_guidance() -> void:
 	var latest := _current_guidance()
 	if is_instance_valid(guidance_status):
 		# Keep errors and loading status visible; avoid two copies of spoken guidance.
-		guidance_status.visible = latest.is_empty() or not panel.caption.visible
+		guidance_status.hide()
 	if latest == guidance_text: return
 	guidance_text = latest
 	guidance_due = not latest.is_empty()

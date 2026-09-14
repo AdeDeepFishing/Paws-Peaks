@@ -10,6 +10,9 @@ var mood_label: Label
 var mood_bar: ProgressBar
 var mood_hint: Label
 var mood_layer: CanvasLayer
+var boss_revealed := false
+var reveal_started := false
+var reveal_timer := 0.0
 
 func _ready() -> void:
 	super._ready()
@@ -22,14 +25,26 @@ func _ready() -> void:
 	var narrator := get_node("/root/Narrator")
 	narrator.state_changed.connect(_story_changed)
 	narrator.reply_ready.connect(_reply)
-	draw_button.text = "E · Draw"
+	draw_button.tooltip_text = "E · Draw"
 	draw_button.tooltip_text = "Share an idea with the Storykeeper."
 	draw_button.pressed.connect(func(): narrator.panel.open_dialogue(); narrator.panel._draw_idea())
 	_build_mood()
+	$Storykeeper/Character.hide()
+	mood_layer.hide()
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	draw_button.disabled = entering or stay_presented
+	if not entering and not reveal_started:
+		reveal_timer += delta
+		var narrator = get_node("/root/Narrator")
+		# Let live narration begin before the paper moves; offline/error paths are bounded.
+		if narrator.enabled and reveal_timer < 8.0 and (narrator.panel.reveal_text.is_empty() or (narrator.voice_enabled and not narrator.panel.speech_started)):
+			draw_button.disabled = true
+			return
+		reveal_started = true
+		player.set_input_enabled(false)
+		get_node("/root/Narrator").panel.animate_boss_reveal(_reveal_boss)
+	draw_button.disabled = entering or stay_presented or not boss_revealed
 	if released and not entering and player.position.z <= -12 and not preview_ending_enabled and not get_node("/root/Narrator").panel.opened:
 		get_node("/root/Narrator").crossed_exit()
 
@@ -91,6 +106,7 @@ func _build_mood() -> void:
 	add_child(mood_layer)
 	var card := PanelContainer.new()
 	mood_layer.add_child(card)
+	card.hide()
 	card.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	card.offset_left = -338
 	card.offset_right = -28
@@ -138,7 +154,7 @@ func _update_mood(value: int) -> void:
 	mood_bar.add_theme_stylebox_override("fill", fill)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("sketchbook") and not entering and not stay_presented:
+	if event.is_action_pressed("sketchbook") and not entering and boss_revealed and not stay_presented:
 		var panel = get_node("/root/Narrator").panel
 		panel.open_dialogue()
 		panel._draw_idea()
@@ -152,3 +168,15 @@ func finish_daybreak(timing: float) -> void:
 	await daybreak.go(1.0, timing)
 	await daybreak.go(2.0, timing)
 	await get_tree().create_timer(1.0 * timing).timeout
+
+func _reveal_boss() -> void:
+	boss_revealed = true
+	var character: Node3D = $Storykeeper/Character
+	character.show()
+	var final_scale := character.scale
+	character.scale = final_scale * .04
+	var pop := create_tween()
+	pop.tween_property(character, "scale", final_scale * 1.06, .18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	pop.tween_property(character, "scale", final_scale, .22).set_trans(Tween.TRANS_SINE)
+	pop.tween_callback(func(): player.set_input_enabled(true))
+	get_node("/root/GameAudio").play_cue("reveal")

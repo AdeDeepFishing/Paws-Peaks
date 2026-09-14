@@ -60,7 +60,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	super._process(delta)
 	draw_button.disabled = entering or solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor()
-	draw_button.text = "Path is clear" if solved else ("Protected" if resolving else ("E · Use protection" if request.state == "READY" and item.get("type") == "DEFENCE" else "E · Draw"))
+	draw_button.tooltip_text = "Path is clear" if solved else ("Protected" if resolving else ("E · Use protection" if request.state == "READY" and item.get("type") == "DEFENCE" else "E · Draw"))
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
 	cancel_request.visible = request.state == "PENDING"
 	modes.disabled = request.state == "PENDING" or resolving or solved or presentation.active
@@ -104,6 +104,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _open_drawing() -> void:
+	if get_node("/root/Narrator").panel.opened: return
 	if entering: return
 	if solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor(): return
 	if request.state == "READY" and not item.is_empty() and not is_instance_valid(offered):
@@ -268,12 +269,12 @@ func _build_drawing() -> void:
 	modes.add_item("AI drawing · Uses credits", 2)
 	modes.add_item("Mock outcomes · No AI", 0)
 	modes.selected = 0 if generation.mode == 2 else 1
-	modes.position = Vector2(28, 150)
+	preload("res://ui/storybook/layout.gd").debug_control(modes, 0)
 	hud_root.add_child(modes)
 	modes.item_selected.connect(func(index: int): generation.configure(modes.get_item_id(index)))
 	cancel_request = Button.new()
 	cancel_request.text = "Stop waiting"
-	cancel_request.position = Vector2(28, 195)
+	preload("res://ui/storybook/layout.gd").debug_control(cancel_request, 2)
 	hud_root.add_child(cancel_request)
 	cancel_request.pressed.connect(func():
 		request.cancel()
@@ -286,40 +287,18 @@ func _build_drawing() -> void:
 	surface = DrawingSurface.new()
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(surface)
-	var toolbar := PanelContainer.new()
-	overlay.add_child(toolbar)
-	toolbar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	toolbar.offset_left = 20
-	toolbar.offset_right = -20
-	toolbar.offset_top = -142
-	toolbar.offset_bottom = -20
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("f3ebda")
-	paper.set_corner_radius_all(14)
-	paper.content_margin_left = 18
-	paper.content_margin_right = 18
-	paper.content_margin_top = 14
-	paper.content_margin_bottom = 14
-	toolbar.add_theme_stylebox_override("panel", paper)
-	surface.excluded_control = toolbar
-	var stack := VBoxContainer.new()
-	toolbar.add_child(stack)
-	hint = _label(stack, "Draw something to protect yourself.", 18)
+	hint = _label(overlay, "Draw your idea over the scene.", 18)
+	hint.hide()
 	choices = OptionButton.new()
 	for choice in ["NO AI · Umbrella", "NO AI · Shield", "NO AI · Unclear", "NO AI · Service failure", "NO AI · Unsuitable"]:
 		choices.add_item(choice)
-	stack.add_child(choices)
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 12)
-	stack.add_child(buttons)
-	_button(buttons, "Undo", func(): surface.undo())
-	_button(buttons, "Clear", func(): surface.clear())
-	_button(buttons, "Back · Esc", _close_drawing)
-	submit_button = _button(buttons, "Create protection", _submit)
+	overlay.add_child(choices)
+	preload("res://ui/storybook/layout.gd").debug_control(choices, 0)
+	var actions := preload("res://ui/storybook/layout.gd").toolbar(overlay, surface, _close_drawing, _submit)
+	submit_button = actions.get_node("HBoxContainer/Submit")
+	preload("res://ui/storybook/layout.gd").drawing_tools(overlay)
 	surface.changed.connect(func():
-		submit_button.disabled = not surface.has_drawing()
-		if surface.has_drawing():
-			hint.text = "Draw something to protect yourself."
+		if surface.has_drawing(): hint.text = "Draw your idea over the scene."
 	)
 	overlay.hide()
 

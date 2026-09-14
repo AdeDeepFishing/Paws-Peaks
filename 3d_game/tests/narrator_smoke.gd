@@ -26,7 +26,9 @@ func run() -> void:
 	change_scene_to_file("res://scenes/moonlit_forest/moonlit_forest.tscn")
 	await scene_changed
 	var level = current_scene
-	await frames(120)
+	await create_timer(5).timeout
+	root.get_node("Journey").grant_microphone()
+	await frames(3)
 	check(narrator.panel.entry.visible, "Chapter 5 exposes Talk")
 	check(level.mood_bar.value == 37, "Boss starts at 37 percent")
 	level._update_mood(19)
@@ -82,7 +84,7 @@ func run() -> void:
 	level.status.text = "Preparing your drawing…"
 	check(narrator._current_guidance().is_empty(), "Technical status does not become spoken guidance")
 	check(narrator.panel.caption.find_children("*", "Button", true, false).all(func(b): return not "Skip" in b.text), "Subtitle has no Skip button")
-	check(narrator.panel.caption.get_theme_stylebox("panel").bg_color.a < 0.8, "Subtitle paper is translucent")
+	check(narrator.panel.caption_art.texture != null, "Subtitle uses supplied paper")
 	level.show_stay_book(null)
 	check(level.book.ending_title.text == "A Place to Stay", "Staying has a complete, distinct ending book")
 	check(level.book.replay != null and level.book.explore != null, "Stay ending permits replay and viewing the world")
