@@ -24,6 +24,42 @@ class GameBridgeTests(unittest.TestCase):
         return json.loads((self.folder / 'status.json').read_text())
 
 
+    def test_otter_fixture_replays_only_saved_stage4_live_requests(self):
+        output = self.folder / "output/game_bridge"
+        saved = output / "previous-otter"
+        saved.mkdir(parents=True)
+        (saved / "model.glb").write_bytes(b"saved-stage4-model")
+        (saved / "reference.png").write_bytes(b"saved-stage4-reference")
+        item = {"name": "Candle", "description": "A warm candle.", "movable": True,
+                "texture_key": "wood", "color": "#D9C6A0"}
+        status = {"game_stage": "otter", "mode": "live", "status": "SUCCEEDED",
+                  "item": item, "reaction": "Cheer_with_Both_Hands", "otter_happy": True,
+                  "otter_response": "That warm light cheers me up!",
+                  "model_path": str(saved / "model.glb"), "reference_path": str(saved / "reference.png")}
+        (saved / "status.json").write_text(json.dumps(status))
+        wrong = output / "newer-stage3"
+        wrong.mkdir()
+        (wrong / "status.json").write_text(json.dumps({**status, "game_stage": "crows"}))
+        response = self.folder / "response"
+        response.mkdir()
+        events = []
+        with patch.object(run, "ROOT", self.folder), patch.object(run.pipeline, "main") as live:
+            self.assertEqual(run.generate(self.folder, "fixture", events.append, "otter"), 0)
+            live.assert_not_called()
+        result = events[-1]
+        self.assertEqual(Path(result["model_path"]).read_bytes(), b"saved-stage4-model")
+        self.assertEqual(Path(result["reference_path"]).read_bytes(), b"saved-stage4-reference")
+        self.assertTrue(result["otter_happy"])
+        self.assertEqual(result["reaction"], status["reaction"])
+        self.assertEqual(result["item"]["mass_kg"], 1.0)
+        self.assertEqual(result["item"]["placement"], "drop")
+
+    def test_missing_otter_fixture_does_not_call_ai(self):
+        with patch.object(run, "ROOT", self.folder), patch.object(run.pipeline, "main") as live:
+            with self.assertRaises(run.AppError):
+                run.generate(self.folder, "fixture", lambda event: None, "otter")
+            live.assert_not_called()
+
     def test_live_delegates_and_filters_status_fields(self):
         def pipeline(argv, *, output_folder, on_event):
             self.assertEqual(argv, ['--skip-preview', '--image', str(self.folder / 'request/input.png'), '--game-stage', 'river'])
@@ -66,6 +102,7 @@ class GameBridgeTests(unittest.TestCase):
             wait_for(lambda: status().get('status') == 'SUCCEEDED')
             self.assertIn('item', status())
             self.assertEqual(status()['item']['movable'], stage == 'dog')
+            self.assertEqual(status()['item']['mass_kg'], 0.5 if stage == 'dog' else 200)
             if stage == 'dog':
                 self.assertEqual(status()['item']['name'], 'Dog Bone')
                 fixture = run.ROOT.parent / 'docs/test-artifacts/stage2-2026-09-13'

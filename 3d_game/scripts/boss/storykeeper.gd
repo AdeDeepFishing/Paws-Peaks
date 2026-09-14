@@ -43,6 +43,8 @@ func make_way() -> void:
 	if moved_aside: return
 	moved_aside = true
 	_idle()
-	# Rotate the body and its thin collider together; retain the authored position.
-	var tween := create_tween()
-	tween.tween_property(self,"rotation:y",PI/2.0,1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# Move the body and its collider together to open the path.
+	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(self, "rotation:y", PI / 2.0, 1.8)
+	tween.tween_property(self, "position:x", position.x - 1.5, 1.8)
+	tween.finished.connect(_place_on_ground)

@@ -10,7 +10,7 @@ signal request_failed(request_id: String, error_code: String, message: String)
 @export var mock_delay := 3.0
 @export var timeout_seconds := 20.0
 
-const GAME_STAGES := {"E01": "river", "E02": "dog", "E03": "crows", "E04": "otter"}
+const GAME_STAGES := {"E01": "river", "E02": "dog", "E03": "crows", "E04": "otter", "E05": "storykeeper"}
 const MaterialPalette = preload("res://scripts/river/material_palette.gd")
 const DraftStore = preload("res://scripts/river/draft_store.gd")
 var animation_options: Dictionary = {}
@@ -142,10 +142,16 @@ static func valid_otter_mood(value: Dictionary) -> bool:
 
 ## Classification membership is validated by the backend stage configuration.
 static func valid_item(value: Variant, stage: String = "river") -> bool:
-	if not value is Dictionary or value.size() != (5 if stage == "otter" else 6):
+	if not value is Dictionary or value.size() != (5 if stage == "otter" else 6) + (1 if value.has("mass_kg") else 0) + (1 if value.has("placement") else 0):
 		return false
 	if not MaterialPalette.valid_selection(value.get("texture_key"), value.get("color")):
 		return false
+	if value.has("placement") and value.placement not in ["drop", "fixed", "float"]:
+		return false
+	if value.has("mass_kg"):
+		var mass = value.mass_kg
+		if not (mass is float or mass is int) or not is_finite(float(mass)) or mass < 0.05 or mass > 1000:
+			return false
 	if not value.get("movable") is bool:
 		return false
 	var text_fields := ["name", "description"] if stage == "otter" else ["name", "description", "type"]

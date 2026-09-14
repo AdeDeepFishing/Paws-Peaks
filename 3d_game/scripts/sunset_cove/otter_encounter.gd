@@ -122,9 +122,9 @@ func _on_request_state(state: String) -> void:
 				request.fail_current("The generated object could not be loaded.")
 				return
 			if is_instance_valid(offered): offered.queue_free()
-			offered = GeneratedModel.physics_body(visual, request.result.movable)
+			offered = GeneratedModel.physics_body(visual, request.result, true)
 			add_child(offered)
-			offered.global_position = sketch_anchor + (Vector3.UP * 0.2 if request.result.movable else Vector3.ZERO)
+			offered.global_position = sketch_anchor + Vector3.UP * GeneratedModel.placement_height(request.result)
 			var rendered_id: String = request.active_id
 			if not DisplayServer.get_name() == "headless":
 				await RenderingServer.frame_post_draw
@@ -170,6 +170,13 @@ func _give_microphone() -> void:
 	layer.queue_free()
 
 func _build_drawing() -> void:
+	var modes := OptionButton.new()
+	modes.add_item("Saved otter request · No AI", 1)
+	modes.add_item("Live AI · Uses credits", 2)
+	modes.selected = 1 if generation.mode == 2 else 0
+	preload("res://ui/storybook/layout.gd").debug_control(modes, 0)
+	hud_root.add_child(modes)
+	modes.item_selected.connect(func(index: int): generation.configure(modes.get_item_id(index)))
 	cancel_button = Button.new()
 	cancel_button.text = "Stop waiting"
 	preload("res://ui/storybook/layout.gd").debug_control(cancel_button, 2)

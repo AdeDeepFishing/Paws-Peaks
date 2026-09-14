@@ -137,18 +137,24 @@ func _sketch_ground_anchor() -> Variant:
 	var origin := camera.project_ray_origin(screen)
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + camera.project_ray_normal(screen) * camera.far, GROUND_MASK, [player.get_rid()])
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if hit.is_empty() or hit.normal.y < 0.5: return null
-	if hit.position.distance_to(player.global_position) > 10.0: return null
-	return hit.position
+	if not hit.is_empty() and hit.normal.y >= 0.5 and hit.position.distance_to(player.global_position) <= 10.0:
+		return hit.position
+	# Screen-space sketches may cover the sky; place those on nearby terrain.
+	for offset in [Vector3(1.5, 0, 0), Vector3(-1.5, 0, 0), Vector3(0, 0, 1.5), Vector3.ZERO]:
+		var point: Vector3 = player.global_position + offset
+		var ground := PhysicsRayQueryParameters3D.create(point + Vector3.UP * 5, point + Vector3.DOWN * 10, GROUND_MASK, [player.get_rid()])
+		hit = get_world_3d().direct_space_state.intersect_ray(ground)
+		if not hit.is_empty() and hit.normal.y >= 0.5: return hit.position
+	return null
 
 func _submit() -> void:
 	if not drawing or resolving: return
 	var anchor = _sketch_ground_anchor()
 	if not anchor is Vector3:
-		hint.text = "Draw over the ground near you so your protection has a place to appear."
+		_submission_error("No safe ground nearby. Close the drawing, move onto the path, and try again.")
 		return
 	if not request.submit(surface.snapshot_png(), "E03", choices.selected):
-		hint.text = "Draw something first."
+		_submission_error("Draw something first.")
 		return
 	if request.state == "PENDING":
 		sketch_anchor = anchor
@@ -156,6 +162,12 @@ func _submit() -> void:
 		generation_preview.anchor_to_world(camera, sketch_anchor)
 		presentation.begin(to_local(sketch_anchor))
 	_close_drawing()
+
+func _submission_error(message: String) -> void:
+	hint.text = message
+	var narrator := get_node("/root/Narrator")
+	narrator.skip()
+	narrator.panel._show_line("Narrator", message)
 
 func _on_request_state(state: String) -> void:
 	match state:
@@ -197,10 +209,12 @@ func _offer_item() -> void:
 		if offered == null:
 			request.fail_current("The generated protection could not be loaded.")
 			return
+	offered = GeneratedModel.physics_body(offered, item, true)
+	if offered is RigidBody3D: offered.freeze = true
 	offered.name = "DrawnProtection"
 	offered.hide()
 	add_child(offered)
-	offered.global_position = sketch_anchor
+	offered.global_position = sketch_anchor + Vector3.UP * GeneratedModel.placement_height(item)
 	presentation.reveal(offered)
 
 func _finish_presentation() -> void:
@@ -219,6 +233,11 @@ func _raise_protection() -> void:
 	player.set_input_enabled(false)
 	player.visual.set_avoidance(0.0)
 	bird.paused = true
+	if offered is PhysicsBody3D:
+		var body := offered
+		offered = body.get_child(0)
+		offered.reparent(self)
+		body.queue_free()
 	# Equipped protection follows the protagonist; it is not a loose ground obstacle.
 	offered.reparent(player)
 	var bounds := GeneratedModel._bounds(offered)

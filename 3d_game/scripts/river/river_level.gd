@@ -239,9 +239,9 @@ func _place_generated_model() -> bool:
 			if child.name.begins_with("Plank"):
 				child.hide()
 	else:
-		generated_visual = GeneratedModel.physics_body(visual, current_item.movable)
+		generated_visual = GeneratedModel.physics_body(visual, current_item, true)
 		add_child(generated_visual)
-		generated_visual.position = Vector3(-4.8, 3.3 if current_item.movable else 1.3, -5.0)
+		generated_visual.position = Vector3(-4.8, 1.3 + GeneratedModel.placement_height(current_item), -5.0)
 	return true
 
 func _clear_generated_model() -> void:
@@ -261,7 +261,7 @@ func near_crossing() -> bool:
 	return in_drawing_area
 
 func _supports_bridge() -> bool:
-	return current_item.get("type", "") == "BRIDGE" and not current_item.get("movable", false)
+	return current_item.get("type", "") == "BRIDGE" and GeneratedModel.placement(current_item) == "fixed"
 
 func can_build_bridge() -> bool:
 	return not bridge_built and request.state == "READY" and request.encounter_id == "E01" and _supports_bridge()

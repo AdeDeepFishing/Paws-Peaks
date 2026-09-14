@@ -200,16 +200,13 @@ func _offer_item() -> void:
 		if visual == null:
 			request.fail_current("The offline bone model could not be loaded.")
 			return
-	offered = GeneratedModel.physics_body(visual, item.movable, true)
+	offered = GeneratedModel.physics_body(visual, item, true)
 	offered.name = "OfferedDrawing"
 	if offered is RigidBody3D:
 		offered.freeze = true
-		# Let the gift tumble and sleep naturally; actors cannot kick it away.
-		offered.collision_layer = 0
-		offered.collision_mask = dog.GROUND_MASK
 	offered.hide()
 	add_child(offered)
-	offered.global_position = sketch_anchor + (Vector3.UP * 2.0 if item.movable else Vector3.ZERO)
+	offered.global_position = sketch_anchor + Vector3.UP * GeneratedModel.placement_height(item)
 	presentation.reveal(offered)
 
 func _react_to_offering() -> void:

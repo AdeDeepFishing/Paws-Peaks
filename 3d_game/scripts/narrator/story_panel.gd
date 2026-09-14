@@ -3,6 +3,7 @@ extends Control
 const INK := Color("294a43")
 var story: Node
 var entry: Button
+var microphone_shine: Control
 var caption: PanelContainer
 var caption_text: Label
 var speaker_label: Label
@@ -41,6 +42,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	entry = Layout.tool(self, "microphone", _talk)
+	microphone_shine = preload("res://ui/drawing_shine.gd").attach(entry)
 	entry.toggle_mode = true
 	Layout.corner(entry, -144, -48)
 	entry.hide()
@@ -284,13 +286,16 @@ func _finish_drawing() -> void:
 
 func _share_drawing() -> void:
 	if busy or mic.recording or not surface.has_drawing(): return
+	var png: PackedByteArray = surface.snapshot_png()
+	if story.scene.has_node("ObjectGeneration") and not story.scene.get_node("ObjectGeneration").submit(png): return
 	_finish_drawing()
 	opened = true
 	_show_line("You","Shared a drawing.")
-	story.ask("",surface.snapshot_png())
+	story.ask("", png)
 
 func _draw_idea() -> void:
 	if busy or mic.recording or canvas_panel.visible or revealing_boss or story.chapter != 5: return
+	if story.scene.has_node("ObjectGeneration") and story.scene.get_node("ObjectGeneration").request.state == "PENDING": return
 	open_dialogue()
 	if not opened: return
 	story.skip(true)
@@ -383,6 +388,7 @@ func _update_tools() -> void:
 		Layout.corner(draw, -256 if unlocked else -144, -160 if unlocked else -48)
 		if opened or revealing_boss: draw.disabled = true
 	entry.disabled = not get_node("/root/Journey").microphone_unlocked or busy or locked or revealing_boss or (story.chapter == 5 and story.scene.get("boss_revealed") == false) or (story.chapter == 4 and story.scene.has_method("near_otter") and not story.scene.near_otter())
+	microphone_shine.set_active(entry.visible and not entry.disabled and not opened)
 	entry.set_pressed_no_signal(mic.recording)
 	stop_button.disabled = busy
 	stop_button.tooltip_text = "Stop recording" if mic.recording else "Close speech"

@@ -1,4 +1,4 @@
-"""Backend-owned classification sets for the four game stages."""
+"""Backend-owned classification sets for the game stages."""
 from utils.common import AppError
 
 STAGES = {
@@ -16,6 +16,7 @@ STAGES = {
         ),
     },
     'otter': {'stage_number': 4, 'encounter_id': 'E04', 'classes': ()},
+    'storykeeper': {'stage_number': 5, 'encounter_id': 'E05', 'classes': ('UNKNOWN',)},
 }
 
 

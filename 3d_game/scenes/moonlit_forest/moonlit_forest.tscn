@@ -9,6 +9,10 @@
 
 [ext_resource type="PackedScene" path="res://scenes/boss/storykeeper.tscn" id="6"]
 
+[ext_resource type="Script" path="res://scripts/moonlit_forest/object_generation.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/river/drawing_request.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/river/desktop_generation.gd" id="9"]
+
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.07, 0.12, 0.22, 1)
@@ -57,3 +61,13 @@ destination = "res://scenes/ending/dawn_forest.tscn"
 
 [node name="Storykeeper" parent="." instance=ExtResource("6")]
 position = Vector3(0, 0, -6)
+
+[node name="ObjectGeneration" type="Node" parent="."]
+script = ExtResource("7")
+
+[node name="DrawingRequest" type="Node" parent="ObjectGeneration"]
+script = ExtResource("8")
+
+[node name="DesktopGeneration" type="Node" parent="ObjectGeneration"]
+script = ExtResource("9")
+mode = 2

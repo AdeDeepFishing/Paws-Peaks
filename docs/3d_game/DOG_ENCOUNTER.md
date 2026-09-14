@@ -160,9 +160,9 @@ work. The complete game specification is not a claim of completed implementation
 
 ## Natural offering contact
 
-Dog offerings use a convex hull fitted to the transformed generated mesh. Movable
+Dog offerings use a convex hull fitted to the transformed generated mesh. AI `drop`
 offerings can rotate and slide on terrain, then stop through normal physics sleep;
-first contact no longer freezes them. Actor collisions remain excluded so the
-player and dog cannot kick the offering away. Other encounters retain their
+first contact no longer freezes them. Offerings collide with terrain, the player, the dog, and other solid objects.
+Movable offerings use the AI-estimated `mass_kg`; older fixtures default to 1 kg. Other encounters retain their
 existing collision shapes. `offering_settle_smoke.gd` checks the saved bone model
 for tipping, floor contact, and natural sleep on a flat test floor.

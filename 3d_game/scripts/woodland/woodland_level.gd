@@ -44,6 +44,8 @@ func _ready() -> void:
 	var marker: Node3D = art.find_child("Player_spawn", true, false)
 	if marker: spawn = marker.global_position + Vector3.UP * 2
 	spawn += spawn_offset
+	# Do not render the elevated setup spawn before the grounded entrance is ready.
+	player.hide()
 	player.respawn(spawn)
 	_build_ui()
 	player.set_input_enabled(false)
@@ -150,3 +152,4 @@ func _start_entrance() -> void:
 		hud_root.show()
 	, CONNECT_ONE_SHOT)
 	player.walk_into_scene(start, to_global(spawn))
+	player.show()
