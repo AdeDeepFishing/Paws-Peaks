@@ -7,8 +7,14 @@ var drawer: PanelContainer
 var caption: PanelContainer
 var caption_text: Label
 var transcript: RichTextLabel
-var input: TextEdit
-var send: Button
+var heard: Label
+var draw_idea: Button
+var reveal_text := ""
+var reveal_prefix := 0
+var reveal_time := 0.0
+var reveal_duration := 0.0
+var reveal_wait := 0.0
+var speech_started := false
 var surface: Control
 var canvas_panel: Control
 var voice_note: Label
@@ -69,9 +75,11 @@ func _ready() -> void:
 	drawer.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	drawer.offset_left = -390
 	drawer.offset_right = 390
-	drawer.offset_top = -405
+	drawer.offset_top = -370
 	drawer.offset_bottom = -24
-	drawer.add_theme_stylebox_override("panel", _paper())
+	var glass := _paper()
+	glass.bg_color.a = 0.76
+	drawer.add_theme_stylebox_override("panel", glass)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 10)
 	drawer.add_child(content)
@@ -88,25 +96,17 @@ func _ready() -> void:
 	transcript.add_theme_color_override("default_color", INK)
 	transcript.add_theme_font_size_override("normal_font_size", 19)
 	content.add_child(transcript)
-	transcript.text = "Ask about the world, explain an idea, or share what this journey means to you."
-	input = TextEdit.new()
-	input.placeholder_text = "What would you like to say?"
-	input.custom_minimum_size.y = 64
-	input.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	content.add_child(input)
-	input.add_theme_color_override("font_color", INK)
-	input.add_theme_color_override("font_placeholder_color", Color("798777"))
+	transcript.text = ""
+	heard = _label(content, "Tap the microphone and speak. Pause when you are done.", 17)
+	heard.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var field := StyleBoxFlat.new()
-	field.bg_color = Color("fffaf0")
+	field.bg_color = Color(0.90,0.87,0.79,0.5)
 	field.set_corner_radius_all(8)
-	field.set_content_margin_all(10)
-	input.add_theme_stylebox_override("normal", field)
-	input.add_theme_stylebox_override("focus", field)
+	field.set_content_margin_all(8)
 	var actions := HBoxContainer.new()
 	content.add_child(actions)
-	_button(actions, "Draw an idea", _draw_idea)
-	send = _button(actions, "Send", _send)
-	record_button = _button(actions, "Record", _toggle_recording)
+	draw_idea = _button(actions, "Draw an idea", _draw_idea)
+	record_button = _button(actions, "Speak", _toggle_recording)
 	record_button.icon = load("res://ui/microphone.svg")
 	_button(actions, "Stop voice", story.skip)
 	var voice := CheckButton.new()
@@ -136,20 +136,21 @@ func _ready() -> void:
 	_build_canvas()
 	mic = preload("res://scripts/narrator/microphone.gd").new()
 	add_child(mic)
+	mic.partial_recorded.connect(func(wav): story.transcribe(wav, true))
 	mic.recorded.connect(func(wav):
-		record_button.text = "Record"
+		record_button.text = "Speak"
 		story.transcribe(wav)
 	)
 	microphone_prompt = ConfirmationDialog.new()
 	microphone_prompt.title = "Use your microphone?"
-	microphone_prompt.dialog_text = "Record up to 20 seconds. You can edit the text before sending."
+	microphone_prompt.dialog_text = "Speak for up to 20 seconds. Pause when you are done."
 	microphone_prompt.ok_button_text = "Start recording"
-	microphone_prompt.cancel_button_text = "Keep typing"
+	microphone_prompt.cancel_button_text = "Not now"
 	microphone_prompt.confirmed.connect(func():
 		if opened: _start_recording()
 	)
 	add_child(microphone_prompt)
-	mic.failed.connect(func(message): record_button.text = "Record"; set_busy(false); show_error(message))
+	mic.failed.connect(func(message): record_button.text = "Speak"; set_busy(false); show_error(message))
 
 func _paper() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -174,6 +175,7 @@ func _button(parent: Node, text: String, action: Callable) -> Button:
 	button.custom_minimum_size.y = 38
 	button.add_theme_color_override("font_color", INK)
 	button.add_theme_color_override("font_hover_color", INK)
+	button.add_theme_color_override("font_focus_color", INK)
 	button.add_theme_color_override("font_pressed_color", INK)
 	button.add_theme_font_size_override("font_size", 16)
 	var style := StyleBoxFlat.new()
@@ -191,6 +193,7 @@ func open_dialogue() -> void:
 	var player = story.scene.get("player")
 	if player == null or not player.input_enabled or player.walking_in: return
 	partner = "Otter" if story.chapter == 4 else "Storykeeper"
+	draw_idea.visible = story.chapter == 5
 	heading_title.text = "A word with the " + partner
 	story.skip()
 	paused_scene = story.scene
@@ -204,7 +207,7 @@ func open_dialogue() -> void:
 	entry.hide()
 	drawer.show()
 	refresh_state()
-	input.grab_focus()
+	record_button.grab_focus()
 
 func close_dialogue() -> void:
 	if not opened: return
@@ -213,7 +216,7 @@ func close_dialogue() -> void:
 	if mic and mic.recording:
 		mic.stop(false)
 		set_busy(false)
-	if record_button: record_button.text = "Record"
+	if record_button: record_button.text = "Speak"
 	if microphone_prompt: microphone_prompt.hide()
 	drawer.hide()
 	canvas_panel.hide()
@@ -225,38 +228,65 @@ func close_dialogue() -> void:
 		if player: player.set_input_enabled(player.input_enabled)
 	paused_scene = null
 
-func _send() -> void:
-	if busy or mic.recording or (input.text.strip_edges().is_empty() and not surface.has_drawing()): return
-	if input.text.length() > 2000:
-		show_error("Please keep this thought under 2,000 characters.")
-		return
-	transcript.text += "\n\nYou: " + input.text + (" [drawing]" if surface.has_drawing() else "")
-	story.ask(input.text, surface.snapshot_png() if surface.has_drawing() else PackedByteArray())
-
 func set_busy(value: bool) -> void:
 	busy = value
-	if send: send.disabled = value
-	if voice_note: voice_note.text = "The Storykeeper is thinking…" if value else ""
+	if record_button: record_button.disabled = value
+	if draw_idea: draw_idea.disabled = value
+	if voice_note: voice_note.text = partner + " is thinking…" if value else ""
 
 func reset_story() -> void:
 	close_dialogue()
-	input.text = ""
+	heard.text = "Tap the microphone and speak."
 	surface.clear()
-	transcript.text = "Ask about the world, explain an idea, or share what this journey means to you."
+	transcript.text = ""
 	confirmation.hide()
 	set_busy(false)
 
 func present(utterance: Dictionary, clear_input := true) -> void:
-	if clear_input:
-		input.text = ""
-		surface.clear()
-	transcript.text += "\n\n" + ("Otter" if utterance.get("speaker") == "otter" else ("Storykeeper" if story.chapter == 5 else "Narrator")) + ": " + str(utterance.text)
+	finish_reveal()
+	if clear_input: surface.clear()
+	var speaker := "Otter" if utterance.get("speaker") == "otter" else ("Storykeeper" if story.chapter == 5 else "Narrator")
+	transcript.text += "\n\n" + speaker + ": "
+	reveal_prefix = transcript.text.length()
+	reveal_text = str(utterance.text)
+	transcript.text += reveal_text
+	transcript.visible_characters = reveal_prefix
+	reveal_time = 0.0
+	reveal_wait = 0.0
+	reveal_duration = maxf(2.0, reveal_text.split(" ", false).size() / 2.5)
+	speech_started = false
+	caption_text.text = reveal_text
+	caption_text.visible_characters = 0
+	if not opened: caption.show()
+
+func start_speech(duration: float) -> void:
+	if reveal_text.is_empty(): return
+	speech_started = true
+	if duration > 0: reveal_duration = duration
+
+func finish_reveal() -> void:
+	reveal_text = ""
+	if transcript: transcript.visible_characters = -1
+	if caption_text: caption_text.visible_characters = -1
+
+func _process(delta: float) -> void:
+	if reveal_text.is_empty(): return
+	reveal_wait += delta
+	if speech_started and story.audio.playing:
+		reveal_time = maxf(reveal_time, story.audio.get_playback_position())
+	elif not story.voice_enabled or reveal_wait > 8.0 or speech_started:
+		reveal_time += delta
+	else: return
+	var words := reveal_text.split(" ", false)
+	var count := mini(words.size(), (int(reveal_time / reveal_duration * words.size()) / 3 + 1) * 3)
+	var visible_text := " ".join(words.slice(0, count))
+	transcript.visible_characters = reveal_prefix + visible_text.length()
+	caption_text.visible_characters = visible_text.length()
 	transcript.scroll_to_line(transcript.get_line_count() - 1)
-	if not opened:
-		caption_text.text = str(utterance.text)
-		caption.show()
+	if reveal_time >= reveal_duration: finish_reveal()
 
 func hide_caption() -> void:
+	finish_reveal()
 	if caption: caption.hide()
 
 func show_error(message: String) -> void:
@@ -295,7 +325,7 @@ func _build_canvas() -> void:
 	_button(actions, "Undo", surface.undo)
 	_button(actions, "Clear", surface.clear)
 	_button(actions, "Back · Esc", _finish_drawing)
-	var use := _button(actions, "Use drawing", _finish_drawing)
+	var use := _button(actions, "Share drawing", _share_drawing)
 	use.disabled = true
 	surface.changed.connect(func(): use.disabled = not surface.has_drawing())
 	canvas_panel.hide()
@@ -303,10 +333,19 @@ func _build_canvas() -> void:
 func _finish_drawing() -> void:
 	canvas_panel.hide()
 	drawer.show()
-	if surface.has_drawing(): voice_note.text = "Your drawing is ready. Add a thought, or send it as it is."
-	input.grab_focus()
+	voice_note.text = ""
+	record_button.grab_focus()
+
+func _share_drawing() -> void:
+	if busy or mic.recording or not surface.has_drawing(): return
+	_finish_drawing()
+	finish_reveal()
+	transcript.text += "\n\nYou shared a drawing."
+	story.ask("", surface.snapshot_png())
 
 func _draw_idea() -> void:
+	if busy or mic.recording: return
+	story.skip()
 	if story.chapter != 5:
 		voice_note.text = "Use this chapter's Draw button for physical objects. You can describe ideas here."
 		return
@@ -336,11 +375,19 @@ func _toggle_recording() -> void:
 func _start_recording() -> void:
 	story.skip()
 	mic.start()
-	send.disabled = true
+	dialogue_epoch += 1
+	heard.text = "Listening…"
+	draw_idea.disabled = true
 	record_button.text = "Stop recording"
-	voice_note.text = "Recording · up to 20 seconds. Review the text before sending."
+	voice_note.text = "Listening · pause to finish, or tap Stop recording."
 
-func receive_transcript(text: String) -> void:
-	input.text += (" " if not input.text.is_empty() else "") + text
-	voice_note.text = "Check your words, then press Send when ready."
-	input.grab_focus()
+func receive_transcript(text: String, partial := false) -> void:
+	text = text.strip_edges()
+	if text.is_empty():
+		if not partial: show_error("No speech heard. Tap Speak and try again.")
+		return
+	heard.text = "You: " + text
+	if partial: return
+	finish_reveal()
+	transcript.text += "\n\nYou: " + text
+	story.ask(text)

@@ -106,13 +106,21 @@ for repeatable layout inspection, not a fabricated record of a real model reply.
 
 ## Microphone input
 
-Talk supports both typing and recording. **Record** starts a visible, muted-monitor
-microphone capture; **Stop recording** sends at most 20 seconds to ElevenLabs Scribe
-v2. The transcript appears as an editable draft. Only **Send** starts the actual
-conversation or mood evaluation. Closing the panel cancels recording; obsolete
-transcripts cannot populate a reopened conversation. Permission/device errors and
-recognition failures retain the typing path. Microphone hardware/OS permission
-must still be checked on the player's own machine.
+Talk uses speech in Chapters 4 and 5. **Speak** begins microphone capture;
+1.35 seconds of silence after detected speech ends the turn automatically, with a
+20-second cap and a manual stop button. Initial silence never submits an empty
+turn. Recognition snapshots update the visible heard-text line approximately every
+three seconds, subject to provider latency. Only the final complete transcript is
+sent automatically to the character. There is no text input or Send button.
+Closing the panel cancels capture and invalidates pending recognition results.
+Errors offer another recording attempt; physical drawing remains available.
+Actual microphone sensitivity/OS permission must be checked on the player's machine.
+
+The dialogue panel keeps translucent cream coloring. **Share drawing** immediately
+submits a Chapter 5 scene drawing with no accompanying text required. Back cancels
+submission. Character captions reveal three words at a time using audio playback
+position and duration; this is estimated pacing, not phoneme/word alignment.
+Without voice, or if audio fails, text reveals at a readable fallback speed.
 
 The local capture is mono PCM at 16 kHz. Recordings are not played through speakers,
 and mailbox audio is removed after processing. Provider retention follows the
@@ -129,7 +137,7 @@ Playtest corrections: item-card speech now starts with “You drew a/an …” b
 reading the existing description. Once the boss introduction has been presented,
 it is no longer supplied as a repeated direction on every turn. The mood meter
 uses a visible full-length background and a zero-margin fill with a linear 0–100
-range. Record first offers a microphone/transcription explanation and a Keep typing
-choice; actual capture starts only after consent, with system permission handled by
-the platform. Otter drawings that project onto sky/water use grounded nearby sand
+range. The first Speak click offers a short explanation, remembered locally;
+recording always requires an explicit Speak/Start recording click. System permission
+is handled by the platform. Otter drawings that project onto sky/water use grounded nearby sand
 for placement; the second Show drawing action is covered by a regression test.

@@ -61,9 +61,9 @@ func run() -> void:
 	narrator.state = {"run_id": "test", "revision": 2}
 	narrator._consume({"epoch": -1, "op": "respond"}, {"ok": true, "state": {"revision": 999}})
 	check(narrator.state.revision == 2, "Old-scene responses are discarded")
-	narrator.panel.input.text = "Old draft"
+	narrator.panel.heard.text = "Old draft"
 	narrator.reset_journey()
-	check(narrator.panel.input.text.is_empty() and narrator.state.is_empty(), "Replay clears drafts and narrator history")
+	check(narrator.panel.heard.text == "Tap the microphone and speak." and narrator.state.is_empty(), "Replay clears recognized speech and narrator history")
 	level.status.text = "Follow the path to the right."
 	level.status.set_meta("narrator_guidance", level.status.text)
 	check(narrator._current_guidance() == level.status.text, "Narrator reads the authored chapter instruction")

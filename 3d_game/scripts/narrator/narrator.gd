@@ -164,7 +164,9 @@ func skip() -> void:
 
 func set_voice(value: bool) -> void:
 	voice_enabled = value
-	if not value: audio.stop()
+	if not value:
+		audio.stop()
+		panel.finish_reveal()
 
 func _process(delta: float) -> void:
 	var playable: bool = is_instance_valid(scene) and chapter > 0 and not get_node("/root/Journey").busy
@@ -172,7 +174,7 @@ func _process(delta: float) -> void:
 		playable = scene.get("entering") != true and scene.process_mode != Node.PROCESS_MODE_DISABLED
 	panel.entry.visible = playable and chapter in [4, 5] and not panel.opened and state.get("ending") == null
 	panel.entry.disabled = playable and chapter == 4 and scene.has_method("near_otter") and not scene.near_otter()
-	panel.entry.tooltip_text = "Approach the otter to talk." if panel.entry.disabled else "Type or record a message."
+	panel.entry.tooltip_text = "Approach the otter to talk." if panel.entry.disabled else "Speak with the character."
 	if not enabled: return
 	if playable and not panel.opened: _observe_guidance()
 	if caption_deadline > 0 and Time.get_ticks_msec() > caption_deadline and not audio.playing:
@@ -214,6 +216,7 @@ func _dispatch() -> void:
 		_fail("The story service is unavailable. You can keep exploring and try again later.")
 		return
 	var request: Dictionary = queue.pop_front()
+	if request.op == "transcribe" and (not panel.opened or request.get("dialogue_epoch") != panel.dialogue_epoch): return
 	if request.epoch != epoch and request.op not in ["new"]: return
 	if request.has("drawing_id") and not _drawing_is_current(request.drawing_id): return
 	if request.op == "voice" and (not voice_enabled or request.utterance_id != last_utterance): return
@@ -241,6 +244,9 @@ func _dispatch() -> void:
 	if request.op != "voice": active = metadata
 
 func _consume(request: Dictionary, response: Dictionary) -> void:
+	if request.op == "transcribe":
+		if not panel.opened or request.get("dialogue_epoch") != panel.dialogue_epoch: return
+		if request.get("partial", false) and not panel.mic.recording: return
 	if request.epoch != epoch and request.op != "new": return
 	if request.op in ["respond", "guide"] and request.get("event_serial", event_serial) != event_serial:
 		panel.set_busy(false)
@@ -248,6 +254,8 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 	if not response.get("ok", false):
 		if request.op == "voice":
 			panel.voice_note.text = "Voice unavailable · subtitles are still here."
+			panel.start_speech(0.0)
+		elif request.op == "transcribe" and request.get("partial", false): return
 		else: _fail(str(response.get("message", "The Storykeeper could not respond. Try again.")))
 		return
 	if request.has("drawing_id") and not _drawing_is_current(request.drawing_id): return
@@ -278,8 +286,9 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 		_enqueue({"op": "presented", "utterance_id": request.input_id})
 		if voice_enabled: _enqueue({"op": "voice", "utterance_id": request.input_id, "drawing_id": request.drawing_id})
 	elif request.op == "transcribe":
-		panel.set_busy(false)
-		if panel.opened and request.get("dialogue_epoch") == panel.dialogue_epoch: panel.receive_transcript(str(response.get("transcript", "")))
+		var partial: bool = request.get("partial", false)
+		if not partial: panel.set_busy(false)
+		panel.receive_transcript(str(response.get("transcript", "")), partial)
 	elif request.op == "voice" and voice_enabled and request.utterance_id == last_utterance and not get_node("/root/Journey").busy:
 		var path := str(response.get("audio_path", "")).simplify_path()
 		var allowed := worker_dir.get_base_dir().get_base_dir().path_join("narrator_agent/" + str(state.run_id)) + "/"
@@ -290,6 +299,7 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 				stream.data = file.get_buffer(file.get_length())
 				audio.stream = stream
 				audio.play()
+				if not request.has("drawing_id"): panel.start_speech(stream.get_length())
 	elif request.op == "leave":
 		if is_instance_valid(scene) and scene.has_method("complete_boss_encounter"): scene.complete_boss_encounter()
 
@@ -326,12 +336,16 @@ func _observe_guidance() -> void:
 		next_comment = Time.get_ticks_msec() / 1000.0 + 0.6
 
 
-func transcribe(wav: PackedByteArray) -> void:
-	if chapter not in [4, 5] or not enabled or _has_op("transcribe"): return
+func transcribe(wav: PackedByteArray, partial := false) -> void:
+	if chapter not in [4, 5] or not enabled: return
+	if partial and _has_op("transcribe"): return
 	_ensure_worker()
-	_enqueue({"op": "transcribe", "dialogue_epoch": panel.dialogue_epoch, "audio_base64": Marshalls.raw_to_base64(wav)})
-	panel.set_busy(true)
-	panel.voice_note.text = "Turning your recording into text…"
+	if not partial:
+		queue = queue.filter(func(request): return request.get("op") != "transcribe")
+	_enqueue({"op": "transcribe", "partial": partial, "dialogue_epoch": panel.dialogue_epoch, "audio_base64": Marshalls.raw_to_base64(wav)})
+	if not partial:
+		panel.set_busy(true)
+		panel.voice_note.text = "Listening to your words…"
 
 
 func _drawing_is_current(id: String) -> bool:
