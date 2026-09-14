@@ -249,3 +249,11 @@ The old automatic preview gate is disabled in normal play. See
 limitations, and [narrator setup](docs/backend/BACKEND.md#narrator-and-speech) for
 OpenAI, ElevenLabs and the optional local authoring bench. The desktop narrator
 requires the local Python backend. It is not available in a Web export yet.
+
+
+## Music and sound
+
+The five delivered BGM tracks now play through the opening, Chapters 1–3, otter,
+Storykeeper and endings. **Audio** controls music/effects levels and master mute.
+Music softens during speech and recording. Page turns, buttons, drawings and
+movement have lightweight feedback. See [Audio integration](docs/3d_game/AUDIO.md).

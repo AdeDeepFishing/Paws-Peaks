@@ -138,8 +138,8 @@ class Service:
                     return {"skipped": True}
                 item = event["payload"].get("item", {})
                 name, description = item.get("name", ""), item.get("description", "")
-                require(isinstance(name, str) and isinstance(description, str) and name and description and len(name) + len(description) <= 1198)
-                actor = {"text": name.rstrip(".") + ". " + description, "emotion": "warm", "channel": "direct_dialogue", "addressed_to": "player", "speaker": "narrator", "evidence": [event["id"]]}
+                require(isinstance(name, str) and isinstance(description, str) and name and description and len(name) + len(description) <= 1180)
+                actor = {"text": "You drew " + ("an " if name[0].lower() in "aeiou" else "a ") + name.rstrip(".") + ". " + description, "emotion": "warm", "channel": "direct_dialogue", "addressed_to": "player", "speaker": "narrator", "evidence": [event["id"]]}
                 result = {"state": self.public(state), "utterance": actor, "input_id": request_id, "drawing_id": drawing_id, "provider_calls": 0}
                 state["requests"][request_id] = result
                 self.write(state)
@@ -222,6 +222,9 @@ class Service:
                 if guidance:
                     latest = next((e for e in reversed(state["events"]) if e["type"] == "guidance_changed"), None)
                     require(latest is not None and latest["payload"].get("text") == guidance, "STALE_RESULT")
+                presented_guidance = any(e["type"] == "narration_presented" and e["stage"] == state["stage"] and guidance and guidance in e["payload"].get("text", "") for e in state["events"])
+                if state["stage"] == 5 and presented_guidance:
+                    guidance = ""
                 context["current_guidance"] = guidance
                 context["input"] = {"text": text, "has_drawing": bool(image), "trigger": request.get("trigger", "dialogue")}
                 state["requests"][request_id] = {"pending": True}

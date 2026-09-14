@@ -61,7 +61,7 @@ A new journey clears narrator context and drafts as well as the existing chapter
   reaction clips can replace the fallback without moving decision logic into the rig.
 
 See [Backend guide](../backend/BACKEND.md#narrator-and-speech) for configuration,
-protocol, local bench, privacy and evaluation. Music is outside this change.
+protocol, local bench, privacy and evaluation. Music and shared feedback are integrated in the [audio follow-up](AUDIO.md).
 
 ## Coverage and limitations
 
@@ -123,3 +123,13 @@ ElevenLabs account/API settings. See the backend guide for the separate STT mode
 The shared **Your Drawing** card speaks its name and description once per drawing,
 using the narrator voice across Chapters 1–4. Moving from sketch to reference image
 to model does not repeat the line or invoke another language-model response.
+
+
+Playtest corrections: item-card speech now starts with “You drew a/an …” before
+reading the existing description. Once the boss introduction has been presented,
+it is no longer supplied as a repeated direction on every turn. The mood meter
+uses a visible full-length background and a zero-margin fill with a linear 0–100
+range. Record first offers a microphone/transcription explanation and a Keep typing
+choice; actual capture starts only after consent, with system permission handled by
+the platform. Otter drawings that project onto sky/water use grounded nearby sand
+for placement; the second Show drawing action is covered by a regression test.

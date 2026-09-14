@@ -43,6 +43,7 @@ func _story_changed(state: Dictionary) -> void:
 	_update_mood(int(state.get("mood", 37)))
 	if state.get("exit_open", false) and not released:
 		released = true
+		get_node("/root/GameAudio").play_cue("ready")
 		objective.text = "The way is open. Cross the clearing when you are ready."
 		status.text = objective.text
 		status.set_meta("narrator_guidance", status.text)
@@ -101,7 +102,15 @@ func _build_mood() -> void:
 	mood_label.add_theme_color_override("font_color", Color("fff9ed"))
 	stack.add_child(mood_label)
 	mood_bar = ProgressBar.new()
-	mood_bar.custom_minimum_size.y = 12
+	mood_bar.custom_minimum_size.y = 16
+	mood_bar.min_value = 0
+	mood_bar.max_value = 100
+	mood_bar.step = 1
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color("526561")
+	track.set_corner_radius_all(2)
+	track.set_content_margin_all(0)
+	mood_bar.add_theme_stylebox_override("background", track)
 	mood_bar.show_percentage = false
 	stack.add_child(mood_bar)
 	mood_hint = Label.new()
@@ -118,7 +127,8 @@ func _update_mood(value: int) -> void:
 	mood_label.tooltip_text = "Talk or share a drawing. Reach 95% to open the way."
 	var fill := StyleBoxFlat.new()
 	fill.bg_color = Color("df7064") if value < 20 else (Color("8fca98") if value > 80 else Color("edc66d"))
-	fill.set_corner_radius_all(6)
+	fill.set_corner_radius_all(2)
+	fill.set_content_margin_all(0)
 	mood_bar.add_theme_stylebox_override("fill", fill)
 
 func _unhandled_input(event: InputEvent) -> void:

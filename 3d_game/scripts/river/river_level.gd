@@ -431,8 +431,9 @@ func _build_ui() -> void:
 		submit_button.text = "Generate · Uses credits" if index == 2 else "Submit drawing"
 		status_label.text = "Live generation selected." if index == 2 else "Offline preview selected."
 	)
-	var sound_button := _button(root, "Sound: on", func():
-		muted = not muted
+	var sound_button := _button(root, "Sound: off" if get_node("/root/GameAudio").master_muted else "Sound: on", func():
+		muted = not get_node("/root/GameAudio").master_muted
+		get_node("/root/GameAudio").set_muted(muted)
 	)
 	sound_button.focus_mode = Control.FOCUS_NONE
 	sound_button.pressed.connect(func(): sound_button.text = "Sound: off" if muted else "Sound: on")
@@ -568,6 +569,7 @@ func _paper_style() -> StyleBoxFlat:
 	return style
 
 func _play(cue: String) -> void:
+	if cue in ["submit", "ready"]: return # Shared drawing feedback is handled by GameAudio.
 	if muted or not is_instance_valid(audio):
 		return
 	audio.stream = tones[cue]

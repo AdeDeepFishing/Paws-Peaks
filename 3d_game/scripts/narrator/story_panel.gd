@@ -23,6 +23,8 @@ var mic: Node
 var record_button: Button
 var partner := "Storykeeper"
 var dialogue_epoch := 0
+var microphone_consent := false
+var microphone_prompt: ConfirmationDialog
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -134,6 +136,16 @@ func _ready() -> void:
 		record_button.text = "Record"
 		story.transcribe(wav)
 	)
+	microphone_prompt = ConfirmationDialog.new()
+	microphone_prompt.title = "Use your microphone?"
+	microphone_prompt.dialog_text = "Record up to 20 seconds. The audio is sent to ElevenLabs to turn it into text. You can edit it before sending, or keep typing instead."
+	microphone_prompt.ok_button_text = "Start recording"
+	microphone_prompt.cancel_button_text = "Keep typing"
+	microphone_prompt.confirmed.connect(func():
+		microphone_consent = true
+		if opened: _start_recording()
+	)
+	add_child(microphone_prompt)
 	mic.failed.connect(func(message): record_button.text = "Record"; set_busy(false); show_error(message))
 
 func _paper() -> StyleBoxFlat:
@@ -199,6 +211,7 @@ func close_dialogue() -> void:
 		mic.stop(false)
 		set_busy(false)
 	if record_button: record_button.text = "Record"
+	if microphone_prompt: microphone_prompt.hide()
 	drawer.hide()
 	canvas_panel.hide()
 	if is_instance_valid(paused_scene):
@@ -308,12 +321,17 @@ func _toggle_recording() -> void:
 	if busy: return
 	if mic.recording:
 		mic.stop(true)
+	elif not microphone_consent:
+		microphone_prompt.popup_centered(Vector2i(500, 180))
 	else:
-		story.skip()
-		mic.start()
-		send.disabled = true
-		record_button.text = "Stop recording"
-		voice_note.text = "Recording · up to 20 seconds. Review the text before sending."
+		_start_recording()
+
+func _start_recording() -> void:
+	story.skip()
+	mic.start()
+	send.disabled = true
+	record_button.text = "Stop recording"
+	voice_note.text = "Recording · up to 20 seconds. Review the text before sending."
 
 func receive_transcript(text: String) -> void:
 	input.text += (" " if not input.text.is_empty() else "") + text

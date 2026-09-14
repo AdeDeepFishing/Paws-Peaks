@@ -83,6 +83,13 @@ func _submit() -> void:
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + camera.project_ray_normal(point) * camera.far, 1, excluded)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty() or hit.normal.y < 0.5:
+		# Drawing is screen-space: sky/water ink can still become an offering on nearby sand.
+		for offset in [Vector3(1.2, 0, 0), Vector3(-1.2, 0, 0), Vector3(0, 0, 1.2), Vector3.ZERO]:
+			var target: Vector3 = otter.global_position + offset
+			var ground := PhysicsRayQueryParameters3D.create(target + Vector3.UP * 8, target + Vector3.DOWN * 8, 1, excluded)
+			hit = get_world_3d().direct_space_state.intersect_ray(ground)
+			if not hit.is_empty() and hit.normal.y >= 0.5: break
+	if hit.is_empty() or hit.normal.y < 0.5:
 		hint.text = "Draw over the sand so your object has a place to land."
 		return
 	sketch_anchor = hit.position

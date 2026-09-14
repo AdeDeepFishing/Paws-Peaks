@@ -21,6 +21,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+GameAudio="*res://scripts/audio/game_audio.gd"
+
 Journey="*res://scripts/overworld/journey.gd"
 
 GenerationWorker="*res://scripts/river/generation_worker.gd"

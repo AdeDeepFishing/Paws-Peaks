@@ -1177,3 +1177,12 @@ can increase or decrease it; below 20 is red, 20–80 yellow, above 80 green, an
 opens the way. Game code enforces the threshold and idempotency. This supersedes
 previous score-free boss resolution assumptions; resting and voluntary stay-ending
 confirmation still do not automatically complete a leave ending.
+
+
+## September 14: Delivered BGM and feedback (#19, #69)
+
+Five team-delivered tracks cover opening, Chapters 1–3, Chapter 4, Chapter 5 and
+the endings, with persistent playback, looping, crossfades and speech ducking.
+Shared procedural feedback covers buttons, page turns, drawing submission/results,
+boss release, jumping and footsteps. Music/Effects levels and master mute are
+available in the Audio panel. See [Audio integration](3d_game/AUDIO.md).

@@ -96,11 +96,19 @@ class NarratorTests(unittest.TestCase):
             drawing_id = "drawing-" + str(stage)
             self.send("event", type="drawing_interpreted", stage=stage, payload={"request_id": drawing_id, "item": {"name": "Umbrella", "description": "A portable umbrella for rain or sun."}})
             result = self.send("read_drawing", drawing_id=drawing_id)
-            self.assertEqual(result["utterance"]["text"], "Umbrella. A portable umbrella for rain or sun.")
+            self.assertEqual(result["utterance"]["text"], "You drew an Umbrella. A portable umbrella for rain or sun.")
             self.assertEqual(result["utterance"]["speaker"], "narrator")
             self.assertTrue(self.send("read_drawing", drawing_id=drawing_id)["skipped"])
             self.assertEqual(self.state["mood"], 37)
         self.assertEqual(self.model.calls, [])
+
+    def test_boss_does_not_repeat_already_presented_intro_guidance(self):
+        direction = "Meet the Storykeeper. Share an idea, a drawing, or a goodbye."
+        self.send("event", type="guidance_changed", stage=5, payload={"text": direction})
+        intro = self.send("guide", guidance=direction)
+        self.send("presented", utterance_id=intro["input_id"])
+        self.send("respond", text="Let us make a bookmark.", guidance=direction)
+        self.assertEqual(self.model.calls[-1]["current_guidance"], "")
 
     def test_item_card_requires_recorded_interpretation(self):
         with self.assertRaises(AppError): self.send("read_drawing", drawing_id="unknown")

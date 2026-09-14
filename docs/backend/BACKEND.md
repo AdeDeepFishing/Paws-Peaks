@@ -1035,3 +1035,7 @@ reference/model progress updates do not repeat it. New/canceled requests and sce
 changes discard obsolete speech. The existing card supplies the text, so no duplicate
 subtitle panel is created. Updated verification: 59 offline backend tests passed,
 including exact card text, all four stages and deduplication.
+
+Playtest follow-up: item readings use “You drew a/an …”; previously presented
+boss introduction guidance is omitted from later turns. Updated backend suite: 60
+tests passed. Music/SFX mixing is documented in [Audio](../3d_game/AUDIO.md).
