@@ -1,6 +1,6 @@
 extends StaticBody3D
 
-## Supplied visual and idle loop only. Personality and dialogue belong to #63.
+## Visual reactions only; dialogue and decisions live in the narrator service.
 const IDLE_CLIP := "Storykeeper_RightHandLift_BodySway"
 var animator: AnimationPlayer
 var grounded := false
@@ -27,3 +27,23 @@ func _place_on_ground() -> void:
 	if not hit.is_empty():
 		global_position.y = hit.position.y
 		grounded = true
+
+var moved_aside := false
+
+func express(emotion: String) -> void:
+	# Use delivered clips when available; current asset safely retains its idle.
+	var preferred: String = {"warm": "TalkWarm", "curious": "Listen", "amused": "Amused", "worried": "Plead", "hesitant": "Hesitate", "accepting": "Release"}.get(emotion, "Idle")
+	for clip in animator.get_animation_list():
+		if clip.get_file() == preferred:
+			animator.play(clip, 0.25)
+			return
+	animator.play("boss/idle", 0.25)
+
+func make_way() -> void:
+	if moved_aside: return
+	moved_aside = true
+	express("accepting")
+	# The game moves the wrapper; the delivered skeleton keeps its authored motion.
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(self, "position:x", position.x - 3.0, 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property($Character, "rotation:y", -0.35, 1.8).set_trans(Tween.TRANS_SINE)

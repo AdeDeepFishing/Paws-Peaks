@@ -20,7 +20,7 @@ benchmarking, and backlog. Game-side integration stays in
 
 ## Sketch-to-model interface
 
-**Sketch-to-model is the only public generation interface.** The game submits one
+**Sketch-to-model is the public object-generation interface.** Narration uses a separate bounded story service described under [Narrator and speech](#narrator-and-speech). The game submits one
 sketch and its stage identity, then receives item data and generated assets.
 `interpret/`, `image_edit/`, and `model_generation/` are internal steps; callers do
 not invoke them separately or supply provider prompts, keys, or class lists.
@@ -264,6 +264,8 @@ backend/
   .env                        # Ignored local credentials shared by features
   .env.example                # Tracked blank configuration template
   .venv/                      # Ignored shared Python environment
+  narrator_agent/             # Story journal, referee, performer, mailbox and authoring bench
+  speech/                     # ElevenLabs speech with per-character voice routing
   stage_config.py             # Backend-owned class sets for all four game stages
   game_bridge/run.py          # Persistent request listener and result logs
   utils/
@@ -857,3 +859,183 @@ The retained reports and artifacts are in [Generated examples](GENERATED_EXAMPLE
 - [OpenAI image inputs](https://developers.openai.com/api/docs/guides/images-vision).
 - [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
 - [Meshy image-to-3D](https://docs.meshy.ai/en/api/image-to-3d).
+
+
+## Narrator and speech
+
+Tickets #63 and #66 add a separate local desktop service. The `Narrator` Godot
+autoload starts `backend/narrator_agent/run.py --serve <mailbox> --parent-pid <pid>`.
+It retains one journal across scene changes. This does not use OpenAI's hosted
+Agents UI: the game owns state and the Python service makes stateless Responses
+calls with strict JSON output. Fixed opening/guidance lines use no model call. Contextual reactions in Stages 1–4 use one performer call; Stage 5 dialogue
+or a drawing uses a neutral referee followed by the performer. No model has
+filesystem, shell or arbitrary game-action tools.
+
+Add these settings to the ignored `backend/.env`:
+
+```dotenv
+NARRATOR_MODEL=gpt-5.6-terra
+ELEVENLABS_API_KEY=
+ELEVENLABS_NARRATOR_VOICE_ID=
+ELEVENLABS_OTTER_VOICE_ID=
+ELEVENLABS_MODEL=eleven_multilingual_v2
+ELEVENLABS_STT_MODEL=scribe_v2
+```
+
+`OPENAI_API_KEY` is shared with the drawing pipeline. `OPENAI_MODEL` still controls
+object interpretation and defaults to `gpt-4.1-mini`; it does not control narration.
+The narrator defaults to Terra with low reasoning effort. A small two-scenario
+comparison found more concise replies and similar response times than 4.1-mini;
+this is a working choice, not a comprehensive model ranking. Configurable model
+IDs must support Responses, image input and strict JSON schemas.
+
+For this desktop feature, the explicit `.env` file overrides inherited environment
+values and is reloaded before dialogue/speech requests. This prevents a stale
+shell key from overriding an edited local key. Existing sketch-to-model configuration
+keeps its environment-first behavior. Keys never enter Godot, the browser, a journal,
+or a response. Do not commit `.env` or `backend/output/`.
+
+ElevenLabs needs Text to Speech access and a usable voice ID. The selected narrator
+voice is configured locally. Otter has an independent voice slot and deliberately
+has no narrator fallback; Stage 4 player dialogue uses the otter prompt and voice. Music is owned
+by the teammate's existing implementation. This feature does not call music generation.
+
+Speech is generated only from a saved narrator utterance, capped at 600 characters.
+`POST /v1/text-to-speech/{voice}` returns MP3; cache identity includes text, speaker
+voice, model and settings. Interactive cache storage is per journey. Fixed authored speech uses a shared
+`backend/output/narrator_agent/_authored_speech/` cache across journeys and is copied
+into the requesting journey for playback. Only fixed game lines enter this shared
+cache; deleting a private run removes its interactive speech. Failed speech leaves
+subtitles usable. Skip, Voice off, scene changes and replay stop playback; stale
+utterances cannot play in a different chapter. Provider calls time out and do not
+automatically retry. Credential-bearing redirects are refused for both providers.
+
+### Authoring bench and evaluation
+
+Run from the repository root:
+
+```sh
+backend/.venv/bin/python backend/narrator_agent/run.py --dry-run
+backend/.venv/bin/python backend/narrator_agent/run.py --bench
+backend/.venv/bin/python backend/narrator_agent/evaluate.py
+backend/.venv/bin/python -m unittest discover -s backend/tests -v
+```
+
+The bench prints a localhost URL with a temporary access token. Open that entire
+URL locally. It supports chapter selection, simulated events, dialogue/drawing,
+speech playback, neutral stay confirmation, crossing an open exit, checkpoints,
+branching, journal export and deletion. All bench events are explicitly simulated.
+Opening it creates no paid requests; Send and Hear this line do. It binds only
+127.0.0.1, requires its token for mutations and exposes no provider keys.
+
+`evaluate.py` lists the 12 semantic cases without calling providers. Add `--live`
+for paid evaluation, optionally `--ids rest,injection`. Summaries go under ignored
+`backend/output/narrator_evals/`; private journals retain the inputs and outputs.
+Offline tests cover state guards, evidence identity, retries, persistence, branches,
+voice routing and stale results. They cannot establish language-model fidelity.
+
+### Story protocol and storage
+
+The mailbox uses one request directory per unique `input_id`: publish `request.json`
+atomically; the worker claims it as `claimed.json` and writes `response.json`.
+Requests and responses are bounded. The game supplies `op`, `input_id`, `run_id`
+and the current `revision`. No keys or provider-selected URLs are accepted.
+
+| Operation | Input and effect |
+|---|---|
+| `new` | Creates a separate run; optional authoring `simulated` flag |
+| `event` | Whitelisted type, stage and bounded payload; appends verified game evidence |
+| `guide` | Current authored `guidance_changed` event text; returns a fixed chapter introduction or direction without a model call |
+| `respond` | Text up to 2,000 characters, optional PNG/JPEG Base64 up to 1 MiB; returns validated decision, utterance and current state |
+| `presented` | A saved utterance ID; records what was actually shown |
+| `transcribe` | Chapters 4/5 only, at most 20 seconds of mono 16 kHz PCM WAV as Base64; returns an editable transcript without invoking dialogue or changing mood |
+| `voice` | A saved utterance ID; returns a local MP3 path, or Base64 in the bench |
+| `confirm_stay` / `cancel_stay` | Current revision and candidate ID; never inferred from silence |
+| `leave` | Open exit plus a real crossing event; commits the leave ending |
+| `state` / `export` / `delete` | Inspect, export the journal, or delete the run and its files |
+| `checkpoint` / `fork` | Snapshot narrator state; restore into a new isolated run without future events |
+
+The response envelope contains `ok`; failures contain a sanitized `error` and
+`message`. State has `run_id`, `revision`, `stage`, `phase`, `exit_open`, `ending`,
+`candidate`, `concern`, `simulated`, and integer `mood`. Successful dialogue also has `utterance`,
+`decision`, request identity, timings and model usage. Evidence references must
+match actual journal event IDs. The actor cannot rewrite the referee decision.
+
+Game state controls completion: opening an exit is not leaving; temporary rest is
+not a stay ending; a stay offer requires a separate confirmation; final endings
+are mutually exclusive. An opened exit never closes. Duplicate request IDs reuse
+saved results; outdated scene/revision results cannot enact a new transition.
+Submitted drawings, interpretations, spawned objects and resolved uses are different
+events. Player claims are explicitly unverified, and only displayed narration becomes
+conversation memory. All events are retained, with bounded per-chapter retrieval
+for model context; continuous movement is not logged frame by frame.
+
+Private files live at `backend/output/narrator_agent/<run_id>/`: `story.json`,
+submitted drawings, checkpoint files and `speech/`. A checkpoint covers the narrator,
+not a full Godot world save. The journal survives backend restarts; starting a new
+game creates a new run. The bench can restore a checkpoint into a branch. There is
+no user account, cloud synchronization, or browser-hosted backend in this delivery.
+
+### Validation on September 14
+
+- 47 offline backend tests passed.
+- Native Godot live smoke verified a real reply, MP3 playback and temporary rest
+  without an ending. A direct TTS check returned HTTP 200 and valid MP3 bytes.
+- Five selected semantic cases were tried live. Initial hypothetical/instruction-
+  override cases incorrectly reported partial progress without unlocking anything.
+  Prompt version 2 explicitly requires substantive in-world progress; both cases
+  passed on rerun. This is a small development sample, not a 120-case benchmark.
+- Offline narrator and ending smoke checks passed; native dialogue and stay-ending
+  captures were inspected. The map smoke completed its assertions but also reported
+  an otter grounding diagnostic during accelerated transitions; it is not a clean
+  map validation. Existing ObjectDB cleanup warnings also remain in some scene tests.
+
+
+September 14 playtest follow-up: fixed introductions are authored in
+`backend/narrator_agent/authored.py`; directions come from the active chapter's
+marked gameplay hint. New fixed guidance uses `guide`, while creation/encounter
+reactions can still combine contextual commentary with the exact authored direction.
+Loading and error messages do not become narrator lines. Only actual interactions
+use dynamic model responses; idle-time model calls have been removed. Essential
+fixed guidance remains available in Guidance only mode. Updated verification: 51
+offline backend tests passed, including no-model introductions and one speech call
+across two journeys. Godot checks cover translucent subtitles without Skip and
+scene drawing, toolbar exclusion, image export and draft preservation.
+
+
+September 14 Talk/mood revision: player dialogue is restricted to Chapters 4 and 5
+in both the client and backend. Stage 4 direct dialogue uses a separate otter actor
+and voice. Stage 5's referee returns a bounded integer `mood_delta`; game state
+starts at 37 and clamps updates to 0–100. An `OPEN_EXIT` proposal below 95 is reduced
+to progress/no change. At 95 the route opens; actual crossing still commits leaving.
+Rest and stay confirmation retain their previous safeguards. No automatic event or
+fixed line changes mood, and duplicate requests reuse the earlier result.
+
+`ELEVENLABS_STT_MODEL=scribe_v2` controls microphone recognition, independently of
+`OPENAI_MODEL` (drawing interpretation), `NARRATOR_MODEL` (dialogue), and
+`ELEVENLABS_MODEL` (spoken output). The microphone path uses the official
+[Speech to Text endpoint](https://elevenlabs.io/docs/api-reference/speech-to-text/convert)
+and requires Speech to Text permission on the ElevenLabs key. A synthetic English
+sample transcribed correctly in 968 ms in one live check; this is not a latency or
+accuracy benchmark. Recognition produces editable text only; it does not submit
+a game action. No raw provider errors or credentials enter the UI.
+
+Updated automated verification: 57 offline backend tests passed, including 94/95
+threshold behavior, mood clamping, duplicate protection, otter routing, transcription
+bounds and review-before-send. Native visual checks cover the right-hand paired CTAs
+and persistent mood display. Actual microphone hardware/permission capture still
+requires a manual check; the recognition API was tested with synthetic audio.
+
+
+The shared Your Drawing card now reads its item name and description through
+`read_drawing`, using the already recorded interpretation. This applies to all four
+object-generation chapters, uses the narrator voice (including the otter chapter),
+and makes no additional language-model call. Each drawing request is read once;
+reference/model progress updates do not repeat it. New/canceled requests and scene
+changes discard obsolete speech. The existing card supplies the text, so no duplicate
+subtitle panel is created. Updated verification: 59 offline backend tests passed,
+including exact card text, all four stages and deduplication.
+
+Playtest follow-up: item readings use “You drew a/an …”; previously presented
+boss introduction guidance is omitted from later turns. Updated backend suite: 60
+tests passed. Music/SFX mixing is documented in [Audio](../3d_game/AUDIO.md).

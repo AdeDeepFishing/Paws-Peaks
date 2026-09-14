@@ -18,7 +18,7 @@ class NoCredentialRedirect(HTTPRedirectHandler):
 
 def provider_urlopen(request, timeout):
     """Keep bearer credentials on the original endpoint; allow ordinary asset redirects."""
-    if request.has_header("Authorization"):
+    if request.has_header("Authorization") or request.has_header("Xi-api-key"):
         return build_opener(NoCredentialRedirect()).open(request, timeout=timeout)
     return standard_urlopen(request, timeout=timeout)
 
@@ -29,7 +29,7 @@ class AppError(Exception):
         self.code = code
 
 
-def load_config(env_file):
+def load_config(env_file, prefer_file=False):
     """Read literal KEY=value lines; never execute or shell-expand the file."""
     values = {}
     if env_file.exists():
@@ -38,16 +38,19 @@ def load_config(env_file):
             if not line or line.startswith("#"):
                 continue
             key, separator, value = line.partition("=")
-            if not separator or key.strip() not in ("OPENAI_API_KEY", "OPENAI_MODEL", "MESHY_API_KEY", "MESHY_MODEL"):
+            if not separator or key.strip() not in ("OPENAI_API_KEY", "OPENAI_MODEL", "MESHY_API_KEY", "MESHY_MODEL", "NARRATOR_MODEL", "ELEVENLABS_API_KEY", "ELEVENLABS_NARRATOR_VOICE_ID", "ELEVENLABS_OTTER_VOICE_ID", "ELEVENLABS_MODEL", "ELEVENLABS_STT_MODEL"):
                 raise AppError("CONFIG_ERROR", "Use only supported KEY=value settings in the env file; see backend/.env.example.")
             value = value.strip()
             if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
                 value = value[1:-1]
             values[key.strip()] = value
     return {
-        key: os.environ.get(key, values.get(key, default)).strip()
+        key: (values.get(key, os.environ.get(key, default)) if prefer_file else os.environ.get(key, values.get(key, default))).strip()
         for key, default in (("OPENAI_API_KEY", ""), ("OPENAI_MODEL", "gpt-4.1-mini"),
-                             ("MESHY_API_KEY", ""), ("MESHY_MODEL", "meshy-6"))
+                             ("MESHY_API_KEY", ""), ("MESHY_MODEL", "meshy-6"),
+                             ("NARRATOR_MODEL", "gpt-5.6-terra"), ("ELEVENLABS_API_KEY", ""),
+                             ("ELEVENLABS_NARRATOR_VOICE_ID", ""), ("ELEVENLABS_OTTER_VOICE_ID", ""),
+                             ("ELEVENLABS_MODEL", "eleven_multilingual_v2"), ("ELEVENLABS_STT_MODEL", "scribe_v2"))
     }
 
 

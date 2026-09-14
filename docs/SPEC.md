@@ -1146,3 +1146,43 @@ appears at that point. Stage 1 keeps its existing start flow.
 `3d_game/tests/stage_entrance_smoke.gd` checks all four arrivals with movement,
 sprint, and jump held throughout the entrance, plus drawing lockout and the final
 position. Use `-- --visual` for approach and arrival screenshots.
+
+
+## September 14: The Storykeeper and spoken narration (#63, #66)
+
+This update resolves the earlier open E05 identity and ending decisions. The warm,
+talkative narrator becomes the physical Storykeeper in Chapter 5 and fears ending
+the adventure. Free dialogue and drawing ideas can convince him to open the exit;
+leaving completes only when the player crosses it. A voluntary stay ending requires
+explicit intent plus a neutral confirmation; temporary rest is never terminal.
+The referee and performer are separate model calls, with game-owned state guards.
+
+The desktop MVP adds persistent evidence journals, bounded cross-chapter memory,
+English subtitles and ElevenLabs speech, plus a local authoring bench with narrator
+checkpoints and branches. Stage 1–4 encounter rules remain authoritative. Current
+memory coverage is recorded chapter/drawing/use/NPC events, not every movement.
+Music remains the teammate's work. A separate otter voice slot is reserved for later.
+Full world-save restoration, Web hosting and new skeletal animation delivery are
+not implemented by this update. See [Narrator integration](3d_game/NARRATOR_AGENT.md)
+and [backend setup and validation](backend/BACKEND.md#narrator-and-speech).
+
+
+## September 14: Talk scope and boss mood
+
+Player dialogue is available only in Chapter 4 (otter) and Chapter 5 (Storykeeper),
+through a microphone Talk CTA beside Draw. Typing and microphone-to-text are both
+supported; the player reviews a transcript and presses Send. Earlier chapters keep
+passive narration. The boss now starts at 37% mood. Model-evaluated dialogue/drawings
+can increase or decrease it; below 20 is red, 20–80 yellow, above 80 green, and 95
+opens the way. Game code enforces the threshold and idempotency. This supersedes
+previous score-free boss resolution assumptions; resting and voluntary stay-ending
+confirmation still do not automatically complete a leave ending.
+
+
+## September 14: Delivered BGM and feedback (#19, #69)
+
+Five team-delivered tracks cover opening, Chapters 1–3, Chapter 4, Chapter 5 and
+the endings, with persistent playback, looping, crossfades and speech ducking.
+Shared procedural feedback covers buttons, page turns, drawing submission/results,
+boss release, jumping and footsteps. Music/Effects levels and master mute are
+available in the Audio panel. See [Audio integration](3d_game/AUDIO.md).

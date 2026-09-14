@@ -149,6 +149,7 @@ func _browse_map(source: Node3D) -> void:
 
 func start_intro() -> void:
 	if busy: return
+	get_node("/root/Narrator").reset_journey()
 	visited_chapters.clear()
 	sketches_shared = 0
 	_begin(0, 1)
@@ -183,10 +184,6 @@ func _run() -> void:
 	var old_mode := source.process_mode
 	source.process_mode = Node.PROCESS_MODE_DISABLED
 	var destination: String = STAGES[target_stage - 1]
-	var load_error := ResourceLoader.load_threaded_request(destination)
-	if load_error != OK:
-		_recover(source, old_mode, "The next chapter could not be loaded.")
-		return
 	var map: Node
 	if source.scene_file_path == MAP:
 		map = source
@@ -199,6 +196,11 @@ func _run() -> void:
 			return
 		await get_tree().scene_changed
 		map = get_tree().current_scene
+	# Finish loading shared map scripts before starting a chapter load.
+	var load_error := ResourceLoader.load_threaded_request(destination)
+	if load_error != OK:
+		_recover(map, map.process_mode, "The next chapter could not be loaded.")
+		return
 	map.configure(from_stage, target_stage)
 	await get_tree().process_frame
 	if page.visible: await _turn_page(true)
@@ -297,3 +299,17 @@ func _finish() -> void:
 	input_blocker.hide()
 	busy = false
 	phase = "idle"
+
+func finish_stay(source: Node) -> void:
+	if busy: return
+	busy = true
+	input_blocker.show()
+	source.player.set_input_enabled(false)
+	source.hud_root.hide()
+	get_node("/root/Narrator").skip()
+	await _capture_page()
+	source.show_stay_book(page.texture)
+	source.hud_root.show()
+	await get_tree().process_frame
+	await _turn_page(false, 1.65, true)
+	_finish()

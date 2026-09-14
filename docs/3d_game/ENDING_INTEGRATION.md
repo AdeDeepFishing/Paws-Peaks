@@ -8,16 +8,11 @@ transition, gentler dawn and victory recap requested in #60.
 Stage 5's `EndingExit` enters `res://scenes/ending/dawn_forest.tscn` when the
 player reaches world **z <= -12**. The boundary covers every X position and
 height, so there is no small target to hit and jumping does not bypass it.
-The clearing is reachable from the normal spawn by walking around the solid
-Storykeeper and returning to the central path behind it.
-
-This is the user-approved temporary route while boss gameplay is unfinished.
-`moonlit_forest_level.gd` exports `preview_ending_enabled` (currently true).
-The visual-only boss integration (#36) retains this preview route. When
-implementing the actual boss encounter, set that property false and call
-`complete_boss_encounter()` after actual victory. The explicit hook uses the
-same deferred, duplicate-guarded transition, independently of the walk gate.
-No boss or combat victory is simulated by this integration.
+Normal play now requires the #63 narrator to open the exit and an actual player
+crossing. `preview_ending_enabled` defaults to false; authoring tests opt in explicitly.
+`complete_boss_encounter()` is called only after the leave event commits. Choosing
+and confirming a stay ending turns the final page into **A Place to Stay** in the
+moonlit scene. See [Narrator integration](NARRATOR_AGENT.md).
 
 The exit now fades the chapter HUD over 0.45 seconds, then curls the final page
 for 1.65 seconds, lifting from the same bottom-right corner and angle used by
@@ -119,7 +114,7 @@ Forward+ on Apple M1. The shared exit regressions preserve the Stage 2 dog gate
 and Stage 3 rock boundary; the night-forest regression checks unchanged V5 art
 and the Stage 4-to-5 flow.
 
-The final boss and its victory call site, voiced ending, full asset credits UI,
+Full asset credits UI,
 Web export and browser performance are not part of this implementation. The
 large GLBs still need a Web delivery budget pass.
 

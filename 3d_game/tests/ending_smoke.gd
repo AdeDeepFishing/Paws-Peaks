@@ -25,14 +25,16 @@ func clear_scene() -> void:
 
 func forest() -> Node:
 	var level = load(FOREST).instantiate()
+	level.preview_ending_enabled = true
 	root.add_child(level)
 	current_scene = level
+	await frames(120)
 	return level
 
 func run() -> void:
 	JourneyTest.fast(self)
 	var worker := root.get_node("GenerationWorker")
-	var level = forest()
+	var level = await forest()
 	await frames(45)
 	# Walk beside the solid Storykeeper to reach the existing preview exit.
 	Input.action_press("move_right")
@@ -124,7 +126,7 @@ func run() -> void:
 	check(root.get_node("GenerationWorker") == worker, "Navigation retains the persistent worker without submitting a request")
 	await clear_scene()
 	# The walk shortcut can be disabled independently of the future boss hook.
-	level = forest()
+	level = await forest()
 	level.preview_ending_enabled = false
 	level.player.set_physics_process(false)
 	level.player.position = Vector3(0, 3, -13)
@@ -138,7 +140,7 @@ func run() -> void:
 	check(root.get_children().filter(func(node): return node is Node3D).size() == 1, "Repeated completion leaves only one active world")
 	await clear_scene()
 	for x in [-18.0, 0.0, 18.0]:
-		level = forest()
+		level = await forest()
 		level.player.set_physics_process(false)
 		level.player.position = Vector3(x, 8, -11.75)
 		await frames(3)

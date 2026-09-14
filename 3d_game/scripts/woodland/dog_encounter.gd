@@ -41,6 +41,7 @@ func _ready() -> void:
 	presentation.finished.connect(_react_to_offering)
 	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
 	status.text = "The dog guards this path. Try drawing food or a toy."
+	status.set_meta("narrator_guidance", status.text)
 
 func _process(delta: float) -> void:
 	super._process(delta)
@@ -77,6 +78,7 @@ func constrain_player(body: CharacterBody3D) -> void:
 		body.velocity.z = maxf(body.velocity.z, 0.0)
 		if request.state != "PENDING" and not dog.distracted:
 			status.text = "The dog keeps blocking the way. Draw food or a toy to distract it."
+			status.set_meta("narrator_guidance", status.text)
 
 func near_dog() -> bool:
 	# Patrol must not move the interaction boundary away from a stationary player.
@@ -161,6 +163,7 @@ func _on_request_state(state: String) -> void:
 			else:
 				presentation.cancel()
 				status.text = "Your drawing is ready. Return to the dog and press E to offer it."
+				status.set_meta("narrator_guidance", status.text)
 
 func _clear_presentation() -> void:
 	presentation.cancel()
@@ -193,6 +196,7 @@ func _offer_item() -> void:
 		return
 	if not near_dog():
 		status.text = "Return to the dog to offer your drawing."
+		status.set_meta("narrator_guidance", status.text)
 		return
 	if sketch_request_id != request.active_id:
 		request.fail_current("The drawing location was lost. Try another sketch.")
@@ -230,6 +234,7 @@ func _react_to_offering() -> void:
 	if request.state != "READY" or not is_instance_valid(offered) or dog.distracted: return
 	if item.get("type") not in ["FOOD", "TOY"]:
 		status.text = "Your object is here, but it won't distract the dog. Draw food or a toy."
+		status.set_meta("narrator_guidance", status.text)
 		return
 	# React to the final physical position after the covered reveal and drop.
 	if dog.distract(offered.global_position + COLLECTION_OFFSET, offered.global_position):
@@ -237,8 +242,10 @@ func _react_to_offering() -> void:
 		objective.text = "Watch the dog collect your drawing."
 
 func _on_collected() -> void:
+	get_node("/root/Narrator").record("npc_interaction_resolved", {"result": "The dog collected the offering and cleared the path.", "item": request.result})
 	objective.text = "The path is clear. Continue into the woods."
 	status.text = "A new friend! Follow the path to the next chapter."
+	status.set_meta("narrator_guidance", status.text)
 	var thanks := Label3D.new()
 	thanks.name = "Thanks"
 	thanks.text = "♥\nThank you!"

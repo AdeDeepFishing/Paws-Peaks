@@ -21,9 +21,12 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+GameAudio="*res://scripts/audio/game_audio.gd"
+
 Journey="*res://scripts/overworld/journey.gd"
 
 GenerationWorker="*res://scripts/river/generation_worker.gd"
+Narrator="*res://scripts/narrator/narrator.gd"
 
 [display]
 
@@ -111,3 +114,7 @@ ui_down={
 [rendering]
 
 anti_aliasing/quality/msaa_3d=2
+
+[audio]
+
+driver/enable_input=true
