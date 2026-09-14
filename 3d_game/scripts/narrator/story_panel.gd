@@ -17,55 +17,66 @@ var busy := false
 var dialogue_epoch := 0
 var mic: Node
 var paused_scene: Node
-var previous_mode := Node.PROCESS_MODE_INHERIT
 var previous_hud_visible := true
+var previous_player_input := true
+var previous_camera_follow := true
 var reveal_text := ""
 var reveal_time := 0.0
 var reveal_duration := 0.0
 var reveal_wait := 0.0
 var speech_started := false
+const Layout = preload("res://ui/storybook/layout.gd")
+var caption_art: TextureRect
+var player_caption: Control
+var player_text: Label
+var stop_button: Button
+var last_status := ""
+var current_speaker := "narrator"
+var reveal_tween: Tween
+var revealing_boss := false
+var reveal_callback: Callable
+
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	entry = _button(self, "Talk", _talk)
-	entry.icon = load("res://ui/microphone.svg")
-	entry.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	entry.offset_left = -240
-	entry.offset_right = -28
-	entry.offset_top = -174
-	entry.offset_bottom = -118
+	entry = Layout.tool(self, "microphone", _talk)
+	entry.toggle_mode = true
+	Layout.corner(entry, -144, -48)
 	entry.hide()
 	caption = PanelContainer.new()
+	caption.name = "SpeakerDialogue"
 	add_child(caption)
-	caption.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	caption.offset_left = 28
-	caption.offset_right = -255
-	caption.offset_top = -150
-	caption.offset_bottom = -24
-	var style := _paper()
-	style.bg_color.a = .76
-	style.shadow_size = 0
-	style.set_content_margin_all(16)
-	caption.add_theme_stylebox_override("panel", style)
+	caption.add_to_group("drawing_input_blocker")
+	caption.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var stack := VBoxContainer.new()
+	caption_art = Layout.paper(caption, "narrator")
+	caption_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# A plain Control keeps labels inside the paper instead of growing its bounds.
+	var stack := Control.new()
 	caption.add_child(stack)
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	speaker_label = _label(stack, "Narrator", 14)
-	caption_text = _label(stack, "", 18)
-	caption_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	caption_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	speaker_label.hide()
+	caption_text = Layout.RollingLabel.new()
+	stack.add_child(caption_text)
+	caption_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	caption_text.anchor_left = .27
+	caption_text.anchor_right = .88
+	caption_text.anchor_top = .35
+	caption_text.anchor_bottom = .87
 	thinking = Control.new()
-	thinking.custom_minimum_size = Vector2(70,24)
 	stack.add_child(thinking)
+	thinking.position = Vector2(185, 112)
 	for i in 3:
 		var dot := _label(thinking, "●", 15)
 		dot.position = Vector2(i*18,4)
 		thinking_dots.append(dot)
 	thinking.hide()
 	confirmation = VBoxContainer.new()
-	stack.add_child(confirmation)
+	add_child(confirmation)
+	confirmation.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	confirmation.position -= Vector2(180, 0)
 	var question := _label(confirmation, "End this journey by staying here?", 17)
 	question.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var choice := HBoxContainer.new()
@@ -74,7 +85,10 @@ func _ready() -> void:
 	_button(choice, "Keep exploring", story.cancel_stay)
 	confirmation.hide()
 	caption.hide()
+	_build_player_caption()
 	_build_canvas()
+	resized.connect(_layout)
+	_layout()
 	mic = preload("res://scripts/narrator/microphone.gd").new()
 	add_child(mic)
 	mic.partial_recorded.connect(func(wav): story.transcribe(wav,true))
@@ -121,10 +135,11 @@ func open_dialogue() -> void:
 	if story.chapter == 4 and story.scene.has_method("near_otter") and not story.scene.near_otter(): return
 	var player = story.scene.get("player")
 	if player == null or not player.input_enabled or player.walking_in: return
+	if story.chapter == 5 and story.scene.get("boss_revealed") == false: return
 	opened = true
 
 func _talk() -> void:
-	if busy: return
+	if busy or not get_node("/root/Journey").microphone_unlocked: return
 	if mic.recording:
 		mic.stop(true)
 		return
@@ -136,14 +151,19 @@ func close_dialogue() -> void:
 	opened = false
 	dialogue_epoch += 1
 	if mic and mic.recording: mic.stop(false)
-	if entry: entry.text = "Talk"
+	if entry: entry.set_pressed_no_signal(false)
+	if player_caption: player_caption.hide()
 	if canvas_panel: canvas_panel.hide()
 	_resume_world()
 	set_busy(false)
 
 func _resume_world() -> void:
 	if is_instance_valid(paused_scene):
-		paused_scene.process_mode = previous_mode
+		var player = paused_scene.get("player")
+		if player:
+			player.set_drawing_active(false)
+			player.set_input_enabled(previous_player_input)
+		paused_scene.camera_follow_enabled = previous_camera_follow
 		var hud = paused_scene.get("hud_root")
 		if hud: hud.visible = previous_hud_visible
 	paused_scene = null
@@ -154,7 +174,9 @@ func set_busy(value: bool) -> void:
 	thinking.visible = value
 	if value:
 		thinking_time = 0
-		caption.show()
+		if opened:
+			player_caption.show()
+		else: caption.show()
 
 func reset_story() -> void:
 	close_dialogue()
@@ -163,8 +185,19 @@ func reset_story() -> void:
 	hide_caption()
 
 func _show_line(speaker: String, text: String) -> void:
+	if speaker == "You":
+		player_text.text = text
+		player_caption.show()
+		return
 	finish_reveal()
+	if is_instance_valid(story.scene):
+		var status = story.scene.get("status_label") if story.chapter == 1 else story.scene.get("status")
+		if status is Label: last_status = status.text
 	speaker_label.text = speaker
+	current_speaker = "otter" if speaker == "Otter" else ("boss" if speaker == "Storykeeper" else "narrator")
+	caption_art.texture = load("res://ui/storybook/dialogue_" + current_speaker + ".png")
+	caption_text.anchor_left = .20 if current_speaker == "otter" else .27
+	caption_text.anchor_top = .39 if current_speaker == "boss" else .35
 	caption_text.text = text
 	caption_text.show()
 	caption.show()
@@ -172,13 +205,13 @@ func _show_line(speaker: String, text: String) -> void:
 func present(utterance: Dictionary, clear_input := true) -> void:
 	if clear_input: surface.clear()
 	set_busy(false)
-	_show_line("Otter" if utterance.get("speaker") == "otter" else ("Storykeeper" if story.chapter == 5 else "Narrator"),str(utterance.text))
+	_show_line("Otter" if utterance.get("speaker") == "otter" else ("Storykeeper" if story.chapter == 5 and is_instance_valid(story.scene) and story.scene.get("boss_revealed") == true else "Narrator"),str(utterance.text))
 	reveal_text = str(utterance.text)
 	reveal_time = 0
 	reveal_wait = 0
 	reveal_duration = maxf(2.0,reveal_text.split(" ",false).size()/2.5)
 	speech_started = false
-	caption_text.visible_characters = 0
+	caption_text.text = ""
 
 func start_speech(duration: float) -> void:
 	if reveal_text.is_empty(): return
@@ -186,16 +219,21 @@ func start_speech(duration: float) -> void:
 	if duration > 0: reveal_duration = duration
 
 func finish_reveal() -> void:
+	if not reveal_text.is_empty() and caption_text: caption_text.text = reveal_text
 	reveal_text = ""
-	if caption_text: caption_text.visible_characters = -1
+	if caption_text:
+		caption_text.visible_characters = -1
 
 func speech_finished() -> void:
 	finish_reveal()
+	if revealing_boss: return
 	if not mic.recording and not busy:
 		close_dialogue()
 		if not confirmation.visible: caption.hide()
 
 func _process(delta: float) -> void:
+	_update_tools()
+	if not revealing_boss and not get_node("/root/Journey").busy: _relay_status()
 	if busy:
 		thinking_time += delta
 		for i in thinking_dots.size():
@@ -209,7 +247,7 @@ func _process(delta: float) -> void:
 	else: return
 	var words := reveal_text.split(" ",false)
 	var count := mini(words.size(),(int(reveal_time/reveal_duration*words.size())/3+1)*3)
-	caption_text.visible_characters = " ".join(words.slice(0,count)).length()
+	caption_text.text = " ".join(words.slice(0,count))
 	if reveal_time >= reveal_duration and not story.audio.playing: speech_finished()
 
 func hide_caption() -> void:
@@ -235,27 +273,8 @@ func _build_canvas() -> void:
 	surface = preload("res://scripts/river/drawing_surface.gd").new()
 	canvas_panel.add_child(surface)
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var toolbar := PanelContainer.new()
-	canvas_panel.add_child(toolbar)
-	toolbar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	toolbar.offset_left = 20
-	toolbar.offset_right = -20
-	toolbar.offset_top = -126
-	toolbar.offset_bottom = -20
-	toolbar.add_theme_stylebox_override("panel", _paper())
-	surface.excluded_control = toolbar
-	var stack := VBoxContainer.new()
-	toolbar.add_child(stack)
-	_label(stack, "Draw your idea here, in the world.", 20)
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 12)
-	stack.add_child(actions)
-	_button(actions, "Undo", surface.undo)
-	_button(actions, "Clear", surface.clear)
-	_button(actions, "Back · Esc", _finish_drawing)
-	var use := _button(actions, "Share drawing", _share_drawing)
-	use.disabled = true
-	surface.changed.connect(func(): use.disabled = not surface.has_drawing())
+	Layout.toolbar(canvas_panel, surface, _finish_drawing, _share_drawing)
+	Layout.drawing_tools(canvas_panel)
 	canvas_panel.hide()
 
 func _finish_drawing() -> void:
@@ -271,19 +290,21 @@ func _share_drawing() -> void:
 	story.ask("",surface.snapshot_png())
 
 func _draw_idea() -> void:
-	if busy or mic.recording or story.chapter != 5: return
+	if busy or mic.recording or canvas_panel.visible or revealing_boss or story.chapter != 5: return
 	open_dialogue()
 	if not opened: return
-	story.skip()
+	story.skip(true)
 	paused_scene = story.scene
-	previous_mode = paused_scene.process_mode
-	paused_scene.process_mode = Node.PROCESS_MODE_DISABLED
+	previous_player_input = paused_scene.player.input_enabled
+	previous_camera_follow = paused_scene.camera_follow_enabled
+	paused_scene.player.set_input_enabled(false)
+	paused_scene.player.set_drawing_active(true)
+	paused_scene.camera_follow_enabled = false
 	var hud = paused_scene.get("hud_root")
 	if hud:
 		previous_hud_visible = hud.visible
 		hud.hide()
 	canvas_panel.show()
-	caption.hide()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if opened and event.is_action_pressed("ui_cancel"):
@@ -292,11 +313,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _start_recording() -> void:
-	story.skip()
+	story.skip(true)
 	dialogue_epoch += 1
 	_show_line("You","Listening…")
 	mic.start()
-	entry.text = "Stop recording"
+	entry.set_pressed_no_signal(true)
 
 func receive_transcript(text: String, partial := false) -> void:
 	text = text.strip_edges()
@@ -305,3 +326,120 @@ func receive_transcript(text: String, partial := false) -> void:
 		return
 	_show_line("You",text)
 	if not partial: story.ask(text)
+
+func _build_player_caption() -> void:
+	player_caption = Control.new()
+	player_caption.name = "PlayerSpeech"
+	add_child(player_caption)
+	player_caption.add_to_group("drawing_input_blocker")
+	player_caption.mouse_filter = Control.MOUSE_FILTER_STOP
+	var paper := Layout.paper(player_caption, "player")
+	paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	player_text = Layout.RollingLabel.new()
+	player_caption.add_child(player_text)
+	player_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	player_text.anchor_left = .05
+	player_text.anchor_right = .80
+	player_text.anchor_top = .12
+	player_text.anchor_bottom = .92
+	player_text.add_theme_font_size_override("font_size", 18)
+	stop_button = _button(player_caption, "■", func():
+		if mic.recording: mic.stop(true)
+		else: close_dialogue()
+	)
+	stop_button.add_theme_font_size_override("font_size", 28)
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var disc := StyleBoxFlat.new()
+		disc.bg_color = Color("d3b07c66")
+		disc.set_corner_radius_all(26)
+		stop_button.add_theme_stylebox_override(state, disc)
+	stop_button.tooltip_text = "Stop recording"
+	stop_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
+	stop_button.offset_left = -78
+	stop_button.offset_right = -26
+	stop_button.offset_top = -26
+	stop_button.offset_bottom = 26
+	player_caption.hide()
+
+func _layout() -> void:
+	var width := clampf(size.x * .49, 340, 660)
+	if not revealing_boss:
+		caption.position = Vector2(24, 24)
+	caption.size = Vector2(width, width * .35)
+	player_caption.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	player_caption.offset_left = -minf(size.x - 220, 700)
+	player_caption.offset_right = -190
+	player_caption.offset_top = -144
+	player_caption.offset_bottom = -48
+
+func _update_tools() -> void:
+	if not is_instance_valid(story.scene) or not story.scene.is_inside_tree(): return
+	var player = story.scene.get("player")
+	var locked: bool = player != null and (player.drawing_active or not player.input_enabled)
+	var draw = story.scene.get("book") if story.chapter == 1 else story.scene.get("draw_button")
+	if draw is Button:
+		var unlocked: bool = get_node("/root/Journey").microphone_unlocked
+		Layout.corner(draw, -256 if unlocked else -144, -160 if unlocked else -48)
+		if opened or revealing_boss: draw.disabled = true
+	entry.disabled = busy or locked or revealing_boss or (story.chapter == 5 and story.scene.get("boss_revealed") == false) or (story.chapter == 4 and story.scene.has_method("near_otter") and not story.scene.near_otter())
+	entry.set_pressed_no_signal(mic.recording)
+	stop_button.disabled = busy
+	stop_button.tooltip_text = "Stop recording" if mic.recording else "Close speech"
+
+func _relay_status() -> void:
+	if not is_instance_valid(story.scene) or not story.scene.is_inside_tree() or story.chapter == 0: return
+	var label = story.scene.get("status_label") if story.chapter == 1 else story.scene.get("status")
+	if not label is Label: return
+	label.hide()
+	var value: String = label.text
+	var drawing_hint = story.scene.get("drawing_hint") if story.chapter == 1 else story.scene.get("hint")
+	var player = story.scene.get("player")
+	if player and player.drawing_active and drawing_hint is Label: value = drawing_hint.text
+	if value == last_status or value.is_empty(): return
+	if story.scene.get("entering") == true or get_node("/root/Journey").busy: return
+	if not reveal_text.is_empty() or busy or opened: return
+	last_status = value
+	# Live narration speaks authored guidance; local errors remain readable offline.
+	if story.enabled and label.get_meta("narrator_guidance", "") == value: return
+	_show_line("Narrator", value)
+	last_status = value
+
+func animate_boss_reveal(reveal: Callable) -> void:
+	if revealing_boss: return
+	revealing_boss = true
+	reveal_callback = reveal
+	if reveal_text.is_empty():
+		_show_line("Narrator", "There is one last thing I haven't told you…")
+		reveal_text = caption_text.text
+		reveal_time = 0
+		reveal_duration = 3.2
+		reveal_wait = 0
+		speech_started = true
+		caption_text.text = ""
+	var home := Vector2(24, 24)
+	var center := (size - caption.size) * .5
+	reveal_tween = create_tween()
+	reveal_tween.tween_interval(1.2)
+	reveal_tween.tween_property(caption, "position", center, .65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	reveal_tween.tween_interval(.18)
+	reveal_tween.tween_callback(func():
+		if reveal_callback.is_valid(): reveal_callback.call()
+		caption.pivot_offset = caption.size * .5
+	)
+	reveal_tween.tween_property(caption, "scale", Vector2.ONE * 1.08, .08)
+	reveal_tween.tween_property(caption, "scale", Vector2.ONE, .2)
+	reveal_tween.tween_property(caption, "position", home, .36).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	reveal_tween.tween_callback(func():
+		revealing_boss = false
+		current_speaker = "boss"
+		caption_art.texture = load("res://ui/storybook/dialogue_boss.png")
+		caption_text.anchor_top = .39
+		speaker_label.text = "Storykeeper"
+	)
+
+func cancel_boss_reveal() -> void:
+	if reveal_tween: reveal_tween.kill()
+	revealing_boss = false
+	reveal_callback = Callable()
+	caption.scale = Vector2.ONE
+	_layout()

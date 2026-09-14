@@ -34,7 +34,7 @@ func near_otter() -> bool:
 func _process(delta: float) -> void:
 	super._process(delta)
 	draw_button.disabled = entering or not near_otter() or not player.is_on_floor() or request.state == "PENDING"
-	draw_button.text = "E · Draw again" if is_instance_valid(offered) else "E · Draw"
+	draw_button.tooltip_text = "E · Draw again" if is_instance_valid(offered) else "E · Draw"
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
 	cancel_button.visible = request.state == "PENDING"
 	if drawing and not near_otter(): _close_drawing()
@@ -52,6 +52,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _open_drawing() -> void:
+	if get_node("/root/Narrator").panel.opened: return
 	if entering: return
 	if not near_otter() or not player.is_on_floor() or request.state == "PENDING": return
 	if request.state == "READY":
@@ -130,7 +131,7 @@ func _on_request_state(state: String) -> void:
 func _build_drawing() -> void:
 	cancel_button = Button.new()
 	cancel_button.text = "Stop waiting"
-	cancel_button.position = Vector2(28, 170)
+	preload("res://ui/storybook/layout.gd").debug_control(cancel_button, 2)
 	hud_root.add_child(cancel_button)
 	cancel_button.pressed.connect(func(): request.cancel())
 	overlay = Control.new()
@@ -139,30 +140,9 @@ func _build_drawing() -> void:
 	surface = preload("res://scripts/river/drawing_surface.gd").new()
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(surface)
-	var toolbar := PanelContainer.new()
-	overlay.add_child(toolbar)
-	toolbar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	toolbar.offset_left = 20
-	toolbar.offset_right = -20
-	toolbar.offset_top = -120
-	toolbar.offset_bottom = -20
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("f3ebda")
-	paper.set_corner_radius_all(14)
-	paper.content_margin_left = 18
-	paper.content_margin_top = 14
-	toolbar.add_theme_stylebox_override("panel", paper)
-	surface.excluded_control = toolbar
-	var stack := VBoxContainer.new()
-	toolbar.add_child(stack)
-	hint = _label(stack, "Draw something to show the otter.", 18)
-	var buttons := HBoxContainer.new()
-	stack.add_child(buttons)
-	for entry in [["Undo", surface.undo], ["Clear", surface.clear], ["Back · Esc", _close_drawing], ["Show drawing", _submit]]:
-		var button := Button.new()
-		button.text = entry[0]
-		button.pressed.connect(entry[1])
-		buttons.add_child(button)
-		submit_button = button
-	surface.changed.connect(func(): submit_button.disabled = not surface.has_drawing())
+	hint = _label(overlay, "Draw something to show the otter.", 18)
+	hint.hide()
+	var actions := preload("res://ui/storybook/layout.gd").toolbar(overlay, surface, _close_drawing, _submit)
+	submit_button = actions.get_node("HBoxContainer/Submit")
+	preload("res://ui/storybook/layout.gd").drawing_tools(overlay)
 	overlay.hide()

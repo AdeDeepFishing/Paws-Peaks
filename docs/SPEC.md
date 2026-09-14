@@ -1193,3 +1193,21 @@ Storykeeper release starts the 12-second night-to-dawn transition. Reaching the
 exit starts the 12-second dawn-to-sunrise transition after dawn finishes; only
 then does the final page turn reveal the victory book. The epilogue retains
 sunrise. See [Daybreak integration](3d_game/DAYBREAK.md).
+
+## September 14: Storybook interface (#72)
+
+The supplied UI references supersede the earlier permanent chapter cards and
+wide drawing toolbar. Use painted circular buttons, a top-left frame for the
+current NPC, and a separate bottom-right player speech frame. Retain only the
+newest two or three wrapped lines. Drawing uses centered Cancel/Confirm actions,
+with Undo and Clear available as shortcuts. The pen sits above the microphone
+once the Chapter 4 gift unlocks it; the gift implementation calls
+`Journey.grant_microphone()` and remains separate teammate work.
+
+The centered menu uses supplied paper, brush tracks and return-button states, with
+Music, Sound and Voice sliders. While open, hide all other UI and drawing content,
+including test selectors and Back navigation; restore their previous state when
+closed. During exploration the existing model selectors and Back navigation remain
+below the menu circle. Chapter 5 moves the narrator paper into the center, reveals
+the Storykeeper with a brief pop, then returns a boss frame to the top left.
+See [Storybook UI integration and verification](3d_game/STORYBOOK_UI.md).

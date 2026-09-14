@@ -34,9 +34,12 @@ func _to_screen(point: Vector2) -> Vector2:
 	return point * _scale_factor() + _offset()
 
 func _can_draw(point: Vector2) -> bool:
-	return Rect2(Vector2.ZERO, size).has_point(point) and not (
-		is_instance_valid(excluded_control) and excluded_control.is_visible_in_tree()
-		and excluded_control.get_global_rect().has_point(global_position + point))
+	if not Rect2(Vector2.ZERO, size).has_point(point): return false
+	var screen_point := global_position + point
+	if is_instance_valid(excluded_control) and excluded_control.is_visible_in_tree() and excluded_control.get_global_rect().has_point(screen_point): return false
+	for control in get_tree().get_nodes_in_group("drawing_input_blocker"):
+		if control is Control and control.is_visible_in_tree() and control.get_global_rect().has_point(screen_point): return false
+	return true
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -148,3 +151,12 @@ func _stamp(bitmap: Image, center: Vector2, radius: float) -> void:
 		for x in range(maxi(0, floori(center.x - radius)), mini(IMAGE_SIZE, ceili(center.x + radius) + 1)):
 			if Vector2(x, y).distance_squared_to(center) <= radius * radius:
 				bitmap.set_pixel(x, y, Color.BLACK)
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or not event is InputEventKey or not event.pressed or event.echo: return
+	if event.keycode == KEY_Z and (event.ctrl_pressed or event.meta_pressed):
+		undo()
+		accept_event()
+	elif event.keycode == KEY_DELETE:
+		clear()
+		accept_event()

@@ -19,6 +19,16 @@ var step_timer := 0.0
 var prior_grounded := true
 var menu: PanelContainer
 var controls: CanvasLayer
+var menu_button: Button
+var menu_blocker: Control
+var menu_scene: Node
+var menu_previous_mode := Node.PROCESS_MODE_INHERIT
+var panel_previous_mode := Node.PROCESS_MODE_INHERIT
+var mute_notice: CheckButton
+var hidden_menu_layers: Dictionary = {}
+var panel_previous_visible := true
+var voice_was_paused := false
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -31,7 +41,7 @@ func _ready() -> void:
 		var effect := AudioStreamPlayer.new()
 		add_child(effect)
 		effects.append(effect)
-	for cue in ["page", "click", "submit", "ready", "jump", "step"]: cues[cue] = _sound(cue)
+	for cue in ["page", "click", "submit", "ready", "jump", "step", "reveal"]: cues[cue] = _sound(cue)
 	get_tree().node_added.connect(func(node):
 		if node is Button: _bind_button.call_deferred(node)
 	)
@@ -76,6 +86,7 @@ func _process(delta: float) -> void:
 	var current := get_tree().current_scene
 	if current == null: return
 	if scene != current:
+		close_menu()
 		scene = current
 		prior_grounded = true
 		for request in scene.find_children("DrawingRequest", "", true, false):
@@ -87,7 +98,7 @@ func _process(delta: float) -> void:
 				)
 	var journey = get_node_or_null("/root/Journey")
 	if controls:
-		controls.visible = not (journey != null and journey.busy) and not (narrator != null and narrator.panel.opened) and scene.get("drawing") != true and scene.get("presentation_phase") != "book"
+		controls.visible = not (journey != null and journey.busy) and scene.get("presentation_phase") != "book"
 	var intro: bool = journey != null and journey.visited_chapters.is_empty() and journey.from_stage == 0 and journey.target_stage == 1 and "/overworld/" in scene.scene_file_path
 	_select("opening" if intro else track_for(scene.scene_file_path, scene.get("stay_presented") == true))
 	if journey != null and phase != journey.phase:
@@ -128,7 +139,7 @@ func _sound(cue: String) -> AudioStreamWAV:
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = 22050
-	var duration := 0.65 if cue == "page" else (0.35 if cue == "ready" else 0.1)
+	var duration := 0.45 if cue == "reveal" else (0.65 if cue == "page" else (0.35 if cue == "ready" else 0.1))
 	var count := int(duration * stream.mix_rate)
 	var data := PackedByteArray()
 	data.resize(count * 2)
@@ -142,6 +153,7 @@ func _sound(cue: String) -> AudioStreamWAV:
 		filtered = lerpf(filtered, noise, 0.25)
 		var sample: float
 		if cue == "page": sample = filtered * envelope * (0.25 + 0.3 * pow(sin(t * PI * 5), 2))
+		elif cue == "reveal": sample = sin(TAU * (90.0 - 45.0 * t) * float(i) / stream.mix_rate) * exp(-t * 7.0) * 0.45 + filtered * envelope * .12
 		elif cue == "step": sample = filtered * envelope * 0.3
 		else:
 			var frequency: float = {"click": 440.0, "submit": 660.0, "ready": 880.0, "jump": 330.0}.get(cue, 440.0)
@@ -155,46 +167,110 @@ func _build_controls() -> void:
 	controls = layer
 	layer.layer = 60
 	add_child(layer)
-	var button := Button.new()
-	button.text = "Audio"
-	button.position = Vector2(20, 220)
-	layer.add_child(button)
+	var root := Control.new()
+	layer.add_child(root)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	menu_blocker = Control.new()
+	root.add_child(menu_blocker)
+	menu_blocker.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	menu_blocker.hide()
+	menu_blocker.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed: close_menu()
+	)
+	menu_button = preload("res://ui/storybook/layout.gd").tool(root, "menu")
+	menu_button.toggle_mode = true
+	menu_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	menu_button.offset_left = -144
+	menu_button.offset_right = -48
+	menu_button.offset_top = 40
+	menu_button.offset_bottom = 136
 	menu = PanelContainer.new()
-	menu.position = Vector2(20, 262)
-	layer.add_child(menu)
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("f3ebda")
-	paper.set_corner_radius_all(10)
-	paper.set_content_margin_all(12)
+	root.add_child(menu)
+	menu.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	menu.offset_left = -248
+	menu.offset_right = 248
+	menu.offset_top = -278
+	menu.offset_bottom = 278
+	var paper := StyleBoxTexture.new()
+	paper.texture = load("res://ui/storybook/menu_paper.png")
+	paper.content_margin_left = 62
+	paper.content_margin_right = 62
+	paper.content_margin_top = 60
+	paper.content_margin_bottom = 48
 	menu.add_theme_stylebox_override("panel", paper)
-	button.add_theme_stylebox_override("normal", paper)
-	button.add_theme_color_override("font_color", Color("294a43"))
 	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 10)
 	menu.add_child(stack)
-	for label in ["Music", "Effects", "Voice"]:
+	var serif := SystemFont.new()
+	serif.font_names = PackedStringArray(["Baskerville", "Georgia", "Times New Roman"])
+	var source_knob: Texture2D = load("res://ui/storybook/slider_knob.png")
+	var knob_image := source_knob.get_image()
+	knob_image.resize(42, 42, Image.INTERPOLATE_LANCZOS)
+	var knob := ImageTexture.create_from_image(knob_image)
+	for label in ["Music", "Sound", "Voice"]:
 		var title := Label.new()
 		title.text = label
-		title.add_theme_color_override("font_color", Color("294a43"))
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.add_theme_font_override("font", serif)
+		title.add_theme_font_size_override("font_size", 30)
+		title.add_theme_color_override("font_color", Color("383838"))
 		stack.add_child(title)
 		var slider := HSlider.new()
-		slider.custom_minimum_size = Vector2(190, 32)
+		slider.name = label + "Volume"
+		slider.custom_minimum_size = Vector2(360, 38)
+		slider.tooltip_text = label + " volume"
 		slider.min_value = 0
 		slider.max_value = 1
 		slider.step = 0.05
 		slider.value = voice_volume if label == "Voice" else (music_volume if label == "Music" else effects_volume)
+		var track := StyleBoxTexture.new()
+		track.texture = load("res://ui/storybook/slider_track.svg")
+		track.content_margin_top = 8
+		track.content_margin_bottom = 8
+		slider.add_theme_stylebox_override("slider", track)
+		slider.add_theme_stylebox_override("grabber_area", StyleBoxEmpty.new())
+		slider.add_theme_stylebox_override("grabber_area_highlight", StyleBoxEmpty.new())
+		for state in ["grabber", "grabber_highlight", "grabber_disabled"]:
+			slider.add_theme_icon_override(state, knob)
 		slider.value_changed.connect(func(value):
 			if label == "Music": music_volume = value
-			elif label == "Effects": effects_volume = value
+			elif label == "Sound": effects_volume = value
 			else: set_voice_volume(value)
 		)
 		stack.add_child(slider)
-	var mute := CheckButton.new()
-	mute.text = "Mute all"
-	mute.add_theme_color_override("font_color", Color("294a43"))
-	mute.toggled.connect(set_muted)
-	stack.add_child(mute)
+	mute_notice = CheckButton.new()
+	mute_notice.text = "Mute all"
+	mute_notice.add_theme_color_override("font_color", Color("745d51"))
+	mute_notice.toggled.connect(set_muted)
+	stack.add_child(mute_notice)
+	mute_notice.hide()
+	var spacer := Control.new()
+	spacer.custom_minimum_size.y = 10
+	stack.add_child(spacer)
+	var back := TextureButton.new()
+	back.name = "ReturnToTitle"
+	back.texture_normal = load("res://ui/storybook/return_normal.svg")
+	back.texture_hover = load("res://ui/storybook/return_hover.svg")
+	back.texture_focused = back.texture_hover
+	back.texture_pressed = load("res://ui/storybook/return_pressed.svg")
+	back.ignore_texture_size = true
+	back.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	back.custom_minimum_size = Vector2(360, 76)
+	back.tooltip_text = "Return to Title"
+	back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	stack.add_child(back)
+	back.pressed.connect(func():
+		play_cue("click")
+		close_menu()
+		get_node("/root/Narrator").panel.close_dialogue()
+		get_node("/root/Journey").start_intro()
+	)
 	menu.hide()
-	button.pressed.connect(func(): menu.visible = not menu.visible)
+	menu_button.pressed.connect(func():
+		if menu.visible: close_menu()
+		else: open_menu()
+	)
 
 
 func _exit_tree() -> void:
@@ -203,3 +279,48 @@ func _exit_tree() -> void:
 		player.stream = null
 	streams.clear()
 	cues.clear()
+
+func open_menu() -> void:
+	if menu.visible or get_node("/root/Journey").busy: return
+	var panel = get_node("/root/Narrator").panel
+	if panel.mic.recording: panel.close_dialogue()
+	panel_previous_visible = panel.visible
+	panel.hide()
+	var narrator = get_node("/root/Narrator")
+	voice_was_paused = narrator.audio.stream_paused
+	narrator.audio.stream_paused = true
+	panel_previous_mode = panel.process_mode
+	panel.process_mode = Node.PROCESS_MODE_DISABLED
+	menu_scene = get_tree().current_scene
+	if is_instance_valid(menu_scene):
+		menu_previous_mode = menu_scene.process_mode
+		menu_scene.process_mode = Node.PROCESS_MODE_DISABLED
+		for layer in menu_scene.find_children("*", "CanvasLayer", true, false):
+			hidden_menu_layers[layer] = layer.visible
+			layer.hide()
+	mute_notice.visible = master_muted
+	mute_notice.set_pressed_no_signal(master_muted)
+	menu.show()
+	menu_blocker.show()
+	menu_button.set_pressed_no_signal(true)
+	menu.find_child("MusicVolume", true, false).grab_focus()
+
+func close_menu() -> void:
+	if menu and menu.visible:
+		var narrator = get_node("/root/Narrator")
+		narrator.panel.process_mode = panel_previous_mode
+		narrator.panel.visible = panel_previous_visible
+		narrator.audio.stream_paused = voice_was_paused
+	for layer in hidden_menu_layers:
+		if is_instance_valid(layer): layer.visible = hidden_menu_layers[layer]
+	hidden_menu_layers.clear()
+	if is_instance_valid(menu_scene): menu_scene.process_mode = menu_previous_mode
+	menu_scene = null
+	if menu: menu.hide()
+	if menu_blocker: menu_blocker.hide()
+	if menu_button: menu_button.set_pressed_no_signal(false)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if menu and menu.visible and event.is_action_pressed("ui_cancel"):
+		close_menu()
+		get_viewport().set_input_as_handled()

@@ -113,10 +113,11 @@ func _update_drawing_entry() -> void:
 	book.visible = true
 	book.disabled = presentation.busy or not in_drawing_area or completed or bridge_built or request.state == "PENDING"
 	drawing_shine.set_active(not book.disabled)
-	book.text = "%s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
+	book.tooltip_text = "%s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
 	cancel_button.visible = not presentation.busy and request.state == "PENDING" and not completed
 
 func _open_book() -> void:
+	if get_node("/root/Narrator").panel.opened: return
 	if presentation.busy or completed or bridge_built or request.state == "PENDING":
 		return
 	if not player.is_on_floor():
@@ -411,6 +412,7 @@ func _build_ui() -> void:
 	title_card.custom_minimum_size = Vector2(430, 112)
 	title_card.add_theme_stylebox_override("panel", _paper_style())
 	root.add_child(title_card)
+	title_card.hide()
 	var title_stack := VBoxContainer.new()
 	title_card.add_child(title_stack)
 	_label(title_stack, "PAWS & PEAKS   /   CHAPTER 01", 14)
@@ -435,6 +437,7 @@ func _build_ui() -> void:
 		muted = not get_node("/root/GameAudio").master_muted
 		get_node("/root/GameAudio").set_muted(muted)
 	)
+	sound_button.hide()
 	sound_button.focus_mode = Control.FOCUS_NONE
 	sound_button.pressed.connect(func(): sound_button.text = "Sound: off" if muted else "Sound: on")
 	sound_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -466,7 +469,7 @@ func _build_ui() -> void:
 	controls.add_theme_color_override("font_color", Color("fff9ed"))
 	controls.add_theme_color_override("font_outline_color", Color("273d36"))
 	controls.add_theme_constant_override("outline_size", 4)
-	book = _button(root, "E · Draw", _open_book)
+	book = preload("res://ui/storybook/layout.gd").tool(root, "pen", _open_book)
 	book.focus_mode = Control.FOCUS_NONE
 	book.icon = load("res://ui/pen.svg")
 	book.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -475,6 +478,7 @@ func _build_ui() -> void:
 	book.offset_top = -92
 	book.offset_bottom = -28
 	book.add_theme_font_size_override("font_size", 20)
+	preload("res://ui/storybook/layout.gd").corner(book, -144, -48)
 	drawing_shine = preload("res://ui/drawing_shine.gd").attach(book)
 	cancel_button = _button(root, "Stop waiting", func():
 		request.cancel()
@@ -486,6 +490,10 @@ func _build_ui() -> void:
 	cancel_button.offset_right = -28
 	cancel_button.offset_top = -150
 	cancel_button.offset_bottom = -102
+	preload("res://ui/storybook/layout.gd").debug_control(generation_modes, 0)
+	preload("res://ui/storybook/layout.gd").debug_control(map_button, 1)
+	status_label.hide()
+	controls.hide()
 	modal = Control.new()
 	modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_root.add_child(modal)
@@ -495,51 +503,33 @@ func _build_ui() -> void:
 func _build_drawing_overlay(root: Control) -> void:
 	drawing_overlay = Control.new()
 	drawing_overlay.name = "SceneDrawingOverlay"
-	drawing_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(drawing_overlay)
+	drawing_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	surface = DrawingSurface.new()
 	surface.name = "DrawingSurface"
+	drawing_overlay.add_child(surface)
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	surface.mouse_default_cursor_shape = Control.CURSOR_CROSS
-	drawing_overlay.add_child(surface)
-	drawing_toolbar = PanelContainer.new()
-	drawing_toolbar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	drawing_toolbar.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	drawing_toolbar.offset_left = 20
-	drawing_toolbar.offset_right = -20
-	drawing_toolbar.offset_top = -150
-	drawing_toolbar.offset_bottom = -20
-	drawing_toolbar.add_theme_stylebox_override("panel", _paper_style())
-	drawing_overlay.add_child(drawing_toolbar)
-	surface.excluded_control = drawing_toolbar
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 8)
-	drawing_toolbar.add_child(stack)
-	var heading := HBoxContainer.new()
-	stack.add_child(heading)
-	drawing_hint = _label(heading, "Draw over the scene. Submit when ready.", 16)
-	drawing_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	drawing_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	drawing_hint = _label(drawing_overlay, "Draw over the scene. Submit when ready.", 16)
+	drawing_hint.hide()
 	choices = OptionButton.new()
 	for choice in ["NO AI · Test bridge", "NO AI · Unsuitable", "NO AI · Unclear", "NO AI · Service failure"]:
 		choices.add_item(choice)
-	heading.add_child(choices)
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 10)
-	stack.add_child(buttons)
-	undo_button = _button(buttons, "Undo", func(): surface.undo())
-	clear_button = _button(buttons, "Clear", func(): surface.clear())
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	buttons.add_child(spacer)
-	drawing_cancel = _button(buttons, "Cancel · Esc", func(): _close_panel(true))
-	submit_button = _button(buttons, "Submit drawing", _submit)
+	drawing_overlay.add_child(choices)
+	preload("res://ui/storybook/layout.gd").debug_control(choices, 0)
+	# Retain controller labels; keyboard editing does not need permanent buttons.
+	undo_button = _button(drawing_overlay, "Undo", surface.undo)
+	clear_button = _button(drawing_overlay, "Clear", surface.clear)
+	undo_button.hide()
+	clear_button.hide()
+	drawing_toolbar = preload("res://ui/storybook/layout.gd").toolbar(drawing_overlay, surface, func(): _close_panel(true), _submit)
+	drawing_cancel = drawing_toolbar.get_node("HBoxContainer/Cancel")
+	submit_button = drawing_toolbar.get_node("HBoxContainer/Submit")
+	preload("res://ui/storybook/layout.gd").drawing_tools(drawing_overlay)
 	surface.changed.connect(func():
-		submit_button.disabled = not surface.has_drawing()
 		undo_button.disabled = not surface.has_drawing()
 		clear_button.disabled = not surface.has_drawing()
-		if surface.has_drawing():
-			drawing_hint.text = "Draw over the scene. Submit when ready."
+		if surface.has_drawing(): drawing_hint.text = "Draw over the scene. Submit when ready."
 	)
 	drawing_overlay.hide()
 

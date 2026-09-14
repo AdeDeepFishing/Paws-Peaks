@@ -27,6 +27,12 @@ var input_blocker: Control
 var phase := "idle"
 var visited_chapters: Array[int] = []
 var sketches_shared := 0
+## Granted by the Chapter 4 gift beat; survives chapter changes.
+var microphone_unlocked := false
+
+func grant_microphone() -> void:
+	microphone_unlocked = true
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -149,6 +155,7 @@ func _browse_map(source: Node3D) -> void:
 
 func start_intro() -> void:
 	if busy: return
+	microphone_unlocked = false
 	get_node("/root/Narrator").reset_journey()
 	visited_chapters.clear()
 	sketches_shared = 0

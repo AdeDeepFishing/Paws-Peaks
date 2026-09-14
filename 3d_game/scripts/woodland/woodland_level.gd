@@ -77,12 +77,14 @@ func _build_ui() -> void:
 	paper.content_margin_bottom = 14
 	card.add_theme_stylebox_override("panel", paper)
 	root.add_child(card)
+	card.hide()
 	var stack := VBoxContainer.new()
 	card.add_child(stack)
 	_label(stack, "PAWS & PEAKS  /  CHAPTER " + chapter, 14)
 	_label(stack, stage_title, 28)
 	objective = _label(stack, "Explore the path · Scene preview", 16)
 	status = _label(root, "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint", 16)
+	status.hide()
 	status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status.position += Vector2(28,-52)
 	status.add_theme_color_override("font_color", Color("fff9ed"))
@@ -92,12 +94,12 @@ func _build_ui() -> void:
 	navigation.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	navigation.offset_left = -240
 	navigation.offset_right = -28
-	navigation.offset_top = 28
+	navigation.offset_top = 200
 	navigation.add_theme_constant_override("separation", 10)
 	root.add_child(navigation)
 	_navigation_button(navigation, "BackButton", return_label, return_scene, paper)
-	draw_button = Button.new()
-	draw_button.text = "E · Draw"
+	draw_button = preload("res://ui/storybook/illustrated_button.gd").new("pen")
+	draw_button.tooltip_text = "E · Draw"
 	draw_button.icon = load("res://ui/pen.svg")
 	draw_button.disabled = true
 	draw_button.tooltip_text = "There is no drawing challenge in this preview yet."
@@ -107,9 +109,9 @@ func _build_ui() -> void:
 	draw_button.offset_right = -28
 	draw_button.offset_top = -108
 	draw_button.offset_bottom = -52
-	draw_button.add_theme_stylebox_override("normal", paper)
 	draw_button.add_theme_font_size_override("font_size", 20)
 	draw_button.add_theme_color_override("font_color", Color("273d36"))
+	preload("res://ui/storybook/layout.gd").corner(draw_button, -144, -48)
 	drawing_shine = preload("res://ui/drawing_shine.gd").attach(draw_button)
 
 func _navigation_button(parent: Node, node_name: String, text: String, scene: String, paper: StyleBoxFlat) -> void:
