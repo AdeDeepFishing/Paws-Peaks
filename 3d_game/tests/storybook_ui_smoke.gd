@@ -48,6 +48,9 @@ func run() -> void:
 	narrator.panel._show_line("Narrator", "The river hums a little tune. Somewhere beyond the water, another page is waiting.")
 	await frames()
 	await capture("river")
+	var player_position: Vector3 = river.player.position
+	var chapters = journey.visited_chapters.duplicate()
+	var current_item = river.current_item.duplicate(true)
 	await click(mix.menu_button)
 	await frames()
 	check(not river.book.is_visible_in_tree() and not river.generation_modes.is_visible_in_tree() and not river.map_button.is_visible_in_tree(), "Menu hides all chapter controls")
@@ -56,10 +59,19 @@ func run() -> void:
 	check(mix.menu.visible and river.process_mode == Node.PROCESS_MODE_DISABLED, "Menu blocks world input")
 	var sliders = mix.menu.find_children("*", "HSlider", true, false)
 	check(sliders.size() == 3, "Menu contains Music, Sound and Voice")
+	for slider in sliders: check(is_equal_approx(slider.value, .5), "Audio sliders start centered")
+	check(is_equal_approx(narrator.audio.volume_linear, .5), "Actual speech volume matches its default slider")
+	await capture("menu")
 	mix.menu.find_child("VoiceVolume", true, false).value = .3
 	check(is_equal_approx(narrator.audio.volume_linear, .3), "Voice slider controls narration")
-	await capture("menu")
-	await click(mix.menu_button)
+	await click(mix.menu.find_children("*", "TextureButton", true, false)[0])
+	check(current_scene == river and not journey.busy, "Menu CTA resumes the same chapter instead of starting over")
+	if not is_instance_valid(river):
+		quit(1)
+		return
+	check(river.player.position.distance_to(player_position) < .01 and river.current_item == current_item,
+		"Menu CTA preserves player position and item")
+	check(journey.visited_chapters == chapters, "Menu CTA preserves journey progress")
 	check(river.generation_modes.is_visible_in_tree() and narrator.panel.visible, "Closing menu restores previous HUD")
 	check(river.process_mode == Node.PROCESS_MODE_INHERIT, "Closing menu restores input mode")
 	change_scene_to_file(journey.STAGES[3])
@@ -92,7 +104,7 @@ func run() -> void:
 	mix.open_menu()
 	await frames()
 	check(not otter.overlay.is_visible_in_tree(), "Menu hides the drawing and toolbar")
-	mix.close_menu()
+	await click(mix.menu.find_children("*", "TextureButton", true, false)[0])
 	check(otter.drawing and not otter.player.input_enabled, "Menu preserves drawing lock")
 	otter._close_drawing()
 	change_scene_to_file(journey.STAGES[4])

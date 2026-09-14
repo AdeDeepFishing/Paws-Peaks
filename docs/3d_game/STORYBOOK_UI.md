@@ -16,9 +16,13 @@ Draw/Talk controls and permanent instruction labels. This is the UI portion of
   automatic final-transcript submission are retained. Drawing is disabled during
   the conversation. These changes do not add a typed chat or a transcript history.
 - The menu is centered, with Music, Sound and Voice sliders and the three supplied
-  Return to Title button states. The content stack is vertically centered, with
+  painted button states with a live Return to Game label. All three volume sliders
+  default to 50%, including the actual speech player. The CTA closes the menu and
+  resumes the current position, encounter and drawing, just like the corner circle.
+  The content stack is vertically centered, with
   extra top/bottom paper padding; the panel grows equally around its center when
-  font metrics or the unmute control increase its minimum size. Opening it hides all chapter canvas layers and
+  font metrics or the unmute control increase its minimum size. Opening it hides
+  all chapter canvas layers and
   the narrator/player UI, leaving the menu and its top-right toggle visible.
   Closing it restores prior visibility and input modes, including active drawing.
   Narration pauses while the menu is open. An in-progress microphone recording is
@@ -58,7 +62,8 @@ explicitly to exercise the post-gift state, without claiming the quest is comple
 
 User-supplied `Downloads/UI Assets` and `Downloads/UI Assets 2`, provided on
 September 14, 2026. In-game copies are under `3d_game/ui/storybook/` with English
-filenames. No external image generation was used. SVGs containing embedded bitmap
+filenames. No external image generation was used. The original return-button letter outlines are removed from the in-game SVGs
+and replaced with a live English label matching the resume action. SVGs containing embedded bitmap
 sheets were flattened at their authored crop; vector-only menu tracks and return
 buttons remain SVG. The baked play triangle in the narrator paper was removed
 using adjacent paper to match the supplied blank-frame reference. Original
@@ -88,8 +93,8 @@ Godot 4.7.2, desktop Forward+ on Apple M1, using offline scripted fixtures only:
   reopened it, Down selected Return to Title, and another Space restarted the
   journey. The test reproduces that opening-map reset before the fix. Closing the
   menu now releases focus owned by its controls; the same movement/jump sequence
-  stays in Chapter 2. Explicit keyboard navigation inside an open menu still
-  reaches Return to Title and starts a new journey.
+  stays in Chapter 2. The menu CTA now resumes gameplay, following the later user correction; its
+  keyboard activation preserves the collected dog encounter instead of resetting it.
 - Visual captures are under `docs/3d_game/assets/storybook-ui/`.
 
 The older `dog_encounter_smoke.gd` still fails expectations for manual offering,
