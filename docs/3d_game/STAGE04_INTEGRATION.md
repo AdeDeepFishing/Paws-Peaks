@@ -1,5 +1,7 @@
 # Stage 04: Sunset Cove integration
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Updated: 2026-09-14. Implements the environment and transition requested in
 issue #31. Stage 4 also includes the otter greeting described below; nearby sketch submission is enabled. AI-selected animation reactions are implemented;
 progression rules remain separate work.
@@ -109,7 +111,6 @@ view and resized view for visual inspection.
 Run from the repository root:
 
 ```sh
-godot --headless --path 3d_game --script res://tests/sunset_cove_smoke.gd
 godot --headless --path 3d_game --script res://tests/wind_hill_exit_smoke.gd
 godot --path 3d_game --script res://tests/water_reflection_smoke.gd -- --visual
 ```

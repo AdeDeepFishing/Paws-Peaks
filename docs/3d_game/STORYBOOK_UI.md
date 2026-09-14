@@ -1,5 +1,7 @@
 # Storybook UI update (#72)
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 The September 14 UI references replace the previous chapter cards, rectangular
 Draw/Talk controls and permanent instruction labels. This is the UI portion of
 #72; it does not complete its other gameplay and animation tasks.

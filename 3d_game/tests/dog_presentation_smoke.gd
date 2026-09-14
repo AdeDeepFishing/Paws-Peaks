@@ -110,7 +110,11 @@ func run():
 	await create_timer(0.4).timeout
 	check(not level.dog.distracted and level.offered == null, "Cancel during the result hold cannot trigger a late reaction")
 	start()
+	level.player.set_physics_process(false)
+	level.player.position = level.dog.home + Vector3(50, 2, 50)
+	check(not level.near_dog(), "Player can leave while generation is pending")
 	respond()
+	check(is_instance_valid(level.offered), "Completion offers the object automatically even after the player leaves")
 	level.queue_free()
 	await frames(30)
 	level = null

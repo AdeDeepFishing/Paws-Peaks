@@ -55,7 +55,7 @@ func run():
 	JourneyTest.fast(self)
 	visual = "--visual" in OS.get_cmdline_user_args()
 	var level = fresh()
-	await frames(40)
+	check(await wait_for(func(): return not level.entering, 8), "Entrance finishes before interaction")
 	await capture("entry")
 	check(not level.can_exit(), "Entry remains gated")
 	check(level.bird.get_child_count() == 1 and level.bird.visual.visible, "Exactly one giant bird guards the hill")
@@ -112,7 +112,11 @@ func run():
 		level.bird.paused = true
 		await capture("protect")
 		level.bird.paused = false
-	check(await wait_for(func(): return level.solved, 7), "Bird flies away and clears the route")
+	var grounded_y: float = level.player.position.y
+	check(await wait_for(func(): return level.bird.phase == "departing", 7), "Blocked bird departs")
+	check(is_instance_valid(level.offered) and level.offered.get_parent() == level, "Protection detaches from the player on departure")
+	check(await wait_for(func(): return level.solved, 5), "Bird flies away and clears the route")
+	check(absf(level.player.position.y - grounded_y) < 0.1 and not is_instance_valid(level.offered), "Protection leaves without lifting the player or remaining equipped")
 	check(level.player.input_enabled and not level.bird.visible, "Success restores movement and removes the bird")
 	await capture("clear")
 	level.player.position.y = -10
@@ -127,7 +131,7 @@ func run():
 	await frames(3)
 	# The second supported drawing takes the same complete route.
 	level = fresh()
-	await frames(50)
+	check(await wait_for(func(): return not level.entering, 8), "Retry scene finishes its entrance")
 	draw(level, 1)
 	check(await wait_for(func(): return level.solved, 12), "Shield also protects and clears the bird")
 	level.queue_free()
@@ -135,7 +139,8 @@ func run():
 	await frames(3)
 	# Exercise the live model branch with an existing committed umbrella; no worker calls.
 	level = fresh()
-	await frames(50)
+	check(await wait_for(func(): return not level.entering, 8), "Saved-model scene finishes its entrance")
+	check_submission_fallback(level)
 	level.request.mock_delay = 30.0
 	for kind in ["BOW", "MAGIC"]:
 		draw(level, 0)
@@ -165,3 +170,24 @@ func run():
 	await frames(3)
 	print("BIRD ENCOUNTER SMOKE: ", "FAIL" if failed else "PASS")
 	quit(1 if failed else 0)
+
+func check_submission_fallback(level):
+	level._open_drawing()
+	check(level.drawing, "Drawing opens after the entrance")
+	level.surface.reference_size = level.surface.size
+	level.surface.strokes.append(PackedVector2Array([Vector2(600, 8), Vector2(640, 12), Vector2(680, 8)]))
+	level.surface.changed.emit()
+	level.submit_button.pressed.emit()
+	check(level.request.state == "PENDING" and not level.drawing, "Sky sketch starts generation through the submit button")
+	check(level.sketch_anchor.distance_to(level.player.global_position) < 5, "Fallback places the object near the player")
+	level.request.cancel()
+	var home: Vector3 = level.player.global_position
+	level._open_drawing()
+	level.player.set_physics_process(false)
+	level.player.global_position = Vector3(1000, 100, 1000)
+	level.submit_button.pressed.emit()
+	check(level.drawing and level.request.state != "PENDING", "Missing terrain preserves the draft")
+	check(root.get_node("Narrator").panel.caption_text.text.contains("No safe ground"), "Placement failure is immediately visible")
+	level.player.global_position = home
+	level.player.set_physics_process(true)
+	level._close_drawing()

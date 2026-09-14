@@ -1,5 +1,7 @@
 # Shared sketch generation atmosphere
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Updated September 13, 2026. The user's global playtest direction replaces the
 construction tent with particles and soft blur around the submitted sketch.
 This supersedes older cloth-cover descriptions in the stage integration notes.

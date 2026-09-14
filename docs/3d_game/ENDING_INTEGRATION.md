@@ -1,5 +1,7 @@
 # Dawn ending integration
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Updated: 2026-09-14. Implements the supplied ending (#52) and the final-page
 transition, gentler dawn and victory recap requested in #60.
 
@@ -97,7 +99,6 @@ persistent worker. No live AI request is made.
 godot --headless --path 3d_game --script res://tests/ending_smoke.gd
 godot --headless --path 3d_game --script res://tests/woodland_exit_smoke.gd
 godot --headless --path 3d_game --script res://tests/wind_hill_exit_smoke.gd
-godot --headless --path 3d_game --script res://tests/moonlit_forest_smoke.gd
 ```
 
 `journey_journal_smoke.gd` verifies real accepted submissions, rejected and pending

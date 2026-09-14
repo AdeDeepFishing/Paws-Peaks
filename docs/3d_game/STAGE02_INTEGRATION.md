@@ -1,5 +1,7 @@
 # Stage 02: woodland path integration
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Updated: 2026-09-13. Stage 2 now includes the drawing-driven dog distraction encounter
 for issue #38. FOOD and TOY make the dog collect the offering and open the path. See
 [DOG_ENCOUNTER.md](DOG_ENCOUNTER.md) for current behavior and verification. The
