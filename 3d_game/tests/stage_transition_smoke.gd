@@ -86,7 +86,7 @@ func run():
 		if journey.phase == "start" or not journey.busy: break
 	check(journey.phase == "start" and journey.target_stage == 2, "River exit keeps Chapter 2 as its destination")
 	if current_scene != null and current_scene.scene_file_path == journey.MAP:
-		check(current_scene.start_button.text == "Next page  →", "River exit never offers a new journey")
+		check(current_scene.start_button.text == "Play", "River exit never offers a new journey")
 		check(current_scene.review_stage == 2 and "CHAPTER 02" in current_scene.caption.text, "Map presents Chapter 2")
 		check(current_scene.hero.position.distance_to(current_scene.RouteData.STAGES[1]) < 0.25, "Map traveler reaches Chapter 2")
 	await capture("chapter-two-map")

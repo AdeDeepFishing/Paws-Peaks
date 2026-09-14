@@ -38,7 +38,7 @@ func run() -> void:
 			if journey.phase == "start": break
 		check(current_scene.name == "Overworld" and is_instance_valid(river), "Map browsing retains the existing chapter")
 		check(not river.visible and not river.hud.visible and river.process_mode == Node.PROCESS_MODE_DISABLED, "The retained chapter is hidden and paused")
-		check(current_scene.start_button.text == "Return to chapter  →" and current_scene.zoom_controls.visible, "Map offers return and zoom even in Chapter 1")
+		check(current_scene.start_button.text == "Return" and current_scene.zoom_controls.visible, "Map offers return and zoom even in Chapter 1")
 		check(journey.page_material.get_shader_parameter("previous_page") == true, "Back to map turns to the previous page from the left")
 		var map := current_scene
 		map.zoom_slider.value = 1.0

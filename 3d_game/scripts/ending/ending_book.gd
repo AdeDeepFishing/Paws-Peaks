@@ -17,6 +17,13 @@ var content: Control
 var chapters_value: Label
 var sketches_value: Label
 var chapter_marks: Array[int] = []
+var end_page: Control
+var end_paper: TextureRect
+var end_footer: ColorRect
+var memories: Button
+var memory_back: Button
+var memory_replay: Button
+var memory_explore: Button
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -26,6 +33,7 @@ func _ready() -> void:
 	add_child(content)
 	content.draw.connect(_draw_book)
 	_build_pages()
+	_build_end_page()
 	resized.connect(_fit)
 	_fit()
 
@@ -35,6 +43,76 @@ func _fit() -> void:
 	factor = maxf(0.1, factor)
 	content.scale = Vector2.ONE * factor
 	content.position = (size - SIZE * factor) * 0.5
+	if end_paper != null:
+		var scale_factor := minf(size.x / 1280.0, size.y / 800.0)
+		var height := 355.0 * scale_factor
+		end_paper.size = Vector2(size.x, height)
+		end_paper.position = Vector2(0, size.y - height - 64 * scale_factor)
+		end_footer.position = Vector2(0, size.y - 64 * scale_factor - 1)
+		end_footer.size = Vector2(size.x, 64 * scale_factor + 1)
+		var buttons := [memories, replay, explore]
+		for i in buttons.size():
+			buttons[i].position = Vector2(size.x * .5 + (i - 1) * 218 * scale_factor - 100 * scale_factor, height + 2 * scale_factor)
+			buttons[i].size = Vector2(200, 50) * scale_factor
+			buttons[i].add_theme_font_size_override("font_size", maxi(15, roundi(25 * scale_factor)))
+
+
+func _build_end_page() -> void:
+	memory_replay = replay
+	memory_explore = explore
+	end_page = Control.new()
+	end_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(end_page)
+	end_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	end_paper = TextureRect.new()
+	end_paper.texture = preload("res://ui/title/ending_reference.svg")
+	end_paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	end_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	end_footer = ColorRect.new()
+	end_footer.color = Color("e8cca3")
+	end_footer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	end_page.add_child(end_footer)
+	end_page.add_child(end_paper)
+	memories = _end_button("Your journey")
+	replay = _end_button("Play again")
+	explore = _end_button("Stay a while")
+	replay.pressed.connect(func(): replay_requested.emit())
+	explore.pressed.connect(func(): explore_requested.emit())
+	memories.pressed.connect(func():
+		end_page.hide()
+		content.show()
+		memory_back.grab_focus()
+	)
+	memory_back = _button("BackToEnd", "Back", Vector2(22, 14), Vector2(76, 30), false)
+	memory_back.pressed.connect(show_end_page)
+	visibility_changed.connect(func():
+		if visible: show_end_page()
+	)
+	show_end_page()
+
+func _end_button(text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_override("font", preload("res://ui/title/cormorant.ttf"))
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		var paint := StyleBoxTexture.new()
+		paint.texture = preload("res://ui/title/play_paper.svg")
+		paint.modulate_color = Color("ffc4a1") if state in ["hover", "focus"] else Color.WHITE
+		button.add_theme_stylebox_override(state, paint)
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		button.add_theme_color_override(state, Color.WHITE)
+	end_paper.add_child(button)
+	return button
+
+func show_end_page() -> void:
+	content.hide()
+	end_page.show()
+	if is_visible_in_tree() and not replay.disabled: replay.grab_focus()
+
+func set_actions_enabled(value: bool) -> void:
+	for button in [replay, explore, memories, memory_replay, memory_explore, memory_back]:
+		button.disabled = not value
 
 func _label_at(text: String, at: Vector2, bounds: Vector2, font_size: int, serif: bool = false, color: Color = INK) -> Label:
 	var label := Label.new()
@@ -45,15 +123,13 @@ func _label_at(text: String, at: Vector2, bounds: Vector2, font_size: int, serif
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	if serif:
-		var font := SystemFont.new()
-		font.font_names = PackedStringArray(["Georgia", "Noto Serif", "DejaVu Serif"])
-		label.add_theme_font_override("font", font)
+		label.add_theme_font_override("font", preload("res://ui/title/cormorant.ttf"))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(label)
 	return label
 
 func _build_pages() -> void:
-	_label_at("P A W S   &   P E A K S", Vector2(62, 45), Vector2(400, 22), 13)
+	_label_at("T H E   T A L E   W E   D R A W", Vector2(62, 45), Vector2(400, 22), 13)
 	photo = TextureRect.new()
 	photo.position = Vector2(62, 92)
 	photo.size = Vector2(400, 330)
@@ -180,4 +256,5 @@ func set_stay_ending() -> void:
 	ending_title.text = "A Place to Stay"
 	ending_subtitle.text = "You chose a place in this story."
 	conclusion.text = "An ending freely chosen.\nA world to remember."
-	explore.text = "Look around this memory"
+	explore.text = "Look around"
+	memory_explore.text = "Look around this memory"

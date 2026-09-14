@@ -1244,3 +1244,16 @@ starts; hold it for three full seconds while one combined line explains the micr
 and ends with “looks like the otter want to talk to you! use the mic to speak”.
 Allow that line to continue after the gift disappears; do not start a separate invitation. Remove the gift and unlock Talk together. Narration uses paced subtitles
 when speech is unavailable; ordinary automatic commentary waits for this sequence.
+
+## September 15: Title and chapter entrances (#81)
+
+Use the supplied The Tale / We Draw title in Cormorant over the panoramic map,
+with the mountains occluding its lettering. Hold this opening for 2.5 seconds,
+then zoom toward Chapter I as curved paper, chapter text and Play enter together.
+The hero walks up from below to the first marker. Apply the same chapter card
+presentation to all five chapters while retaining the established route travel
+and time-of-day progression. Wait for Play before entering gameplay.
+
+Use the supplied The End artwork for the epilogue, retaining access to the
+existing journey recap, replay, and continued exploration. See
+[Title UI](3d_game/TITLE_UI.md) for integration and verification details.
