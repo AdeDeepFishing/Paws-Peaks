@@ -66,7 +66,7 @@ func run() -> void:
 	check(level.process_mode != Node.PROCESS_MODE_DISABLED, "Closing dialogue restores the encounter")
 	level._story_changed({"stage": 5, "exit_open": true, "ending": null})
 	await frames(120)
-	check(level.released and level.get_node("Storykeeper").position.x < -2.9, "Confirmed release moves the boss aside")
+	check(level.released and is_equal_approx(level.get_node("Storykeeper").position.x, 0.0) and absf(level.get_node("Storykeeper").rotation.y - PI/2) < .01, "Confirmed release rotates the boss in place")
 	level._story_changed({"stage": 5, "exit_open": false, "ending": null})
 	check(level.released, "Later dialogue cannot reclose the exit")
 	# Transport responses from an old scene must not change state or play speech.

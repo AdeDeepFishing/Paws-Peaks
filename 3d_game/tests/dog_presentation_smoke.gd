@@ -33,7 +33,7 @@ func start():
 	for i in level.surface.strokes[0].size():
 		level.surface.strokes[0][i] += offset
 	level._submit()
-	check(level.request.state == "PENDING" and level.presentation.phase == "focusing", "Submission starts the construction focus")
+	check(level.request.state == "PENDING" and level.presentation.phase == "waiting", "Submission preserves the normal camera until the model is ready")
 func respond(valid_model := true):
 	var path := ProjectSettings.globalize_path("res://../docs/test-artifacts/stage2-2026-09-13/model.glb") if valid_model else "res://project.godot"
 	level.request.accept_response({"schema_version": 2, "request_id": level.request.active_id, "status": "recognized", "item": {"name": "Dog Bone", "description": "A local model fixture.", "type": "FOOD", "movable": true, "texture_key": "wood", "color": "#D9C6A0"}, "model_path": path})
@@ -52,22 +52,20 @@ func fresh():
 	level.generation.configure(0)
 	level.request.draft_directory = "user://test-drawings/dog_presentation_smoke"
 	level.request.mock_delay = 60.0
-	await frames(40)
+	await frames(160)
 
 func run():
 	await fresh()
 	var home_fov: float = level.camera.fov
 	start()
-	check(level.generation_preview.mist.active and not level.player.input_enabled, "Sketch mist appears while camera moves")
+	var waiting_camera: Transform3D = level.camera.transform
+	check(level.generation_preview.mist.active and level.player.input_enabled, "Generation keeps exploration available")
 	await create_timer(0.5).timeout
-	check(level.presentation.phase == "focusing" and level.camera.fov < home_fov and level.camera.fov > 40, "Camera zooms gradually")
-	await wait_until(func(): return level.presentation.phase == "waiting")
-	check(level.player.input_enabled and level.cancel_request.visible, "Exploration and cancellation are available while generating")
+	check(level.presentation.phase == "waiting" and is_equal_approx(level.camera.fov, home_fov), "Generation never zooms")
+	check(level.camera.transform.is_equal_approx(waiting_camera) and level.camera_follow_enabled, "Generation retains the regular follow camera")
 	level.player.respawn(Vector3(1, 0.2, 3))
 	await frames(35)
-	var frame := root.get_visible_rect().grow(-24)
-	check(frame.has_point(level.camera.unproject_position(level.sketch_anchor)), "Group camera retains the object landing while the player moves")
-	check(frame.has_point(level.camera.unproject_position(level.player.global_position + Vector3.UP * 1.6)), "Group camera retains the moving protagonist")
+	var reveal_home: Transform3D = level.camera.transform
 	await capture("cover")
 	respond()
 	check(is_instance_valid(level.offered) and not level.offered.visible and not level.dog.distracted, "Model remains hidden during uncovering and dog waits")
@@ -79,6 +77,7 @@ func run():
 	await create_timer(1.5).timeout
 	check(level.presentation.phase == "revealing" and is_equal_approx(level.camera.fov, 40) and not level.dog.distracted, "Visible result holds for two seconds before zoom-out")
 	await wait_until(func(): return level.dog.distracted)
+	check(level.presentation.home.is_equal_approx(reveal_home), "Reveal restores the view at completion, not at submission")
 	check(not level.presentation.active and is_equal_approx(level.camera.fov, home_fov), "Dog reaction starts only after camera restoration")
 	check(level.dog.state == "jump" and level.dog.has_node("ReactionHeart"), "Reaction includes a heart and an excited jump")
 	await capture("reaction")

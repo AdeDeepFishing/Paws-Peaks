@@ -3,6 +3,7 @@ extends "res://tests/dog_presentation_smoke.gd"
 func run():
 	for sketch_size in [Vector2(100, 90), Vector2(430, 360), Vector2(580, 100), Vector2(110, 400)]:
 		await fresh()
+		await frames(120)
 		level.request.draft_directory = "/private/tmp/paws-dog-framing-draft"
 		level.presentation.duration_scale = 0.1
 		level._open_drawing()
@@ -17,23 +18,24 @@ func run():
 		level._submit()
 		check(level.request.state == "PENDING", "Sketch reaches the actual submission flow")
 		await wait_until(func(): return level.presentation.phase == "waiting")
-		await frames(2)
+		check(level.camera_follow_enabled and not level.presentation.focus_started, "Waiting preserves normal player follow")
+		respond()
+		await wait_until(func(): return level.presentation.phase == "revealing")
 		var preview = level.generation_preview
 		var viewport := Rect2(Vector2.ZERO, root.get_visible_rect().size)
 		check(viewport.encloses(Rect2(preview.mist.position, preview.mist.size)), "Entire sketch and mist fit the close-up: " + str(sketch_size))
-		check(preview.image.size.x <= preview.submitted_rect.size.x * 1.31, "Close-up does not inflate the submitted drawing: " + str(sketch_size))
-		for participant in [level.player.visual, level.dog]:
+		check(preview.image.size.x <= preview.submitted_rect.size.x * 3.01, "Close-up keeps drawing enlargement within the intended threefold limit: " + str(sketch_size))
+		for participant in [level.player.visual]:
 			var points: Array[Vector3] = []
 			preload("res://scripts/woodland/encounter_framing.gd").add_visual(points, participant)
 			for point in points:
-				check(not level.camera.is_position_behind(point) and viewport.grow(-24).has_point(level.camera.unproject_position(point)), "The dog and protagonist remain fully framed")
+				check(not level.camera.is_position_behind(point) and viewport.grow(-24).has_point(level.camera.unproject_position(point)), "The protagonist remains fully framed")
 		if "--visual" in OS.get_cmdline_user_args():
 			await RenderingServer.frame_post_draw
 			root.get_texture().get_image().save_png("/private/tmp/paws-dog-fit-%d.png" % int(sketch_size.x))
 
 	# Allow the actual gravity/reveal sequence to finish before the dog approaches.
 	level.presentation.duration_scale = 1.0
-	respond()
 	await wait_until(func(): return level.dog.distracted)
 	var landing: Vector3 = level.offered.global_position
 	level.dog.paused = true

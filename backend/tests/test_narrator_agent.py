@@ -44,6 +44,12 @@ class NarratorTests(unittest.TestCase):
         response = self.service.handle(request)
         if "state" in response: self.state = response["state"]
         return response
+    def test_negative_boss_mood_drives_angry_reaction(self):
+        self.model.delta = -12
+        result = self.send("respond", text="Your story is worthless.")
+        self.assertEqual(result["state"]["mood"], 25)
+        self.assertEqual(result["utterance"]["emotion"], "angry")
+
     def test_drawing_scores_without_a_clarification_turn(self):
         import base64
         self.model.decision = "NEEDS_CLARIFICATION"

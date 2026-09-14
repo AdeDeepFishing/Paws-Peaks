@@ -100,7 +100,7 @@ func _on_drawing_area(body: Node3D) -> void:
 	in_drawing_area = true
 	if not unlocked:
 		unlocked = true
-		status_label.text = "Could you draw a way across? %s · Draw" % book_key
+		status_label.text = "Could you draw a way across?"
 		status_label.set_meta("narrator_guidance", status_label.text)
 	_update_drawing_entry()
 
@@ -311,7 +311,7 @@ func restart() -> void:
 	bridge.hide()
 	$Bridge/Deck/CollisionShape3D.set_deferred("disabled", true)
 	player.respawn(SPAWN)
-	status_label.text = "Follow the pink path to the river."
+	status_label.text = "Follow the path to the river."
 	status_label.set_meta("narrator_guidance", status_label.text)
 	_close_panel(true)
 	_update_hud()
@@ -450,7 +450,7 @@ func _build_ui() -> void:
 	map_button.offset_right = -28
 	map_button.offset_top = 144
 	map_button.offset_bottom = 188
-	status_label = _label(root, "Follow the pink path to the river.", 19)
+	status_label = _label(root, "Follow the path to the river.", 19)
 	status_label.set_meta("narrator_guidance", status_label.text)
 	status_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status_label.position += Vector2(28, -154)
