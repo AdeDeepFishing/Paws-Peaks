@@ -32,8 +32,7 @@ var chapter_card: Control
 var title_lines: Array[Label3D] = []
 var title_progress := 0.0
 const INTRO_HOLD := 2.5
-const TITLE_FONT = preload("res://ui/title/cormorant.ttf")
-const TITLE_ITALIC = preload("res://ui/title/cormorant_italic.ttf")
+const TITLE_FONT = preload("res://ui/title/cormorant_upright_semibold.ttf")
 
 func _ready() -> void:
 	_build_route()
@@ -95,10 +94,7 @@ func _build_title() -> void:
 	for index in 2:
 		var line := Label3D.new()
 		line.text = "The Tale" if index == 0 else "We Draw"
-		var font := FontVariation.new()
-		font.base_font = TITLE_FONT if index == 0 else TITLE_ITALIC
-		font.variation_opentype = {"wght": 500}
-		line.font = font
+		line.font = TITLE_FONT
 		line.font_size = 160
 		line.outline_size = 0
 		line.modulate = Color("303632")
@@ -157,7 +153,8 @@ func _build_zoom_controls() -> void:
 	for button in [near, far]:
 		button.custom_minimum_size = Vector2(58, 36)
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		button.add_theme_font_size_override("font_size", 17)
+		button.add_theme_font_override("font", TITLE_FONT)
+		button.add_theme_font_size_override("font_size", 20)
 		for state in ["normal", "hover", "pressed", "focus"]:
 			var style := StyleBoxFlat.new()
 			style.bg_color = Color("34584e")

@@ -1247,7 +1247,7 @@ when speech is unavailable; ordinary automatic commentary waits for this sequenc
 
 ## September 15: Title and chapter entrances (#81)
 
-Use the supplied The Tale / We Draw title in Cormorant over the panoramic map,
+Use the supplied The Tale / We Draw title in Cormorant Upright over the panoramic map,
 with the mountains occluding its lettering. Hold this opening for 2.5 seconds,
 then zoom toward Chapter I as curved paper, chapter text and Play enter together.
 The hero walks up from below to the first marker. Apply the same chapter card

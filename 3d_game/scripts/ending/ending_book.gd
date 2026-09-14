@@ -94,7 +94,7 @@ func _end_button(text: String) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_override("font", preload("res://ui/title/cormorant.ttf"))
+	button.add_theme_font_override("font", preload("res://ui/title/cormorant_upright_bold.ttf"))
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var paint := StyleBoxTexture.new()
 		paint.texture = preload("res://ui/title/play_paper.svg")
@@ -122,8 +122,7 @@ func _label_at(text: String, at: Vector2, bounds: Vector2, font_size: int, serif
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
-	if serif:
-		label.add_theme_font_override("font", preload("res://ui/title/cormorant.ttf"))
+	label.add_theme_font_override("font", preload("res://ui/title/cormorant_upright_semibold.ttf") if serif else preload("res://ui/title/cormorant_upright_bold.ttf"))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(label)
 	return label
@@ -163,7 +162,8 @@ func _button(node_name: String, text: String, at: Vector2, bounds: Vector2, prim
 	button.position = at
 	button.size = bounds
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_size_override("font_size", 17 if primary else 14)
+	button.add_theme_font_override("font", preload("res://ui/title/cormorant_upright_bold.ttf"))
+	button.add_theme_font_size_override("font_size", 20 if primary else 18)
 	var style := StyleBoxFlat.new()
 	style.bg_color = INK if primary else Color(0, 0, 0, 0)
 	style.set_corner_radius_all(8)
