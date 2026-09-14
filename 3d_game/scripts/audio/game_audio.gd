@@ -21,6 +21,8 @@ var menu: PanelContainer
 var controls: CanvasLayer
 var menu_button: Button
 var menu_blocker: Control
+var menu_close: Button
+var map_return: TextureButton
 var menu_scene: Node
 var menu_previous_mode := Node.PROCESS_MODE_INHERIT
 var panel_previous_mode := Node.PROCESS_MODE_INHERIT
@@ -205,8 +207,7 @@ func _build_controls() -> void:
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 10)
 	menu.add_child(stack)
-	var serif := SystemFont.new()
-	serif.font_names = PackedStringArray(["Baskerville", "Georgia", "Times New Roman"])
+	var serif := preload("res://ui/title/cormorant_upright_bold.ttf")
 	var source_knob: Texture2D = load("res://ui/storybook/slider_knob.png")
 	var knob_image := source_knob.get_image()
 	knob_image.resize(42, 42, Image.INTERPOLATE_LANCZOS)
@@ -252,7 +253,8 @@ func _build_controls() -> void:
 	spacer.custom_minimum_size.y = 10
 	stack.add_child(spacer)
 	var back := TextureButton.new()
-	back.name = "ReturnToGame"
+	back.name = "BackToMap"
+	map_return = back
 	back.texture_normal = load("res://ui/storybook/return_normal.svg")
 	back.texture_hover = load("res://ui/storybook/return_hover.svg")
 	back.texture_focused = back.texture_hover
@@ -260,28 +262,62 @@ func _build_controls() -> void:
 	back.ignore_texture_size = true
 	back.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	back.custom_minimum_size = Vector2(360, 76)
-	back.tooltip_text = "Return to Game"
+	back.tooltip_text = "Back to Map"
 	back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	stack.add_child(back)
-	var resume_label := Label.new()
-	resume_label.text = "Return to Game"
-	resume_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	resume_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	resume_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	resume_label.add_theme_font_override("font", serif)
-	resume_label.add_theme_font_size_override("font_size", 30)
-	resume_label.add_theme_color_override("font_color", Color.WHITE)
-	back.add_child(resume_label)
-	resume_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	back.pressed.connect(func():
-		play_cue("click")
-		close_menu()
-	)
+	var map_label := Label.new()
+	map_label.text = "Back to Map"
+	map_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	map_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	map_label.add_theme_font_override("font", serif)
+	map_label.add_theme_font_size_override("font_size", 30)
+	map_label.add_theme_color_override("font_color", Color.WHITE)
+	back.add_child(map_label)
+	map_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	back.pressed.connect(_back_to_map)
+	_build_menu_close()
 	menu.hide()
 	menu_button.pressed.connect(func():
 		if menu.visible: close_menu()
 		else: open_menu()
 	)
+
+
+func _build_menu_close() -> void:
+	# Keep X outside the vertical stack so it does not shift the audio controls.
+	var overlay := Control.new()
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	menu.add_child(overlay)
+	menu_close = Button.new()
+	menu_close.name = "CloseMenu"
+	menu_close.tooltip_text = "Close menu"
+	menu_close.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	menu_close.icon = preload("res://ui/storybook/menu_close.svg")
+	menu_close.expand_icon = true
+	menu_close.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_close.custom_minimum_size = Vector2(55, 51)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		menu_close.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	menu_close.add_theme_color_override("icon_hover_color", Color("c17e52"))
+	menu_close.add_theme_color_override("icon_pressed_color", Color("75432e"))
+	var focus := StyleBoxFlat.new()
+	focus.draw_center = false
+	focus.border_color = Color("b4955d")
+	focus.set_border_width_all(2)
+	focus.set_corner_radius_all(5)
+	menu_close.add_theme_stylebox_override("focus", focus)
+	overlay.add_child(menu_close)
+	overlay.resized.connect(func(): menu_close.position = Vector2(overlay.size.x - 61, -37))
+	menu_close.position = Vector2(overlay.size.x - 61, -37)
+	menu_close.pressed.connect(close_menu)
+
+func _back_to_map() -> void:
+	if map_return.disabled or not menu.visible: return
+	play_cue("click")
+	close_menu()
+	var error: Error = get_node("/root/Journey").browse_map()
+	if error != OK: open_menu()
 
 
 func _exit_tree() -> void:
@@ -303,6 +339,9 @@ func open_menu() -> void:
 	panel_previous_mode = panel.process_mode
 	panel.process_mode = Node.PROCESS_MODE_DISABLED
 	menu_scene = get_tree().current_scene
+	map_return.disabled = not get_node("/root/Journey").can_browse_map()
+	map_return.modulate.a = 0.45 if map_return.disabled else 1.0
+	map_return.tooltip_text = "Finish the current action to open the map." if map_return.disabled else "Back to Map"
 	if is_instance_valid(menu_scene):
 		menu_previous_mode = menu_scene.process_mode
 		menu_scene.process_mode = Node.PROCESS_MODE_DISABLED

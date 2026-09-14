@@ -64,14 +64,14 @@ func run() -> void:
 	await capture("menu")
 	mix.menu.find_child("VoiceVolume", true, false).value = .3
 	check(is_equal_approx(narrator.audio.volume_linear, .3), "Voice slider controls narration")
-	await click(mix.menu.find_children("*", "TextureButton", true, false)[0])
-	check(current_scene == river and not journey.busy, "Menu CTA resumes the same chapter instead of starting over")
+	await click(mix.menu_close)
+	check(current_scene == river and not journey.busy, "Menu X resumes the same chapter instead of starting over")
 	if not is_instance_valid(river):
 		quit(1)
 		return
 	check(river.player.position.distance_to(player_position) < .01 and river.current_item == current_item,
-		"Menu CTA preserves player position and item")
-	check(journey.visited_chapters == chapters, "Menu CTA preserves journey progress")
+		"Menu X preserves player position and item")
+	check(journey.visited_chapters == chapters, "Menu X preserves journey progress")
 	check(river.generation_modes.is_visible_in_tree() and narrator.panel.visible, "Closing menu restores previous HUD")
 	check(river.process_mode == Node.PROCESS_MODE_INHERIT, "Closing menu restores input mode")
 	change_scene_to_file(journey.STAGES[3])
@@ -104,14 +104,16 @@ func run() -> void:
 	mix.open_menu()
 	await frames()
 	check(not otter.overlay.is_visible_in_tree(), "Menu hides the drawing and toolbar")
-	await click(mix.menu.find_children("*", "TextureButton", true, false)[0])
+	await click(mix.menu_close)
 	check(otter.drawing and not otter.player.input_enabled, "Menu preserves drawing lock")
 	otter._close_drawing()
 	change_scene_to_file(journey.STAGES[4])
 	await scene_changed
-	for i in 240:
+	for i in 600:
 		if narrator.panel.revealing_boss: break
+		await physics_frame
 		await process_frame
+	check(narrator.panel.revealing_boss, "Boss reveal starts after the entrance")
 	await create_timer(1.92).timeout
 	check(narrator.panel.caption.position.distance_to((narrator.panel.size - narrator.panel.caption.size) * .5) < 2, "Reveal dialogue reaches screen center")
 	await capture("reveal-center")

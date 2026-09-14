@@ -16,9 +16,13 @@ Draw/Talk controls and permanent instruction labels. This is the UI portion of
   automatic final-transcript submission are retained. Drawing is disabled during
   the conversation. These changes do not add a typed chat or a transcript history.
 - The menu is centered, with Music, Sound and Voice sliders and the three supplied
-  painted button states with a live Return to Game label. All three volume sliders
-  default to 50%, including the actual speech player. The CTA closes the menu and
-  resumes the current position, encounter and drawing, just like the corner circle.
+  painted button states with a live Back to Map label and the supplied painted X.
+  All three volume sliders default to 50%, including the actual speech player.
+  X, Escape and the corner circle close the menu and resume in place. The bottom
+  CTA opens the current chapter map, whose Return button restores the same scene,
+  position and encounter. Drawing, generation, conversations and scripted sequences
+  temporarily disable map navigation while X remains usable. Menu lettering uses
+  the bundled Cormorant Upright Bold font.
   The content stack is vertically centered, with
   extra top/bottom paper padding; the panel grows equally around its center when
   font metrics or the unmute control increase its minimum size. Opening it hides
@@ -64,7 +68,8 @@ User-supplied `Downloads/UI Assets` and `Downloads/UI Assets 2`, provided on
 September 14, 2026. In-game copies are under `3d_game/ui/storybook/` with English
 filenames. No external image generation was used. The original return-button letter outlines are removed from the in-game SVGs
 and replaced with a live English label matching the resume action. SVGs containing embedded bitmap
-sheets were flattened at their authored crop; vector-only menu tracks and return
+sheets were flattened at their authored crop; `menu_close.svg` is the user-supplied
+`Group 1.svg` from Downloads; vector-only menu tracks and return
 buttons remain SVG. The baked play triangle in the narrator paper was removed
 using adjacent paper to match the supplied blank-frame reference. Original
 Downloads files were not changed. Menu labels use available system serif fonts
@@ -93,8 +98,12 @@ Godot 4.7.2, desktop Forward+ on Apple M1, using offline scripted fixtures only:
   reopened it, Down selected Return to Title, and another Space restarted the
   journey. The test reproduces that opening-map reset before the fix. Closing the
   menu now releases focus owned by its controls; the same movement/jump sequence
-  stays in Chapter 2. The menu CTA now resumes gameplay, following the later user correction; its
-  keyboard activation preserves the collected dog encounter instead of resetting it.
+  stays in Chapter 2. The menu X resumes gameplay; its keyboard activation preserves the collected
+  dog encounter. The bottom CTA now opens the retained chapter map.
+- `menu_map_smoke.gd`: pointer X close, pointer/keyboard Back to Map, retained
+  position/drawing state after Return, and navigation guards while generation is
+  pending. Pointer helpers wait for the menu to become visible after transitions.
+  The storybook reveal test waits for the actual entrance before sampling motion.
 - Visual captures are under `docs/3d_game/assets/storybook-ui/`.
 
 The older `dog_encounter_smoke.gd` still fails expectations for manual offering,

@@ -99,11 +99,23 @@ func travel_to(destination: String) -> Error:
 	_begin(origin, target)
 	return OK
 
+func can_browse_map() -> bool:
+	if busy: return false
+	var source := get_tree().current_scene
+	if source == null or stage_for_scene(source.scene_file_path) == 0: return false
+	if source.has_method("can_browse_map") and not source.can_browse_map(): return false
+	var player = source.get("player")
+	if player == null or not player.input_enabled: return false
+	for request in source.find_children("DrawingRequest", "", true, false):
+		if request.state == "PENDING": return false
+	var narrator := get_node("/root/Narrator")
+	return not narrator.panel.opened and not narrator.panel.revealing_boss and not narrator.scripted_narration
+
 func browse_map() -> Error:
 	if busy: return ERR_BUSY
 	var source := get_tree().current_scene
 	if source == null or stage_for_scene(source.scene_file_path) == 0: return ERR_UNCONFIGURED
-	if source.has_method("can_browse_map") and not source.can_browse_map(): return ERR_BUSY
+	if not can_browse_map(): return ERR_BUSY
 	if not ResourceLoader.exists(MAP): return ERR_FILE_NOT_FOUND
 	busy = true
 	input_blocker.show()
