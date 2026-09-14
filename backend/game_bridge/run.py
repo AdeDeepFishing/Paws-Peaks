@@ -97,7 +97,7 @@ def generate(job_dir, mode, emit, game_stage, animation_options=None):
         return 0
     # Provider keys are read only by Python. No keys or signed URLs enter Godot.
     with open(os.devnull, "w") as sink, contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
-        code = pipeline.main(["--image", str(job_dir / "request/input.png"), "--game-stage", game_stage],
+        code = pipeline.main(["--skip-preview", "--image", str(job_dir / "request/input.png"), "--game-stage", game_stage],
                              output_folder=response_dir / "artifacts", on_event=emit, **({"animation_options": animation_options} if game_stage == "otter" else {}))
     return code
 
@@ -122,7 +122,7 @@ def execute(job_dir, request_id, encounter_id, mode, game_stage="river", *, requ
         if (job_dir / "cancel").exists() and event.get("status") != "FAILED":
             raise AppError("CANCELED", "Local request canceled.")
         # Only the explicitly allowed fields enter the game's status channel.
-        allowed = {key: event[key] for key in ("stage", "status", "item", "reaction", "reference_path", "model_path", "preview_path", "preview_error", "error") if key in event}
+        allowed = {key: event[key] for key in ("stage", "status", "item", "reaction", "otter_happy", "otter_response", "reference_path", "model_path", "preview_path", "preview_error", "error") if key in event}
         progress.update(allowed)
         if event.get("status") in ("SUCCEEDED", "FAILED") or any(
                 key in allowed for key in ("item", "reference_path", "model_path", "preview_path", "preview_error")):

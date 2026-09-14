@@ -14,6 +14,8 @@ var cancel_button: Button
 var generation_preview: Control
 var sketch_anchor := Vector3.ZERO
 var offered: Node3D
+var microphone_gift: Node2D
+var gift_pending := false
 
 func _ready() -> void:
 	super._ready()
@@ -21,9 +23,9 @@ func _ready() -> void:
 	request.state_changed.connect(_on_request_state)
 	generation.progress_changed.connect(func(message: String): status.text = message)
 	draw_button.pressed.connect(_open_drawing)
-	draw_button.tooltip_text = "Approach the otter to show it a drawing."
-	objective.text = "Meet the otter. Draw something to show it."
-	status.text = "Follow the beach to meet the otter. Draw something to show it."
+	draw_button.tooltip_text = "Approach the otter to meet it."
+	objective.text = "Meet the otter on the beach."
+	status.text = "There is an otter waving on the beach. Go say hello."
 	status.set_meta("narrator_guidance", status.text)
 	_build_drawing()
 	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
@@ -33,7 +35,12 @@ func near_otter() -> bool:
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	draw_button.disabled = entering or not near_otter() or not player.is_on_floor() or request.state == "PENDING"
+	if not entering and not otter.mood_revealed and otter.phase == "idle":
+		otter.mood_revealed = true
+		objective.text = "The otter feels heartbroken. Offer something to cheer it up."
+		status.text = "The otter looks unhappy. Draw an offering to cheer it up."
+		status.set_meta("narrator_guidance", status.text)
+	draw_button.disabled = entering or gift_pending or not near_otter() or not player.is_on_floor() or request.state == "PENDING"
 	draw_button.tooltip_text = "E · Draw again" if is_instance_valid(offered) else "E · Draw"
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
 	cancel_button.visible = request.state == "PENDING"
@@ -53,7 +60,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _open_drawing() -> void:
 	if get_node("/root/Narrator").panel.opened: return
-	if entering: return
+	if entering or gift_pending: return
 	if not near_otter() or not player.is_on_floor() or request.state == "PENDING": return
 	if request.state == "READY":
 		request.reset()
@@ -63,7 +70,7 @@ func _open_drawing() -> void:
 	player.set_input_enabled(false)
 	hud_root.hide()
 	overlay.show()
-	hint.text = "Draw something to show the otter."
+	hint.text = "Draw an offering to cheer up the otter."
 	submit_button.disabled = not surface.has_drawing()
 
 func _close_drawing() -> void:
@@ -101,7 +108,7 @@ func _submit() -> void:
 func _on_request_state(state: String) -> void:
 	match state:
 		"PENDING":
-			otter.wait_for_drawing()
+			otter.wait_for_drawing(sketch_anchor)
 			status.text = "Preparing your drawing for the otter…"
 		"FAILED":
 			otter.stop_waiting()
@@ -124,9 +131,43 @@ func _on_request_state(state: String) -> void:
 			if request.state != "READY" or request.active_id != rendered_id: return
 			generation_preview.model_presented()
 			otter.play_option(request.reaction)
-			get_node("/root/Narrator").record("npc_interaction_resolved", {"result": "Showed a generated drawing to the otter; its reaction animation played. No gift transfer is implied.", "item": request.result, "reaction": request.reaction})
-			status.text = "Your drawing is here. You can show the otter another."
+			otter.accept_offering(request.otter_happy)
+			objective.text = "You cheered up the otter!" if otter.happy else "Try another offering to cheer up the otter."
+			get_node("/root/Narrator").record("npc_interaction_resolved", {"result": "Presented a generated offering to the otter; its reaction animation played.", "item": request.result, "reaction": request.reaction, "otter_happy": request.otter_happy, "otter_response": request.otter_response})
+			status.text = "Otter: " + request.otter_response
 			status.set_meta("narrator_guidance", status.text)
+			if request.otter_happy: _give_microphone()
+
+func _give_microphone() -> void:
+	var journey := get_node("/root/Journey")
+	if journey.microphone_unlocked or gift_pending: return
+	gift_pending = true
+	var narrator := get_node("/root/Narrator")
+	status.text = "Your offering cheered up the otter. It has a surprise gift for you!"
+	status.set_meta("narrator_guidance", status.text)
+	narrator.begin_scripted_line(status.text)
+	while not narrator.panel.reveal_text.is_empty():
+		await get_tree().process_frame
+	var layer := CanvasLayer.new()
+	layer.layer = 6
+	add_child(layer)
+	microphone_gift = preload("res://scripts/sunset_cove/microphone_gift.gd").new()
+	microphone_gift.otter = otter
+	layer.add_child(microphone_gift)
+	await microphone_gift.conjured
+	status.text = "The otter gave you a microphone. looks like the otter want to talk to you! use the mic to speak"
+	status.set_meta("narrator_guidance", status.text)
+	narrator.begin_scripted_line(status.text)
+	# Keep the mist until speech (or paced subtitle fallback) actually starts.
+	while narrator.panel.reveal_time <= 0.0 and not narrator.audio.playing and not narrator.panel.reveal_text.is_empty():
+		await get_tree().process_frame
+	microphone_gift.reveal()
+	await microphone_gift.received
+	journey.grant_microphone()
+	gift_pending = false
+	narrator.record("npc_interaction_resolved", {"result": "The happy otter conjured a microphone gift. The player received it and can now speak."})
+	narrator.end_scripted_narration()
+	layer.queue_free()
 
 func _build_drawing() -> void:
 	cancel_button = Button.new()
@@ -140,7 +181,7 @@ func _build_drawing() -> void:
 	surface = preload("res://scripts/river/drawing_surface.gd").new()
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(surface)
-	hint = _label(overlay, "Draw something to show the otter.", 18)
+	hint = _label(overlay, "Draw an offering to cheer up the otter.", 18)
 	hint.hide()
 	var actions := preload("res://ui/storybook/layout.gd").toolbar(overlay, surface, _close_drawing, _submit)
 	submit_button = actions.get_node("HBoxContainer/Submit")

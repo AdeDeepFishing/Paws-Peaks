@@ -19,7 +19,7 @@ func run():
 		Input.action_press("move_right")
 		Input.action_press("jump")
 		Input.action_press("sprint")
-		for i in 240:
+		for i in 480:
 			await physics_frame
 			await process_frame
 			if i == 15:

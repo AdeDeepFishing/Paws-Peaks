@@ -126,14 +126,17 @@ GLB and roughly 1.20 million triangles require a separate Web budget pass.
 
 One textured otter stands on solid sand at world X=2, Z=4, just in front of the water.
 It turns toward the player and repeats `Big_Wave_Hello` whenever the player is
-more than 2.5 horizontal world units away. Approaching within that distance
+more than 5 horizontal world units away. Approaching within that distance
 blends to `Idle_11`; stepping away resumes waving. Confused waiting and selected
-reactions take priority over this distance behavior. After a reaction, the otter
+reactions take priority over this distance behavior. While waiting, it faces the
+sketch placement center instead of tracking the player; afterward, player-facing resumes. After a reaction, the otter
 resumes waving or idle according to the player's distance.
 
 `3d_game/models/otter/otter.scn` contains one model, skeleton and texture set.
 `animations.res` contains all 13 full clips; `animations.json` contains the short
-selection descriptions. The same skeleton plays every clip through one
+selection descriptions for eight AI-selectable reactions. Walking, idle, swim-idle,
+confused scratch and the greeting wave are excluded from AI selection; their clips
+remain available for normal scripted behavior. The same skeleton plays every clip through one
 AnimationPlayer. Idle, walking and swim-idle loop; other clips are one-shots.
 The 0.03-second companion clips are omitted.
 
@@ -167,10 +170,11 @@ the response is `{ "item": { "name", "description", "movable", "texture_key", "c
 "reaction": "Shrug" }` (field names shown schematically). `reaction` is an exact
 animation key, validated by both backend and game. Selection adds no AI call.
 
-The otter repeats `Confused_Scratch` while waiting for the model to render,
+The otter turns toward the submitted sketch/object placement center and repeats
+`Confused_Scratch` while waiting for the model to render,
 including after the interpretation arrives. Once the object appears,
 `Otter.play_option(reaction)` plays the selected clip and returns to idle after
-one duration. A failed or canceled request stops the confused animation and
+10 seconds, repeating shorter clips until that limit. A failed or canceled request stops the confused animation and
 returns to idle. Invalid animation keys fail the request instead of guessing a
 local reaction. Stale responses cannot interrupt a newer request.
 
@@ -186,3 +190,56 @@ submission uses credits; Stage 4 has no offline model fixture yet.
 The existing otter smoke test also checks proximity gating, E04 request labels, animation options in the desktop mailbox, and retained
 drafts after cancellation, confused looping, and the transition from a rendered
 model to the selected reaction. Provider outputs are simulated, with no paid calls.
+
+
+## Otter offering and heart feedback
+
+The otter starts sad, but its broken heart is hidden while it waves. Opening
+narration and guidance only introduce the otter. On the first nearby idle, reveal
+the gently splitting 2D broken heart beside its head and queue the unhappy-otter
+guidance. The broken heart hides again whenever it waves; a whole happy heart
+remains visible. The broken heart also hides while the drawing canvas is open or generation is
+pending. It returns after cancellation, failure or an unhappy completed offering,
+subject to the greeting visibility rules.
+The camera-projected indicator follows the otter while it waves, waits and reacts.
+The chapter objective asks the player to draw an offering to cheer it up.
+
+The existing interpretation call now also returns `otter_happy` (boolean) and
+`otter_response` (a short English reply explaining the decision). The model judges
+the identified offering; submitting any drawing does not automatically succeed.
+After the current request's model is successfully placed, the reply appears in
+status text and an affirmative decision changes the indicator to a pulsing whole
+heart. Once cheered up, the heart stays whole for this scene visit. Failed,
+canceled, stale or incomplete results cannot change it. The eight reaction choices,
+ten-second reaction loop and sketch-facing waiting behavior remain active.
+This feedback does not add an exit lock or make a separate paid evaluation call.
+
+
+## Microphone gift and speaking unlock
+
+Speaking starts locked for every new journey, including direct Stage 5 previews.
+After the first successfully placed offering cheers up the otter, narration first
+announces the happy outcome and a surprise gift. When that line finishes, the
+microphone rises beside its paws beneath the shared generation mist and blur.
+After at least 1.2 seconds of conjuring, wait for the usage narration to start,
+then reveal the clear microphone for a full three seconds. During that hold the
+narrator explains the microphone and invites the player to speak in one combined line. The gift then disappears as Talk
+becomes available. Narration failures use paced subtitles so the sequence can finish.
+The player must still be near the otter to talk. Microphone capture never starts
+automatically; the player clicks Talk. Narrator playback and drawing remain usable
+while speaking is locked.
+
+The unlock persists across chapter changes for this journey and resets on a new
+journey. Additional offerings do not repeat the gift. Leaving the scene before
+the gift completes does not grant the unlock. The gift is a local animation,
+with no additional model generation or provider request.
+
+The gift explanation and speaking invitation are one narration line beginning
+when the microphone becomes clear: “The otter gave you a microphone. looks like
+the otter want to talk to you! use the mic to speak”. Gift removal after three
+seconds unlocks Talk without restarting this line; narration can continue afterward.
+
+The first presented otter dialogue reply answers the player and naturally invites
+them to continue the journey to the right. The backend supplies
+this route and a first-reply flag to the otter prompt. Later replies do not repeat
+the invitation unless asked about the route; unpresented replies do not consume it.

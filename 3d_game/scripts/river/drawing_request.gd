@@ -23,6 +23,8 @@ var game_stage := ""
 var snapshot := PackedByteArray()
 var result: Dictionary = {}
 var reaction := ""
+var otter_happy := false
+var otter_response := ""
 var model_path := ""
 var message := ""
 var generation := 0
@@ -46,6 +48,8 @@ func submit(png: PackedByteArray, encounter: String, mock_outcome: int = 0) -> b
 	saved_draft_path = DraftStore.save_latest(snapshot, draft_directory)
 	if saved_draft_path.is_empty(): push_warning("The latest draft could not be saved locally.")
 	reaction = ""
+	otter_happy = false
+	otter_response = ""
 	model_path = ""
 	result = {}
 	message = ""
@@ -119,14 +123,22 @@ func accept_response(response: Dictionary) -> bool:
 	if game_stage == "otter" and (not response.get("reaction") is String or not animation_options.has(response.get("reaction"))):
 		_fail("The otter reaction was not valid. Try again.")
 		return false
+	if game_stage == "otter" and not valid_otter_mood(response):
+		_fail("The otter mood response was not valid. Try again.")
+		return false
 	if not response.get("model_path", "") is String:
 		_fail("The model response was not valid.")
 		return false
 	model_path = response.get("model_path", "")
 	reaction = response.get("reaction", "")
+	otter_happy = response.get("otter_happy", false)
+	otter_response = response.get("otter_response", "")
 	result = response["item"].duplicate(true)
 	_set_state("READY")
 	return true
+
+static func valid_otter_mood(value: Dictionary) -> bool:
+	return value.get("otter_happy") is bool and value.get("otter_response") is String and not value.otter_response.strip_edges().is_empty() and value.otter_response.length() <= 160
 
 ## Classification membership is validated by the backend stage configuration.
 static func valid_item(value: Variant, stage: String = "river") -> bool:
@@ -153,6 +165,8 @@ func reset() -> void:
 	cancel()
 	snapshot = PackedByteArray()
 	reaction = ""
+	otter_happy = false
+	otter_response = ""
 	model_path = ""
 	result = {}
 	message = ""
@@ -166,6 +180,8 @@ func _fail(reason: String, code: String = "GENERATION_FAILED") -> void:
 	message = reason
 	result = {}
 	reaction = ""
+	otter_happy = false
+	otter_response = ""
 	model_path = ""
 	_set_state("FAILED")
 	request_failed.emit(failed_id, code, reason)

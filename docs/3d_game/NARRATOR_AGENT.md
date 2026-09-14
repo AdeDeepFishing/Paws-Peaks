@@ -164,3 +164,20 @@ The active conversation ends when speech playback (or paced text fallback)
 finishes. In particular, the 95% release reply closes automatically and the exit
 waits for that reply before beginning the sunrise/final page. The separate
 explicit confirmation for choosing a stay ending remains inside the caption.
+
+
+### Microphone progression
+
+Talk remains disabled until the Chapter 4 otter grants its microphone gift after
+an accepted happy offering. The three-second gift presentation must finish before
+speaking unlocks. The unlock persists into Chapter 5, but fresh journeys and direct
+chapter previews start locked. The button, recording entry point and transcription
+transport all enforce this gate; passive spoken narration and boss drawing do not
+require the microphone gift.
+
+Stage 4 uses its arrival guidance as the complete spoken introduction, without a
+separate opening prefix. Approaching the otter then supplies the unhappy-otter hint.
+
+When a scripted gift sequence finishes, record its final guidance change before
+subsequent dialogue requests. Updating only the local hint would cause the backend
+to reject replies against the previous guidance. This update does not repeat the hint aloud.

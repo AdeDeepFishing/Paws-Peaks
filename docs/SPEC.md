@@ -1137,8 +1137,10 @@ is implemented. See [Boss integration](3d_game/BOSS_INTEGRATION.md).
 ## September 14: Stage entrances
 
 Stages 2–5 now begin with an automatic walk to the existing starting position.
-The player starts four world units behind that position along the approach path
-(Stage 3 approaches from the left). Normal walking animation and terrain collision
+The player starts eight world units behind that position along the approach path
+in Stages 2 and 5. Stage 4 shifts its arrival point four units back from the authored
+spawn and starts another four units back, retaining a four-unit automatic walk. Stage 3 shifts its arrival point three units left of the authored spawn, starts
+five units farther left, and hands control back after that five-unit walk. Normal walking animation and terrain collision
 remain active. The camera holds its authored starting framing during the entrance;
 movement, sprint, jump, and drawing controls unlock on grounded arrival. The HUD
 appears at that point. Stage 1 keeps its existing start flow.
@@ -1202,7 +1204,7 @@ current NPC, and a separate bottom-right player speech frame. Retain only the
 newest two or three wrapped lines. Drawing uses centered Cancel/Confirm actions,
 with Undo and Clear available as shortcuts. The pen sits above the microphone
 once the Chapter 4 gift unlocks it; the gift implementation calls
-`Journey.grant_microphone()` and remains separate teammate work.
+`Journey.grant_microphone()` after the microphone reveal finishes.
 
 The centered menu uses supplied paper, brush tracks and return-button states, with
 Music, Sound and Voice sliders. While open, hide all other UI and drawing content,
@@ -1211,3 +1213,34 @@ closed. During exploration the existing model selectors and Back navigation rema
 below the menu circle. Chapter 5 moves the narrator paper into the center, reveals
 the Storykeeper with a brief pop, then returns a boss frame to the top left.
 See [Storybook UI integration and verification](3d_game/STORYBOOK_UI.md).
+
+
+## Otter offering happiness
+
+Chapter 4 first introduces the waving otter without revealing its sadness.
+When the player approaches and the otter becomes idle, reveal its animated broken
+heart and prompt an offering to cheer it up. Hide the broken heart while waving. The interpretation AI
+returns a happiness decision and a brief response explaining the offering's effect.
+Only a successfully placed offering with an affirmative decision restores the
+whole heart; keep that happy state for the scene visit. Failed or canceled
+requests leave the mood unchanged. This adds feedback without a new exit gate.
+
+
+## Otter microphone gift
+
+Player speaking is locked until the otter is cheered up by an offering. The happy
+otter conjures a microphone with a short magical animation; display it for three
+seconds, then remove it and enable Talk at the same moment. The unlock persists
+through this journey, including Chapter 5, and resets for a new journey. The player
+still explicitly starts recording with Talk. Passive narration is unaffected.
+
+
+### Microphone presentation order
+
+On the happy outcome, the narrator announces that the otter is cheered up and has
+a surprise gift. Finish this line before conjuring the microphone under the shared
+object-generation blur and mist. Reveal the clear microphone when the explanation
+starts; hold it for three full seconds while one combined line explains the microphone
+and ends with “looks like the otter want to talk to you! use the mic to speak”.
+Allow that line to continue after the gift disappears; do not start a separate invitation. Remove the gift and unlock Talk together. Narration uses paced subtitles
+when speech is unavailable; ordinary automatic commentary waits for this sequence.

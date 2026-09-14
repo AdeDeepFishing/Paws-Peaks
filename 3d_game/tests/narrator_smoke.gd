@@ -46,6 +46,10 @@ func run() -> void:
 	var real_mic = narrator.panel.mic
 	var fake_mic := CaptureStub.new()
 	narrator.panel.mic = fake_mic
+	root.get_node("Journey").microphone_unlocked = false
+	narrator.panel.entry.pressed.emit()
+	check(not fake_mic.recording, "Speaking is locked before receiving the microphone")
+	root.get_node("Journey").microphone_unlocked = true
 	narrator.panel.entry.pressed.emit()
 	check(fake_mic.recording and narrator.panel.opened, "One microphone click starts recording directly")
 	narrator.panel.close_dialogue()
@@ -88,5 +92,17 @@ func run() -> void:
 	level.show_stay_book(null)
 	check(level.book.ending_title.text == "A Place to Stay", "Staying has a complete, distinct ending book")
 	check(level.book.replay != null and level.book.explore != null, "Stay ending permits replay and viewing the world")
+	# Inspect queued transport without starting a worker or making provider calls.
+	narrator.queue.clear()
+	narrator.guidance_text = "A microphone! Tap Talk to speak."
+	narrator.scripted_narration = true
+	level.status.text = "Tap Talk to speak with the otter."
+	level.status.set_meta("narrator_guidance", level.status.text)
+	narrator.enabled = true
+	narrator.end_scripted_narration()
+	narrator.enabled = false
+	check(narrator.queue.size() == 1 and narrator.queue[0].op == "event" and narrator.queue[0].type == "guidance_changed" and narrator.queue[0].payload.text == level.status.text, "Gift completion records the new guidance before a spoken reply")
+	check(not narrator.guidance_due and not narrator.comment_due, "Recording final gift guidance does not repeat narration")
+	narrator.queue.clear()
 	print("NARRATOR SMOKE: ", "FAIL" if failed else "PASS")
 	quit(1 if failed else 0)

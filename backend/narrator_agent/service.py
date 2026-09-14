@@ -227,6 +227,12 @@ class Service:
                     guidance = ""
                 context["current_guidance"] = guidance
                 context["input"] = {"text": text, "has_drawing": bool(image), "trigger": request.get("trigger", "dialogue")}
+                if state["stage"] == 4 and request.get("trigger", "dialogue") == "dialogue":
+                    context["otter_route_direction"] = "Continue the journey to the right."
+                    context["include_otter_departure_hint"] = not any(
+                        e["stage"] == 4 and e["type"] == "narration_presented"
+                        and e["payload"].get("speaker") == "otter" for e in state["events"])
+
                 state["requests"][request_id] = {"pending": True}
                 self.write(state)
             else: raise AppError("INVALID_REQUEST", "Unknown story operation.")

@@ -1039,3 +1039,26 @@ including exact card text, all four stages and deduplication.
 Playtest follow-up: item readings use “You drew a/an …”; previously presented
 boss introduction guidance is omitted from later turns. Updated backend suite: 60
 tests passed. Music/SFX mixing is documented in [Audio](../3d_game/AUDIO.md).
+
+
+### Stage 4 offering happiness response
+
+Stage 4 interpretation requires top-level `item`, `reaction`, `otter_happy` and
+`otter_response`. `otter_happy` is a strict boolean; `otter_response` is a nonblank
+English reply from the otter, at most 160 characters, explaining why the offering
+does or does not cheer it up. These fields accompany the early interpretation and
+survive the cumulative game-bridge snapshots through successful completion.
+Other stages keep their existing item-only interpretation contract. This supersedes
+the earlier two-field Stage 4 examples above. No additional provider call is added.
+The game applies happiness only after successful model placement for the active
+request; positive feedback persists for the current scene visit.
+
+
+### Preview rendering during gameplay
+
+Live desktop game requests pass `--skip-preview` to the sketch-to-model pipeline.
+They complete immediately after the GLB download, omitting the local PNG render,
+`preview` stage, and `preview_path`/`preview_error` fields. The game renders the GLB
+itself. Reference-image generation is still required and is unchanged.
+Standalone CLI runs retain preview rendering by default for inspection/testing;
+pass `--skip-preview` to opt out. Offline fixture test mode retains its preview.

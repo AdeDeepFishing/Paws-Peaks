@@ -62,6 +62,7 @@ def main(argv=None, *, output_folder=None, on_event=None, on_response=None, anim
     parser.add_argument("--target-faces", type=int, default=500,
                         help="T2 geometry target (default: 500 for lightweight game objects).")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--skip-preview", action="store_true", help="Complete after downloading the GLB; skip the local PNG render.")
     args = parser.parse_args(argv)
     if not 100 <= args.target_faces <= 15000:
         parser.error("T2 target faces must be between 100 and 15000.")
@@ -116,10 +117,12 @@ def main(argv=None, *, output_folder=None, on_event=None, on_response=None, anim
             job = wait_for_task(lambda: api_call("meshy_status", lambda: model_generation.refresh_job(job_path, config)))
             model_path = api_call("model_download", lambda: model_generation.download_model(job, folder / "model.glb"))
         print(json.dumps({"stage": "model", "status": "SUCCEEDED", "path": model_path}), flush=True)
-        emit({"stage": "preview", "status": "PENDING", "model_path": str(model_path)})
-        with measure("preview_stage"):
-            preview = preview_result(model_path)
-        print(json.dumps({"stage": "preview", **preview}), flush=True)
+        preview = {}
+        if not args.skip_preview:
+            emit({"stage": "preview", "status": "PENDING", "model_path": str(model_path)})
+            with measure("preview_stage"):
+                preview = preview_result(model_path)
+            print(json.dumps({"stage": "preview", **preview}), flush=True)
         emit({"stage": "complete", "status": "SUCCEEDED", **description, "model_path": str(model_path), **preview})
         outcome = "SUCCEEDED"
         return 0

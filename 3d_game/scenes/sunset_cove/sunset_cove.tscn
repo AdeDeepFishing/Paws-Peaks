@@ -26,6 +26,8 @@ chapter = "04"
 stage_title = "Sunset Cove"
 fallback_spawn = Vector3(0, 2, 6)
 camera_pullback = 3.0
+spawn_offset = Vector3(0, 0, 4)
+entrance_offset = Vector3(0, 0, 4)
 return_scene = "res://scenes/wind_hill/wind_hill.tscn"
 return_label = "Back to Wind Hill"
 
