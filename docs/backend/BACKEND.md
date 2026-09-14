@@ -879,6 +879,7 @@ ELEVENLABS_API_KEY=
 ELEVENLABS_NARRATOR_VOICE_ID=
 ELEVENLABS_OTTER_VOICE_ID=
 ELEVENLABS_MODEL=eleven_multilingual_v2
+ELEVENLABS_STT_MODEL=scribe_v2
 ```
 
 `OPENAI_API_KEY` is shared with the drawing pipeline. `OPENAI_MODEL` still controls
@@ -896,7 +897,7 @@ or a response. Do not commit `.env` or `backend/output/`.
 
 ElevenLabs needs Text to Speech access and a usable voice ID. The selected narrator
 voice is configured locally. Otter has an independent voice slot and deliberately
-has no narrator fallback; the Stage 4 speech trigger is future work. Music is owned
+has no narrator fallback; Stage 4 player dialogue uses the otter prompt and voice. Music is owned
 by the teammate's existing implementation. This feature does not call music generation.
 
 Speech is generated only from a saved narrator utterance, capped at 600 characters.
@@ -947,6 +948,7 @@ and the current `revision`. No keys or provider-selected URLs are accepted.
 | `guide` | Current authored `guidance_changed` event text; returns a fixed chapter introduction or direction without a model call |
 | `respond` | Text up to 2,000 characters, optional PNG/JPEG Base64 up to 1 MiB; returns validated decision, utterance and current state |
 | `presented` | A saved utterance ID; records what was actually shown |
+| `transcribe` | Chapters 4/5 only, at most 20 seconds of mono 16 kHz PCM WAV as Base64; returns an editable transcript without invoking dialogue or changing mood |
 | `voice` | A saved utterance ID; returns a local MP3 path, or Base64 in the bench |
 | `confirm_stay` / `cancel_stay` | Current revision and candidate ID; never inferred from silence |
 | `leave` | Open exit plus a real crossing event; commits the leave ending |
@@ -955,7 +957,7 @@ and the current `revision`. No keys or provider-selected URLs are accepted.
 
 The response envelope contains `ok`; failures contain a sanitized `error` and
 `message`. State has `run_id`, `revision`, `stage`, `phase`, `exit_open`, `ending`,
-`candidate`, `concern`, and `simulated`. Successful dialogue also has `utterance`,
+`candidate`, `concern`, `simulated`, and integer `mood`. Successful dialogue also has `utterance`,
 `decision`, request identity, timings and model usage. Evidence references must
 match actual journal event IDs. The actor cannot rewrite the referee decision.
 
@@ -999,3 +1001,27 @@ fixed guidance remains available in Guidance only mode. Updated verification: 51
 offline backend tests passed, including no-model introductions and one speech call
 across two journeys. Godot checks cover translucent subtitles without Skip and
 scene drawing, toolbar exclusion, image export and draft preservation.
+
+
+September 14 Talk/mood revision: player dialogue is restricted to Chapters 4 and 5
+in both the client and backend. Stage 4 direct dialogue uses a separate otter actor
+and voice. Stage 5's referee returns a bounded integer `mood_delta`; game state
+starts at 37 and clamps updates to 0–100. An `OPEN_EXIT` proposal below 95 is reduced
+to progress/no change. At 95 the route opens; actual crossing still commits leaving.
+Rest and stay confirmation retain their previous safeguards. No automatic event or
+fixed line changes mood, and duplicate requests reuse the earlier result.
+
+`ELEVENLABS_STT_MODEL=scribe_v2` controls microphone recognition, independently of
+`OPENAI_MODEL` (drawing interpretation), `NARRATOR_MODEL` (dialogue), and
+`ELEVENLABS_MODEL` (spoken output). The microphone path uses the official
+[Speech to Text endpoint](https://elevenlabs.io/docs/api-reference/speech-to-text/convert)
+and requires Speech to Text permission on the ElevenLabs key. A synthetic English
+sample transcribed correctly in 968 ms in one live check; this is not a latency or
+accuracy benchmark. Recognition produces editable text only; it does not submit
+a game action. No raw provider errors or credentials enter the UI.
+
+Updated automated verification: 57 offline backend tests passed, including 94/95
+threshold behavior, mood clamping, duplicate protection, otter routing, transcription
+bounds and review-before-send. Native visual checks cover the right-hand paired CTAs
+and persistent mood display. Actual microphone hardware/permission capture still
+requires a manual check; the recognition API was tested with synthetic audio.

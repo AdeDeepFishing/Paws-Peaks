@@ -18,7 +18,7 @@ MAX_REQUEST = 1500000
 
 def safe_handle(service, data):
     try:
-        if data.get("op") in ("respond", "voice"):
+        if data.get("op") in ("respond", "voice", "transcribe"):
             service.config = load_config(ROOT / ".env", prefer_file=True)
         return {"ok": True, **service.handle(data)}
     except AppError as error: return {"ok": False, "error": error.code, "message": str(error)}
@@ -35,6 +35,9 @@ def process_file(service, path):
         if path.stat().st_size > MAX_REQUEST: raise ValueError()
         request = json.loads(path.read_text())
         result = safe_handle(service, request)
+        if "audio_base64" in request:
+            request.pop("audio_base64")
+            atomic(path, request)
     except Exception:
         result = {"ok": False, "error": "INVALID_REQUEST", "message": "Invalid story request."}
     atomic(result_path, result)

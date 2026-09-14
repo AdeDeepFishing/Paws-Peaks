@@ -17,7 +17,9 @@ while subtitles are shown.
 
 In Chapters 1–4, the narrator responds to chapter arrivals, drawings and confirmed
 encounter outcomes. Short subtitles and optional speech accompany these events.
-The **Talk to the narrator** button opens a paper dialogue panel. It pauses movement
+Only Chapters 4 and 5 expose the bottom-right microphone **Talk** CTA beside **Draw**.
+Chapter 4 talks to the otter; Chapter 5 talks to the Storykeeper. Chapters 1–3 keep
+passive narration without player dialogue. Talk opens a paper dialogue panel. It pauses movement
 while open; closing restores the scene. Guidance + reactions and Guidance only settings control
 contextual reactions; Voice and Stop voice control spoken playback independently.
 
@@ -27,6 +29,11 @@ write freely or **Draw an idea** directly over the game scene, explain its meani
 and correct misunderstandings. The drawing layer shares the earlier chapters'
 transparent canvas, with a bottom toolbar and no separate paper sketch panel.
 The referee evaluates intent and feasible effects without a fixed keyword/item list.
+The boss mood starts at 37%, changes only with evaluated player dialogue/drawings,
+and is clamped to 0–100. Below 20% is red, 20–80% yellow, above 80% green. The exit
+opens at 95%; a referee proposal alone cannot bypass the threshold. Duplicate
+requests do not award points twice, waiting gives no points, and an opened route
+stays open even if mood later falls. This supersedes the original score-free design.
 The performer supplies the character's response, while game code applies only the
 permitted transition. Earlier encounter mechanics remain authoritative.
 
@@ -66,7 +73,8 @@ needed in addition to deterministic state guards.
 
 Implemented checkpoint/fork tools restore narrator state in the authoring bench,
 not a full playable-world save. Web delivery and cloud saves remain future work.
-The otter voice configuration is reserved; spoken otter dialogue is not wired yet.
+The otter has its own conversation prompt and configured voice. It cannot change
+the boss mood or final ending. Approach the otter to use Talk.
 No new skeletal clips are claimed. The supplied idle and a game-controlled step
 aside provide the current presentation.
 
@@ -94,3 +102,20 @@ for repeatable layout inspection, not a fabricated record of a real model reply.
 
 ![Scene drawing fixture](../assets/narrator/drawing.png)
 ![Translucent guidance fixture](../assets/narrator/guidance.png)
+
+
+## Microphone input
+
+Talk supports both typing and recording. **Record** starts a visible, muted-monitor
+microphone capture; **Stop recording** sends at most 20 seconds to ElevenLabs Scribe
+v2. The transcript appears as an editable draft. Only **Send** starts the actual
+conversation or mood evaluation. Closing the panel cancels recording; obsolete
+transcripts cannot populate a reopened conversation. Permission/device errors and
+recognition failures retain the typing path. Microphone hardware/OS permission
+must still be checked on the player's own machine.
+
+The local capture is mono PCM at 16 kHz. Recordings are not played through speakers,
+and mailbox audio is removed after processing. Provider retention follows the
+ElevenLabs account/API settings. See the backend guide for the separate STT model.
+
+![Boss mood and paired CTAs](../assets/narrator/boss-mood.png)

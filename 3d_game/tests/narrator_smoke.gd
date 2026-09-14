@@ -16,12 +16,22 @@ func run() -> void:
 	change_scene_to_file(root.get_node("Journey").STAGES[1])
 	await scene_changed
 	await frames(2)
+	check(not narrator.panel.entry.visible, "Talk is hidden in Chapter 2")
 	var drawing = current_scene.find_child("DrawingRequest", true, false)
 	check(drawing != null and drawing.request_prepared.is_connected(narrator._drawing_submitted), "Nested encounter drawings feed the shared journal")
 	change_scene_to_file("res://scenes/moonlit_forest/moonlit_forest.tscn")
 	await scene_changed
 	var level = current_scene
 	await frames(120)
+	check(narrator.panel.entry.visible, "Chapter 5 exposes Talk")
+	check(level.mood_bar.value == 37, "Boss starts at 37 percent")
+	level._update_mood(19)
+	check(level.mood_bar.get_theme_stylebox("fill").bg_color == Color("df7064"), "Below 20 mood is red")
+	level._update_mood(80)
+	check(level.mood_bar.get_theme_stylebox("fill").bg_color == Color("edc66d"), "80 remains in the middle band")
+	level._update_mood(81)
+	check(level.mood_bar.get_theme_stylebox("fill").bg_color == Color("8fca98"), "Above 80 mood is green")
+	level._update_mood(37)
 	check(not level.preview_ending_enabled and not level.can_exit(), "Boss gate is closed in real play")
 	level.player.position.z = -13
 	level.constrain_player(level.player)

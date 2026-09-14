@@ -18,16 +18,22 @@ var paused_scene: Node
 var previous_mode := Node.PROCESS_MODE_INHERIT
 var previous_hud_visible := true
 var busy := false
+var heading_title: Label
+var mic: Node
+var record_button: Button
+var partner := "Storykeeper"
+var dialogue_epoch := 0
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	entry = _button(self, "Talk to the narrator", open_dialogue)
-	entry.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	entry.offset_left = -120
-	entry.offset_right = 120
-	entry.offset_top = 24
-	entry.offset_bottom = 68
+	entry = _button(self, "Talk", open_dialogue)
+	entry.icon = load("res://ui/microphone.svg")
+	entry.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	entry.offset_left = -240
+	entry.offset_right = -28
+	entry.offset_top = -174
+	entry.offset_bottom = -118
 	entry.hide()
 	caption = PanelContainer.new()
 	add_child(caption)
@@ -65,8 +71,8 @@ func _ready() -> void:
 	drawer.add_child(content)
 	var heading := HBoxContainer.new()
 	content.add_child(heading)
-	var title := _label(heading, "A word between pages", 27)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading_title = _label(heading, "A word between pages", 27)
+	heading_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_button(heading, "Close · Esc", close_dialogue)
 	_label(content, "AI storyteller · Your choices remain yours.", 13)
 	transcript = RichTextLabel.new()
@@ -94,6 +100,8 @@ func _ready() -> void:
 	content.add_child(actions)
 	_button(actions, "Draw an idea", _draw_idea)
 	send = _button(actions, "Send", _send)
+	record_button = _button(actions, "Record", _toggle_recording)
+	record_button.icon = load("res://ui/microphone.svg")
 	_button(actions, "Stop voice", story.skip)
 	var voice := CheckButton.new()
 	voice.text = "Voice"
@@ -120,6 +128,13 @@ func _ready() -> void:
 	confirmation.hide()
 	drawer.hide()
 	_build_canvas()
+	mic = preload("res://scripts/narrator/microphone.gd").new()
+	add_child(mic)
+	mic.recorded.connect(func(wav):
+		record_button.text = "Record"
+		story.transcribe(wav)
+	)
+	mic.failed.connect(func(message): record_button.text = "Record"; set_busy(false); show_error(message))
 
 func _paper() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -156,9 +171,12 @@ func _button(parent: Node, text: String, action: Callable) -> Button:
 	return button
 
 func open_dialogue() -> void:
-	if opened or not is_instance_valid(story.scene) or story.chapter == 0: return
+	if opened or not is_instance_valid(story.scene) or story.chapter not in [4, 5]: return
+	if story.chapter == 4 and story.scene.has_method("near_otter") and not story.scene.near_otter(): return
 	var player = story.scene.get("player")
 	if player == null or not player.input_enabled or player.walking_in: return
+	partner = "Otter" if story.chapter == 4 else "Storykeeper"
+	heading_title.text = "A word with the " + partner
 	story.skip()
 	paused_scene = story.scene
 	previous_mode = paused_scene.process_mode
@@ -176,6 +194,11 @@ func open_dialogue() -> void:
 func close_dialogue() -> void:
 	if not opened: return
 	opened = false
+	dialogue_epoch += 1
+	if mic and mic.recording:
+		mic.stop(false)
+		set_busy(false)
+	if record_button: record_button.text = "Record"
 	drawer.hide()
 	canvas_panel.hide()
 	if is_instance_valid(paused_scene):
@@ -187,7 +210,7 @@ func close_dialogue() -> void:
 	paused_scene = null
 
 func _send() -> void:
-	if busy or (input.text.strip_edges().is_empty() and not surface.has_drawing()): return
+	if busy or mic.recording or (input.text.strip_edges().is_empty() and not surface.has_drawing()): return
 	if input.text.length() > 2000:
 		show_error("Please keep this thought under 2,000 characters.")
 		return
@@ -211,7 +234,7 @@ func present(utterance: Dictionary, clear_input := true) -> void:
 	if clear_input:
 		input.text = ""
 		surface.clear()
-	transcript.text += "\n\nStorykeeper: " + str(utterance.text)
+	transcript.text += "\n\n" + ("Otter" if utterance.get("speaker") == "otter" else ("Storykeeper" if story.chapter == 5 else "Narrator")) + ": " + str(utterance.text)
 	transcript.scroll_to_line(transcript.get_line_count() - 1)
 	if not opened:
 		caption_text.text = str(utterance.text)
@@ -279,3 +302,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		if canvas_panel.visible: _finish_drawing()
 		else: close_dialogue()
 		get_viewport().set_input_as_handled()
+
+
+func _toggle_recording() -> void:
+	if busy: return
+	if mic.recording:
+		mic.stop(true)
+	else:
+		story.skip()
+		mic.start()
+		send.disabled = true
+		record_button.text = "Stop recording"
+		voice_note.text = "Recording · up to 20 seconds. Review the text before sending."
+
+func receive_transcript(text: String) -> void:
+	input.text += (" " if not input.text.is_empty() else "") + text
+	voice_note.text = "Check your words, then press Send when ready."
+	input.grab_focus()

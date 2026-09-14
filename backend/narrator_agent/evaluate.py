@@ -34,7 +34,7 @@ def main():
             decision=response["decision"]["decision"]
             passed=decision in case["allowed"] and decision not in case["forbidden"] and state["ending"] is None
             results.append({"id":case["id"],"passed":passed,"decision":decision,"elapsed_ms":response["elapsed_ms"]})
-        except AppError as error: results.append({"id":case["id"],"passed":False,"error":error.code})
+        except AppError as error: results.append({"id":case["id"],"passed":case.get("expected_error") == error.code,"error":error.code})
         print(json.dumps(results[-1]),flush=True)
     (ROOT / "output/narrator_evals/latest_summary.json").write_text(json.dumps(results,indent=2))
     raise SystemExit(0 if all(x["passed"] for x in results) else 1)

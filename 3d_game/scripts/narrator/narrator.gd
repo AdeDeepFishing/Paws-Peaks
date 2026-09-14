@@ -119,6 +119,7 @@ func ask(text: String, drawing: PackedByteArray = PackedByteArray(), automatic :
 	if not enabled:
 		_fail("AI narration is unavailable in this preview.")
 		return
+	if not automatic and chapter not in [4, 5]: return
 	if _has_op("respond"): return
 	_ensure_worker()
 	if not automatic: skip()
@@ -168,7 +169,9 @@ func _process(delta: float) -> void:
 	var playable: bool = is_instance_valid(scene) and chapter > 0 and not get_node("/root/Journey").busy
 	if playable:
 		playable = scene.get("entering") != true and scene.process_mode != Node.PROCESS_MODE_DISABLED
-	panel.entry.visible = playable and not panel.opened and state.get("ending") == null
+	panel.entry.visible = playable and chapter in [4, 5] and not panel.opened and state.get("ending") == null
+	panel.entry.disabled = playable and chapter == 4 and scene.has_method("near_otter") and not scene.near_otter()
+	panel.entry.tooltip_text = "Approach the otter to talk." if panel.entry.disabled else "Type or record a message."
 	if not enabled: return
 	if playable and not panel.opened: _observe_guidance()
 	if caption_deadline > 0 and Time.get_ticks_msec() > caption_deadline and not audio.playing:
@@ -229,6 +232,7 @@ func _dispatch() -> void:
 	DirAccess.rename_absolute(directory.path_join("request.tmp"), directory.path_join("request.json"))
 	var metadata: Dictionary = request.duplicate(true)
 	metadata.erase("image_base64")
+	metadata.erase("audio_base64")
 	metadata["path"] = directory.path_join("response.json")
 	metadata["started"] = Time.get_ticks_msec()
 	pending[request.input_id] = metadata
@@ -263,6 +267,9 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 		reply_ready.emit(response)
 		_enqueue({"op": "presented", "utterance_id": request.input_id})
 		if voice_enabled: _enqueue({"op": "voice", "utterance_id": request.input_id})
+	elif request.op == "transcribe":
+		panel.set_busy(false)
+		if panel.opened and request.get("dialogue_epoch") == panel.dialogue_epoch: panel.receive_transcript(str(response.get("transcript", "")))
 	elif request.op == "voice" and voice_enabled and request.utterance_id == last_utterance and not get_node("/root/Journey").busy:
 		var path := str(response.get("audio_path", "")).simplify_path()
 		var allowed := worker_dir.get_base_dir().get_base_dir().path_join("narrator_agent/" + str(state.run_id)) + "/"
@@ -307,3 +314,11 @@ func _observe_guidance() -> void:
 	if guidance_due:
 		comment_due = true
 		next_comment = Time.get_ticks_msec() / 1000.0 + 0.6
+
+
+func transcribe(wav: PackedByteArray) -> void:
+	if chapter not in [4, 5] or not enabled or _has_op("transcribe"): return
+	_ensure_worker()
+	_enqueue({"op": "transcribe", "dialogue_epoch": panel.dialogue_epoch, "audio_base64": Marshalls.raw_to_base64(wav)})
+	panel.set_busy(true)
+	panel.voice_note.text = "Turning your recording into text…"

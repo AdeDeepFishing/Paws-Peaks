@@ -34,7 +34,10 @@ class Service:
     def path(self, run): return self.directory / identifier(run) / "story.json"
 
     def read(self, run):
-        try: return json.loads(self.path(run).read_text())
+        try:
+            state = json.loads(self.path(run).read_text())
+            state.setdefault("mood", 37)
+            return state
         except FileNotFoundError: raise AppError("RUN_NOT_FOUND", "Start a journey first.") from None
 
     def write(self, state):
@@ -46,14 +49,14 @@ class Service:
 
     def new(self, simulated=False):
         state = {"run_id": uuid4().hex, "revision": 0, "stage": 0, "phase": "GUIDE", "exit_open": False,
-                 "ending": None, "candidate": None, "concern": "", "events": [], "requests": {},
+                 "ending": None, "candidate": None, "mood": 37, "concern": "", "events": [], "requests": {},
                  "simulated": bool(simulated), "parent_run": None}
         self.write(state)
         return self.public(state)
 
     @staticmethod
     def public(state):
-        return {k: deepcopy(state[k]) for k in ("run_id", "revision", "stage", "phase", "exit_open", "ending", "candidate", "concern", "simulated")}
+        return {k: deepcopy(state[k]) for k in ("run_id", "revision", "stage", "phase", "exit_open", "ending", "candidate", "concern", "simulated", "mood")}
 
     def add_event(self, state, kind, payload, revise=True):
         event = {"id": uuid4().hex, "type": kind, "stage": state["stage"], "payload": deepcopy(payload),
@@ -149,7 +152,11 @@ class Service:
                 state["requests"][request_id] = result
                 self.write(state)
                 return result
-            if op == "voice":
+            if op == "transcribe":
+                require(state["stage"] in (4, 5) and state["ending"] is None, "DIALOGUE_UNAVAILABLE")
+                try: recording = base64.b64decode(request.get("audio_base64", ""), validate=True)
+                except Exception: raise AppError("INVALID_AUDIO", "Invalid recording.") from None
+            elif op == "voice":
                 utterance = state["requests"].get(request.get("utterance_id"), {}).get("utterance")
                 require(isinstance(utterance, dict))
                 text, speaker = utterance["text"], utterance.get("speaker", "narrator")
@@ -175,6 +182,7 @@ class Service:
                 require(request.get("revision") == state["revision"], "STALE_RESULT")
                 text = request.get("text", "")
                 require(isinstance(text, str) and len(text) <= 2000)
+                require(state["stage"] >= 4 or (not text and not request.get("image_base64")), "DIALOGUE_UNAVAILABLE")
                 require(request.get("trigger", "dialogue") in ("dialogue", "event", "idle"))
                 image = None
                 if request.get("image_base64"):
@@ -205,6 +213,15 @@ class Service:
                 state["requests"][request_id] = {"pending": True}
                 self.write(state)
             else: raise AppError("INVALID_REQUEST", "Unknown story operation.")
+        if op == "transcribe":
+            from speech.transcribe import transcribe
+            text = transcribe(self.config, recording)
+            with self.lock:
+                state = self.read(run)
+                result = {"transcript": text}
+                state["requests"][request_id] = result
+                self.write(state)
+            return result
         if op == "voice":
             with self.voice_lock:
                 run_cache = self.path(run).parent / "speech"
@@ -221,17 +238,27 @@ class Service:
         started = time.monotonic()
         try:
             evidence_ids = {e["id"] for e in context["events"]}
-            judge = {"decision": "NO_CHANGE", "reason": "Comment on confirmed events only.", "concern": context["state"]["concern"], "drawing_name": "", "evidence": []}
+            judge = {"mood_delta": 0, "decision": "NO_CHANGE", "reason": "Comment on confirmed events only.", "concern": context["state"]["concern"], "drawing_name": "", "evidence": []}
             metrics = []
             if context["state"]["stage"] == 5 and (text or image):
                 judge, metric = self.caller(self.config, model.JUDGE, context, model.JUDGE_SCHEMA, image)
                 metrics.append(metric)
             require(judge["decision"] in model.DECISIONS and set(judge["evidence"]) <= evidence_ids, "INVALID_MODEL_OUTPUT")
+            delta = judge.get("mood_delta")
+            require(type(delta) is int and -100 <= delta <= 100, "INVALID_MODEL_OUTPUT")
+            mood_after = max(0, min(100, context["state"]["mood"] + delta))
+            judge["mood_before"], judge["mood_after"] = context["state"]["mood"], mood_after
+            judge["exit_open_after"] = context["state"]["exit_open"] or (context["state"]["stage"] == 5 and mood_after >= 95)
+            if judge["decision"] == "OPEN_EXIT" and mood_after < 95:
+                judge["decision"] = "PARTIAL_PROGRESS" if delta else "NO_CHANGE"
+            if mood_after >= 95 and not context["state"]["exit_open"] and judge["decision"] not in ("OFFER_STAY_ENDING", "REST_TEMPORARILY"):
+                judge["decision"] = "OPEN_EXIT"
             if context["state"]["exit_open"] and judge["decision"] not in ("OFFER_STAY_ENDING", "REST_TEMPORARILY"):
                 judge["decision"] = "NO_CHANGE"
             # The performer receives the validated proposal and may not rewrite it.
             context["authoritative_result"] = judge
-            actor, metric = self.caller(self.config, model.ACTOR, context, model.ACTOR_SCHEMA, image)
+            otter_dialogue = context["state"]["stage"] == 4 and context["input"]["trigger"] == "dialogue"
+            actor, metric = self.caller(self.config, model.OTTER if otter_dialogue else model.ACTOR, context, model.ACTOR_SCHEMA, image)
             metrics.append(metric)
             require(set(actor["evidence"]) <= evidence_ids and actor["emotion"] in model.EMOTIONS, "INVALID_MODEL_OUTPUT")
             require(isinstance(actor["text"], str) and 0 < len(actor["text"]) <= 600, "INVALID_MODEL_OUTPUT")
@@ -244,6 +271,9 @@ class Service:
                 state = self.read(run)
                 require(state["revision"] == revision and state["ending"] is None, "STALE_RESULT")
                 decision = judge["decision"]
+                state["mood"] = mood_after
+                if state["stage"] == 5 and mood_after >= 95:
+                    state["exit_open"] = True
                 if decision == "OPEN_EXIT":
                     require(state["stage"] == 5)
                     state["exit_open"], state["phase"] = True, "RELEASE_READY"
@@ -257,7 +287,7 @@ class Service:
                     state["phase"] = "RELEASE_READY" if state["exit_open"] else "CONFRONTING"
                 state["concern"] = judge["concern"][:400]
                 self.add_event(state, "decision", judge)
-                actor["speaker"] = "narrator"
+                actor["speaker"] = "otter" if otter_dialogue else "narrator"
                 result = {"state": self.public(state), "utterance": actor, "decision": judge,
                           "input_id": request_id, "metrics": metrics, "elapsed_ms": round((time.monotonic()-started)*1000)}
                 state["requests"][request_id] = result

@@ -38,7 +38,7 @@ def load_config(env_file, prefer_file=False):
             if not line or line.startswith("#"):
                 continue
             key, separator, value = line.partition("=")
-            if not separator or key.strip() not in ("OPENAI_API_KEY", "OPENAI_MODEL", "MESHY_API_KEY", "MESHY_MODEL", "NARRATOR_MODEL", "ELEVENLABS_API_KEY", "ELEVENLABS_NARRATOR_VOICE_ID", "ELEVENLABS_OTTER_VOICE_ID", "ELEVENLABS_MODEL"):
+            if not separator or key.strip() not in ("OPENAI_API_KEY", "OPENAI_MODEL", "MESHY_API_KEY", "MESHY_MODEL", "NARRATOR_MODEL", "ELEVENLABS_API_KEY", "ELEVENLABS_NARRATOR_VOICE_ID", "ELEVENLABS_OTTER_VOICE_ID", "ELEVENLABS_MODEL", "ELEVENLABS_STT_MODEL"):
                 raise AppError("CONFIG_ERROR", "Use only supported KEY=value settings in the env file; see backend/.env.example.")
             value = value.strip()
             if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
@@ -50,7 +50,7 @@ def load_config(env_file, prefer_file=False):
                              ("MESHY_API_KEY", ""), ("MESHY_MODEL", "meshy-6"),
                              ("NARRATOR_MODEL", "gpt-5.6-terra"), ("ELEVENLABS_API_KEY", ""),
                              ("ELEVENLABS_NARRATOR_VOICE_ID", ""), ("ELEVENLABS_OTTER_VOICE_ID", ""),
-                             ("ELEVENLABS_MODEL", "eleven_multilingual_v2"))
+                             ("ELEVENLABS_MODEL", "eleven_multilingual_v2"), ("ELEVENLABS_STT_MODEL", "scribe_v2"))
     }
 
 

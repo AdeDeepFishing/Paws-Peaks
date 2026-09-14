@@ -16,6 +16,7 @@ func run() -> void:
 	await scene_changed
 	await create_timer(3).timeout
 	var narrator := root.get_node("Narrator")
+	await capture("boss-mood")
 	narrator.panel.open_dialogue()
 	narrator.panel.present({"text": "I thought that if the last page stayed unturned, none of our little adventures could disappear. But perhaps a story can end and still be yours."})
 	await capture("dialogue")

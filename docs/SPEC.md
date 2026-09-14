@@ -1165,3 +1165,15 @@ Music remains the teammate's work. A separate otter voice slot is reserved for l
 Full world-save restoration, Web hosting and new skeletal animation delivery are
 not implemented by this update. See [Narrator integration](3d_game/NARRATOR_AGENT.md)
 and [backend setup and validation](backend/BACKEND.md#narrator-and-speech).
+
+
+## September 14: Talk scope and boss mood
+
+Player dialogue is available only in Chapter 4 (otter) and Chapter 5 (Storykeeper),
+through a microphone Talk CTA beside Draw. Typing and microphone-to-text are both
+supported; the player reviews a transcript and presses Send. Earlier chapters keep
+passive narration. The boss now starts at 37% mood. Model-evaluated dialogue/drawings
+can increase or decrease it; below 20 is red, 20–80 yellow, above 80 green, and 95
+opens the way. Game code enforces the threshold and idempotency. This supersedes
+previous score-free boss resolution assumptions; resting and voluntary stay-ending
+confirmation still do not automatically complete a leave ending.
