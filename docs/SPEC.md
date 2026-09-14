@@ -1207,7 +1207,9 @@ once the Chapter 4 gift unlocks it; the gift implementation calls
 `Journey.grant_microphone()` after the microphone reveal finishes.
 
 The centered menu uses supplied paper, brush tracks and return-button states, with
-Music, Sound and Voice sliders. While open, hide all other UI and drawing content,
+Music, Sound and Voice sliders, each defaulting to 50%. The bottom CTA reads
+Return to Game and resumes the same scene, player position and encounter state.
+It does not open the map or restart the journey. While open, hide all other UI and drawing content,
 including test selectors and Back navigation; restore their previous state when
 closed. During exploration the existing model selectors and Back navigation remain
 below the menu circle. Chapter 5 moves the narrator paper into the center, reveals

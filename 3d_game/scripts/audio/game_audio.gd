@@ -8,9 +8,9 @@ var streams: Dictionary = {}
 var cues: Dictionary = {}
 var selected := ""
 var slot := 0
-var music_volume := 0.6
-var effects_volume := 0.6
-var voice_volume := 1.0
+var music_volume := 0.5
+var effects_volume := 0.5
+var voice_volume := 0.5
 var master_muted := false
 var phase := ""
 var scene: Node
@@ -252,7 +252,7 @@ func _build_controls() -> void:
 	spacer.custom_minimum_size.y = 10
 	stack.add_child(spacer)
 	var back := TextureButton.new()
-	back.name = "ReturnToTitle"
+	back.name = "ReturnToGame"
 	back.texture_normal = load("res://ui/storybook/return_normal.svg")
 	back.texture_hover = load("res://ui/storybook/return_hover.svg")
 	back.texture_focused = back.texture_hover
@@ -260,14 +260,22 @@ func _build_controls() -> void:
 	back.ignore_texture_size = true
 	back.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	back.custom_minimum_size = Vector2(360, 76)
-	back.tooltip_text = "Return to Title"
+	back.tooltip_text = "Return to Game"
 	back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	stack.add_child(back)
+	var resume_label := Label.new()
+	resume_label.text = "Return to Game"
+	resume_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	resume_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	resume_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	resume_label.add_theme_font_override("font", serif)
+	resume_label.add_theme_font_size_override("font_size", 30)
+	resume_label.add_theme_color_override("font_color", Color.WHITE)
+	back.add_child(resume_label)
+	resume_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	back.pressed.connect(func():
 		play_cue("click")
 		close_menu()
-		get_node("/root/Narrator").panel.close_dialogue()
-		get_node("/root/Journey").start_intro()
 	)
 	menu.hide()
 	menu_button.pressed.connect(func():

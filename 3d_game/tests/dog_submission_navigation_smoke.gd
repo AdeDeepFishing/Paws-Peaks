@@ -65,18 +65,13 @@ func run():
 	await keypress(KEY_SPACE)
 	await frames(90)
 	check(current_scene == level and not root.get_node("Journey").busy, "Walking and jumping after closing menu never return to the opening map")
-	# Explicit menu navigation and Return to Title must still work.
+	# Keyboard activation of the menu CTA resumes the same collected encounter.
 	await pointer(mix.menu_button)
 	for i in 3: await keypress(KEY_DOWN)
 	await keypress(KEY_SPACE)
-	var journey = root.get_node("Journey")
-	for i in 600:
-		await frames(1)
-		if journey.phase == "start": break
-	check(current_scene.scene_file_path == journey.MAP and current_scene.review_stage == 1,
-		"Explicit menu Return to Title still opens the first Start screen")
-	await preload("res://tests/journey_test_helpers.gd").complete(self)
-	check(current_scene.scene_file_path == journey.STAGES[0], "Explicit new journey can enter Chapter 1")
+	check(not mix.menu.visible and current_scene == level and level.dog.solved,
+		"Keyboard Return to Game keeps the solved dog encounter")
+	check(not root.get_node("Journey").busy, "Resume does not start a map transition")
 	current_scene.queue_free()
 	current_scene = null
 	await frames(3)

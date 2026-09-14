@@ -46,6 +46,7 @@ func _ready() -> void:
 	add_child(layer)
 	layer.add_child(panel)
 	audio = AudioStreamPlayer.new()
+	audio.volume_linear = get_node("/root/GameAudio").voice_volume
 	add_child(audio)
 	audio.finished.connect(panel.speech_finished)
 	get_tree().scene_changed.connect(_scene_changed)
