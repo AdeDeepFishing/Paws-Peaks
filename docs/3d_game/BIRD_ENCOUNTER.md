@@ -1,5 +1,7 @@
 # Stage 3: giant bird encounter (#34, #59)
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Current global presentation: construction tents have been replaced by sketch-local
 particles and soft blur. See [Generation presentation](GENERATION_PRESENTATION.md).
 Existing camera timing and encounter reactions remain in place.

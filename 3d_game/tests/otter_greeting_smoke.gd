@@ -155,7 +155,8 @@ func run():
 	level.surface.reference_size = level.surface.size
 	center = level.camera.unproject_position(Vector3(0, 0.3, 6))
 	level.surface.strokes.append(PackedVector2Array([center - Vector2(15, 30), center + Vector2(15, 0)]))
-	level._submit()
+	level.surface.changed.emit()
+	level.submit_button.pressed.emit()
 	check(level.request.state == "PENDING" and level.request.active_id != previous_id, "Second drawing creates a fresh Stage 4 request")
 	check(otter.phase == "waiting", "Second drawing starts confused waiting again")
 	check(is_instance_valid(previous_model), "Previous object stays while the next drawing generates")

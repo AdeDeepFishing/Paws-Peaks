@@ -1,5 +1,7 @@
 # Giant Storykeeper visual
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Updated: 2026-09-14. Implements the supplied Stage 5 boss appearance for #36.
 The separate personality/agent requirements (#63) are explicitly deferred.
 
@@ -81,7 +83,6 @@ interpretation, release and confirmed stay endings. Combat is not part of this d
 
 ```sh
 godot --headless --path 3d_game --script res://tests/boss_smoke.gd
-godot --path 3d_game --script res://tests/moonlit_forest_smoke.gd
 godot --headless --path 3d_game --script res://tests/ending_smoke.gd
 godot --path 3d_game --script res://tests/boss_visual.gd
 ```

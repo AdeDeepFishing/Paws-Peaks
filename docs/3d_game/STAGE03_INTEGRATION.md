@@ -1,5 +1,7 @@
 # Stage 03: Wind Hill integration
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Updated: 2026-09-13. Wind Hill now includes the single giant bird encounter in
 [#34](BIRD_ENCOUNTER.md). Its defence drawing and bird departure gate the existing
 transition to Stage 4. The environment details below remain applicable.

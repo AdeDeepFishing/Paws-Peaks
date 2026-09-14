@@ -1,5 +1,7 @@
 # Stage 05: Moonlit Forest integration
 
+> Test consolidation: test names and results below describe historical verification. See [Testing](TESTING.md) for the current stage suites and coverage; retired scripts are no longer runnable.
+
 Updated: 2026-09-14. Uses the designer's V5 replacement for issue #32.
 The giant Storykeeper visual and idle loop (#36) are integrated; see
 [Boss integration](BOSS_INTEGRATION.md). Personality/agent work (#63) and
@@ -100,9 +102,7 @@ depths and an airborne height. Stage 4 traversal and reflection lifecycle tests
 cover regressions in the preceding scene.
 
 ```sh
-godot --headless --path 3d_game --script res://tests/moonlit_forest_smoke.gd
 godot --headless --path 3d_game --script res://tests/sunset_cove_exit_smoke.gd
-godot --headless --path 3d_game --script res://tests/sunset_cove_smoke.gd
 godot --headless --path 3d_game --script res://tests/water_reflection_smoke.gd
 ```
 
