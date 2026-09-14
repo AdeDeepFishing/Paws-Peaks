@@ -23,10 +23,14 @@ var mic: Node
 var record_button: Button
 var partner := "Storykeeper"
 var dialogue_epoch := 0
-var microphone_consent := false
+const MICROPHONE_PREFERENCES := "user://microphone_preferences.cfg"
+var microphone_prompt_seen := false
 var microphone_prompt: ConfirmationDialog
 
 func _ready() -> void:
+	var preferences := ConfigFile.new()
+	if preferences.load(MICROPHONE_PREFERENCES) == OK:
+		microphone_prompt_seen = bool(preferences.get_value("microphone", "prompt_seen", false))
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	entry = _button(self, "Talk", open_dialogue)
@@ -138,11 +142,10 @@ func _ready() -> void:
 	)
 	microphone_prompt = ConfirmationDialog.new()
 	microphone_prompt.title = "Use your microphone?"
-	microphone_prompt.dialog_text = "Record up to 20 seconds. The audio is sent to ElevenLabs to turn it into text. You can edit it before sending, or keep typing instead."
+	microphone_prompt.dialog_text = "Record up to 20 seconds. You can edit the text before sending."
 	microphone_prompt.ok_button_text = "Start recording"
 	microphone_prompt.cancel_button_text = "Keep typing"
 	microphone_prompt.confirmed.connect(func():
-		microphone_consent = true
 		if opened: _start_recording()
 	)
 	add_child(microphone_prompt)
@@ -321,7 +324,11 @@ func _toggle_recording() -> void:
 	if busy: return
 	if mic.recording:
 		mic.stop(true)
-	elif not microphone_consent:
+	elif not microphone_prompt_seen:
+		microphone_prompt_seen = true
+		var preferences := ConfigFile.new()
+		preferences.set_value("microphone", "prompt_seen", true)
+		preferences.save(MICROPHONE_PREFERENCES)
 		microphone_prompt.popup_centered(Vector2i(500, 180))
 	else:
 		_start_recording()
