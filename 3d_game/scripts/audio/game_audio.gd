@@ -10,6 +10,7 @@ var selected := ""
 var slot := 0
 var music_volume := 0.6
 var effects_volume := 0.6
+var voice_volume := 1.0
 var master_muted := false
 var phase := ""
 var scene: Node
@@ -113,6 +114,12 @@ func play_cue(cue: String) -> void:
 		effect.play()
 		return
 
+func set_voice_volume(value: float) -> void:
+	voice_volume = clampf(value, 0.0, 1.0)
+	var narrator = get_node_or_null("/root/Narrator")
+	if narrator != null and is_instance_valid(narrator.audio):
+		narrator.audio.volume_linear = voice_volume
+
 func set_muted(value: bool) -> void:
 	master_muted = value
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), value)
@@ -164,7 +171,7 @@ func _build_controls() -> void:
 	button.add_theme_color_override("font_color", Color("294a43"))
 	var stack := VBoxContainer.new()
 	menu.add_child(stack)
-	for label in ["Music", "Effects"]:
+	for label in ["Music", "Effects", "Voice"]:
 		var title := Label.new()
 		title.text = label
 		title.add_theme_color_override("font_color", Color("294a43"))
@@ -174,10 +181,11 @@ func _build_controls() -> void:
 		slider.min_value = 0
 		slider.max_value = 1
 		slider.step = 0.05
-		slider.value = 0.6
+		slider.value = voice_volume if label == "Voice" else (music_volume if label == "Music" else effects_volume)
 		slider.value_changed.connect(func(value):
 			if label == "Music": music_volume = value
-			else: effects_volume = value
+			elif label == "Effects": effects_volume = value
+			else: set_voice_volume(value)
 		)
 		stack.add_child(slider)
 	var mute := CheckButton.new()
