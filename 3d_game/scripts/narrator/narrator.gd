@@ -81,6 +81,7 @@ func _drawing_submitted(payload: Dictionary) -> void:
 
 func _interpreted(id: String, item: Dictionary) -> void:
 	record("drawing_interpreted", {"request_id": id, "item": item, "result": "AI interpretation only; use has not been confirmed."})
+	if enabled: _enqueue({"op": "read_drawing", "drawing_id": id})
 
 func record(kind: String, payload: Dictionary) -> void:
 	if not enabled or chapter == 0: return
@@ -214,6 +215,7 @@ func _dispatch() -> void:
 		return
 	var request: Dictionary = queue.pop_front()
 	if request.epoch != epoch and request.op not in ["new"]: return
+	if request.has("drawing_id") and not _drawing_is_current(request.drawing_id): return
 	if request.op == "voice" and (not voice_enabled or request.utterance_id != last_utterance): return
 	if request.op != "new":
 		if state.is_empty(): return
@@ -248,6 +250,8 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 			panel.voice_note.text = "Voice unavailable · subtitles are still here."
 		else: _fail(str(response.get("message", "The Storykeeper could not respond. Try again.")))
 		return
+	if request.has("drawing_id") and not _drawing_is_current(request.drawing_id): return
+	if response.get("skipped", false): return
 	if response.has("state"):
 		if state.is_empty() or response.state.get("revision", -1) >= state.get("revision", -1):
 			state = response.state
@@ -267,6 +271,12 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 		reply_ready.emit(response)
 		_enqueue({"op": "presented", "utterance_id": request.input_id})
 		if voice_enabled: _enqueue({"op": "voice", "utterance_id": request.input_id})
+	elif request.op == "read_drawing":
+		# The item card already supplies the text; read it without another caption/model call.
+		skip()
+		last_utterance = request.input_id
+		_enqueue({"op": "presented", "utterance_id": request.input_id})
+		if voice_enabled: _enqueue({"op": "voice", "utterance_id": request.input_id, "drawing_id": request.drawing_id})
 	elif request.op == "transcribe":
 		panel.set_busy(false)
 		if panel.opened and request.get("dialogue_epoch") == panel.dialogue_epoch: panel.receive_transcript(str(response.get("transcript", "")))
@@ -322,3 +332,10 @@ func transcribe(wav: PackedByteArray) -> void:
 	_enqueue({"op": "transcribe", "dialogue_epoch": panel.dialogue_epoch, "audio_base64": Marshalls.raw_to_base64(wav)})
 	panel.set_busy(true)
 	panel.voice_note.text = "Turning your recording into text…"
+
+
+func _drawing_is_current(id: String) -> bool:
+	if not is_instance_valid(scene): return false
+	for drawing in scene.find_children("DrawingRequest", "", true, false):
+		if drawing.active_id == id and drawing.state in ["PENDING", "READY"]: return true
+	return false

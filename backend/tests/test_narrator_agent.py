@@ -90,6 +90,22 @@ class NarratorTests(unittest.TestCase):
             self.send("respond", text="", trigger="event", guidance="Take an invented exit.")
         self.assertEqual(self.model.calls, [])
 
+    def test_item_card_reads_exact_text_once_without_model_or_mood_change(self):
+        for stage in range(1, 5):
+            self.send("event", type="stage_entered", stage=stage, payload={})
+            drawing_id = "drawing-" + str(stage)
+            self.send("event", type="drawing_interpreted", stage=stage, payload={"request_id": drawing_id, "item": {"name": "Umbrella", "description": "A portable umbrella for rain or sun."}})
+            result = self.send("read_drawing", drawing_id=drawing_id)
+            self.assertEqual(result["utterance"]["text"], "Umbrella. A portable umbrella for rain or sun.")
+            self.assertEqual(result["utterance"]["speaker"], "narrator")
+            self.assertTrue(self.send("read_drawing", drawing_id=drawing_id)["skipped"])
+            self.assertEqual(self.state["mood"], 37)
+        self.assertEqual(self.model.calls, [])
+
+    def test_item_card_requires_recorded_interpretation(self):
+        with self.assertRaises(AppError): self.send("read_drawing", drawing_id="unknown")
+        self.assertEqual(self.model.calls, [])
+
     def test_mood_threshold_and_clamping(self):
         self.assertEqual(self.state["mood"], 37)
         self.model.decision = "OPEN_EXIT"

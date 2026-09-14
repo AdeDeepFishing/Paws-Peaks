@@ -119,3 +119,7 @@ and mailbox audio is removed after processing. Provider retention follows the
 ElevenLabs account/API settings. See the backend guide for the separate STT model.
 
 ![Boss mood and paired CTAs](../assets/narrator/boss-mood.png)
+
+The shared **Your Drawing** card speaks its name and description once per drawing,
+using the narrator voice across Chapters 1–4. Moving from sketch to reference image
+to model does not repeat the line or invoke another language-model response.

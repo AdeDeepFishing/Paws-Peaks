@@ -130,6 +130,20 @@ class Service:
                 state["requests"][request_id] = result
                 self.write(state)
                 return result
+            if op == "read_drawing":
+                drawing_id = identifier(request.get("drawing_id"))
+                event = next((e for e in reversed(state["events"]) if e["type"] == "drawing_interpreted" and e["stage"] == state["stage"] and e["payload"].get("request_id") == drawing_id), None)
+                require(event is not None, "STALE_RESULT")
+                if any(r.get("drawing_id") == drawing_id for r in state["requests"].values()):
+                    return {"skipped": True}
+                item = event["payload"].get("item", {})
+                name, description = item.get("name", ""), item.get("description", "")
+                require(isinstance(name, str) and isinstance(description, str) and name and description and len(name) + len(description) <= 1198)
+                actor = {"text": name.rstrip(".") + ". " + description, "emotion": "warm", "channel": "direct_dialogue", "addressed_to": "player", "speaker": "narrator", "evidence": [event["id"]]}
+                result = {"state": self.public(state), "utterance": actor, "input_id": request_id, "drawing_id": drawing_id, "provider_calls": 0}
+                state["requests"][request_id] = result
+                self.write(state)
+                return result
             if op == "guide":
                 require(state["ending"] is None, "ENDING_LOCKED")
                 require(request.get("revision") == state["revision"], "STALE_RESULT")

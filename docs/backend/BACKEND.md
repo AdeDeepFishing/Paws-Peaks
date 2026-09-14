@@ -1025,3 +1025,13 @@ threshold behavior, mood clamping, duplicate protection, otter routing, transcri
 bounds and review-before-send. Native visual checks cover the right-hand paired CTAs
 and persistent mood display. Actual microphone hardware/permission capture still
 requires a manual check; the recognition API was tested with synthetic audio.
+
+
+The shared Your Drawing card now reads its item name and description through
+`read_drawing`, using the already recorded interpretation. This applies to all four
+object-generation chapters, uses the narrator voice (including the otter chapter),
+and makes no additional language-model call. Each drawing request is read once;
+reference/model progress updates do not repeat it. New/canceled requests and scene
+changes discard obsolete speech. The existing card supplies the text, so no duplicate
+subtitle panel is created. Updated verification: 59 offline backend tests passed,
+including exact card text, all four stages and deduplication.
