@@ -81,9 +81,15 @@ Godot 4.7.2, desktop Forward+ on Apple M1, using offline scripted fixtures only:
 - `stage_transition_smoke.gd`: starts at the opening map, submits an offline bridge
   drawing, opens/closes the menu during drawing, walks across the bridge and the
   authored exit, checks the Chapter 2 map label/position/Next page button, then
-  enters Woodland Path. `map_return_smoke.gd` also passes. The reported return to
-  the opening Start screen after Chapter 1 has not reproduced in these paths;
-  the exact player action remains to be confirmed. No progression fix is claimed.
+  enters Woodland Path. `map_return_smoke.gd` also passes.
+- `dog_submission_navigation_smoke.gd`: submits a drawing with real pointer input,
+  waits for the dog to collect it, and exercises the menu before resuming keyboard
+  input. Previously, clicking the menu toggle to close left it focused: Space
+  reopened it, Down selected Return to Title, and another Space restarted the
+  journey. The test reproduces that opening-map reset before the fix. Closing the
+  menu now releases focus owned by its controls; the same movement/jump sequence
+  stays in Chapter 2. Explicit keyboard navigation inside an open menu still
+  reaches Return to Title and starts a new journey.
 - Visual captures are under `docs/3d_game/assets/storybook-ui/`.
 
 The older `dog_encounter_smoke.gd` still fails expectations for manual offering,
