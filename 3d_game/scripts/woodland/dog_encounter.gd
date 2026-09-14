@@ -179,7 +179,7 @@ func presentation_camera_transform(anchor: Vector3) -> Transform3D:
 	var centers: Array[Vector3] = []
 	Framing.add_visual(centers, player.visual)
 	Framing.add_sketch(points, generation_preview, basis)
-	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview)
+	return global_transform.affine_inverse() * Framing.fit(camera, points, centers, basis, generation_preview, presentation.focus_fov, 3.0, 0.83)
 
 func _settle_offering(_ground: Node, body: RigidBody3D) -> void:
 	if not is_instance_valid(body) or body != offered: return

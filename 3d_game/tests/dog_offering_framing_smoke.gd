@@ -22,7 +22,7 @@ func run():
 		var preview = level.generation_preview
 		var viewport := Rect2(Vector2.ZERO, root.get_visible_rect().size)
 		check(viewport.encloses(Rect2(preview.mist.position, preview.mist.size)), "Entire sketch and mist fit the close-up: " + str(sketch_size))
-		check(preview.image.size.x <= preview.submitted_rect.size.x * 1.31, "Close-up does not inflate the submitted drawing: " + str(sketch_size))
+		check(preview.image.size.x <= preview.submitted_rect.size.x * 3.01, "Close-up keeps drawing enlargement within the intended threefold limit: " + str(sketch_size))
 		for participant in [level.player.visual]:
 			var points: Array[Vector3] = []
 			preload("res://scripts/woodland/encounter_framing.gd").add_visual(points, participant)
