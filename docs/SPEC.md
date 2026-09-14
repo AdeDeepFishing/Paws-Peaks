@@ -1186,3 +1186,10 @@ the endings, with persistent playback, looping, crossfades and speech ducking.
 Shared procedural feedback covers buttons, page turns, drawing submission/results,
 boss release, jumping and footsteps. Music/Effects levels and master mute are
 available in the Audio panel. See [Audio integration](3d_game/AUDIO.md).
+
+### Chapter 5 daybreak update (2026-09-14, #60)
+
+Storykeeper release starts the 12-second night-to-dawn transition. Reaching the
+exit starts the 12-second dawn-to-sunrise transition after dawn finishes; only
+then does the final page turn reveal the victory book. The epilogue retains
+sunrise. See [Daybreak integration](3d_game/DAYBREAK.md).

@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ending/ending_level.gd" id="1"]
-[ext_resource type="PackedScene" path="res://models/ending/dawn_forest.glb" id="2"]
+[ext_resource type="PackedScene" path="res://models/stage05/moonlit_forest.glb" id="2"]
 [ext_resource type="Script" path="res://scripts/moonlit_forest/moonlit_forest_art.gd" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/river/river_player.tscn" id="4"]
 
@@ -33,10 +33,10 @@ return_label = "Back to forest"
 
 [node name="DawnArt" parent="." instance=ExtResource("2")]
 script = ExtResource("3")
-animation_name = "Forest_dawn_wind_clouds"
-key_light_name = "Sunrise_key"
-directional_energy_scale = 0.32
-local_energy_scale = 0.2
+animation_name = "Forest_wind_clouds_fireflies"
+key_light_name = "Moon_key"
+directional_energy_scale = 0.5
+local_energy_scale = 0.3
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment")

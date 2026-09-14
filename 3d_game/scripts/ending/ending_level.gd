@@ -8,34 +8,23 @@ var memory: Texture2D
 var presentation_phase := "arrival"
 var book_tween: Tween
 var ambience: Environment
-var arrival_lights: Dictionary = {}
 
 func _ready() -> void:
 	super._ready()
 	player.set_input_enabled(false)
-	ambience = $WorldEnvironment.environment.duplicate()
-	$WorldEnvironment.environment = ambience
-	for light in $DawnArt.find_children("*", "Light3D", true, false):
-		arrival_lights[light] = light.light_energy
-	_set_dawn(0.0)
+	var daybreak = preload("res://scripts/moonlit_forest/daybreak.gd").new()
+	add_child(daybreak)
+	daybreak.setup(self)
+	daybreak.set_value(2.0)
+	ambience = $WorldEnvironment.environment
 	# F6 remains a complete preview; Journey owns timing for the normal final exit.
 	if not get_node("/root/Journey").busy:
 		reveal_dawn.call_deferred(get_node("/root/Journey").duration_scale)
 
-func _set_dawn(amount: float) -> void:
-	ambience.tonemap_exposure = lerpf(0.46, 0.78, amount)
-	ambience.ambient_light_energy = lerpf(0.22, 0.34, amount)
-	ambience.fog_light_color = Color("53637a").lerp(Color("bfc9db"), amount)
-	ambience.fog_light_energy = lerpf(0.24, 0.38, amount)
-	for light in arrival_lights:
-		light.light_energy = arrival_lights[light] * lerpf(0.65, 1.0, amount)
-
 func reveal_dawn(timing: float = 1.0) -> void:
 	if presentation_phase != "arrival": return
 	presentation_phase = "dawn"
-	var tween := create_tween()
-	tween.tween_method(_set_dawn, 0.0, 1.0, 3.6 * timing).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await tween.finished
+	await get_tree().create_timer(0.6 * timing).timeout
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		memory = ImageTexture.create_from_image(get_viewport().get_texture().get_image())

@@ -2,15 +2,20 @@ extends "res://scripts/woodland/woodland_level.gd"
 
 ## Explicit test/authoring preview only. Real play requires a narrator resolution.
 @export var preview_ending_enabled := false
+var daybreak: Node
 var released := false
 var stay_presented := false
 var book: Control
 var mood_label: Label
 var mood_bar: ProgressBar
 var mood_hint: Label
+var mood_layer: CanvasLayer
 
 func _ready() -> void:
 	super._ready()
+	daybreak = preload("res://scripts/moonlit_forest/daybreak.gd").new()
+	add_child(daybreak)
+	daybreak.setup(self)
 	objective.text = "Meet the Storykeeper. Share an idea, a drawing, or a goodbye."
 	status.text = objective.text
 	status.set_meta("narrator_guidance", status.text)
@@ -48,6 +53,7 @@ func _story_changed(state: Dictionary) -> void:
 		status.text = objective.text
 		status.set_meta("narrator_guidance", status.text)
 		$Storykeeper.make_way()
+		daybreak.go(1.0, get_node("/root/Journey").duration_scale)
 	if state.get("ending") == "stay" and not stay_presented:
 		stay_presented = true
 		get_node("/root/Journey").finish_stay(self)
@@ -80,7 +86,7 @@ func complete_boss_encounter() -> void:
 
 
 func _build_mood() -> void:
-	var mood_layer := CanvasLayer.new()
+	mood_layer = CanvasLayer.new()
 	mood_layer.layer = 25
 	add_child(mood_layer)
 	var card := PanelContainer.new()
@@ -137,3 +143,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		panel.open_dialogue()
 		panel._draw_idea()
 		get_viewport().set_input_as_handled()
+
+## Journey waits for both atmosphere beats before the final page turn.
+func finish_daybreak(timing: float) -> void:
+	player.set_input_enabled(false)
+	hud_root.hide()
+	mood_layer.hide()
+	await daybreak.go(1.0, timing)
+	await daybreak.go(2.0, timing)
+	await get_tree().create_timer(1.0 * timing).timeout
