@@ -72,6 +72,30 @@ class NarratorTests(unittest.TestCase):
         self.assertEqual(self.model.calls, [])
         self.assertIsNone(self.state["ending"])
 
+    def test_otter_introduction_and_approach_are_each_spoken_once(self):
+        self.send("event", type="stage_entered", stage=4, payload={})
+        greeting = "There is an otter waving on the beach. Go say hello."
+        self.send("event", type="guidance_changed", stage=4, payload={"text": greeting})
+        first = self.send("guide", guidance=greeting)
+        self.assertEqual(first["utterance"]["text"], greeting)
+        self.send("presented", utterance_id=first["input_id"])
+        approach = "The otter looks unhappy. Draw an offering to cheer it up."
+        self.send("event", type="guidance_changed", stage=4, payload={"text": approach})
+        second = self.send("guide", guidance=approach)
+        self.assertEqual(second["utterance"]["text"], approach)
+        self.assertEqual(self.model.calls, [])
+
+    def test_spoken_reply_after_microphone_guidance_update(self):
+        self.send("event", type="stage_entered", stage=4, payload={})
+        previous = "A microphone! Tap Talk to speak."
+        current = "Tap Talk to speak with the otter."
+        self.send("event", type="guidance_changed", stage=4, payload={"text": previous})
+        self.send("event", type="npc_interaction_resolved", stage=4, payload={"result": "Received the microphone."})
+        self.send("event", type="guidance_changed", stage=4, payload={"text": current})
+        response = self.send("respond", text="Thank you for the gift.", guidance=current)
+        self.assertEqual(response["utterance"]["speaker"], "otter")
+        self.assertEqual(self.model.calls[-1]["current_guidance"], current)
+
     def test_fixed_speech_cache_survives_new_journey(self):
         self.service.config = {"ELEVENLABS_API_KEY": "test-only", "ELEVENLABS_NARRATOR_VOICE_ID": "narrator", "ELEVENLABS_MODEL": "eleven_multilingual_v2"}
         class Response:
@@ -162,6 +186,21 @@ class NarratorTests(unittest.TestCase):
         self.assertEqual(len(self.model.calls), 1)
         self.assertEqual(self.state["mood"], 37)
         self.assertFalse(self.state["exit_open"])
+
+    def test_otter_first_presented_reply_hints_right_only_once(self):
+        self.send("event", type="stage_entered", stage=4, payload={})
+        first = self.send("respond", text="Hello!", trigger="dialogue")
+        self.assertTrue(self.model.calls[-1]["include_otter_departure_hint"])
+        self.assertEqual(self.model.calls[-1]["otter_route_direction"], "Continue the journey to the right.")
+        # A discarded/unpresented reply must not consume the first-reply hint.
+        retry = self.send("respond", text="Can you hear me?", trigger="dialogue")
+        self.assertTrue(self.model.calls[-1]["include_otter_departure_hint"])
+        self.send("presented", utterance_id=retry["input_id"])
+        self.send("respond", text="Thank you.", trigger="dialogue")
+        self.assertFalse(self.model.calls[-1]["include_otter_departure_hint"])
+        self.send("event", type="stage_entered", stage=5, payload={})
+        self.send("respond", text="Hello.", trigger="dialogue")
+        self.assertNotIn("include_otter_departure_hint", self.model.calls[-1])
 
     def test_open_exit_does_not_end_until_crossing(self):
         self.model.decision = "OPEN_EXIT"

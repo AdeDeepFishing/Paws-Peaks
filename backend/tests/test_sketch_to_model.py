@@ -13,7 +13,7 @@ from utils.common import AppError
 
 
 class PipelineTests(unittest.TestCase):
-    def run_mock_pipeline(self, description, edit_error=None, preview_error=False, interpretation_error=None, game_stage="river", animation_options=None):
+    def run_mock_pipeline(self, description, edit_error=None, preview_error=False, interpretation_error=None, game_stage="river", animation_options=None, skip_preview=False):
         with tempfile.TemporaryDirectory() as folder, contextlib.ExitStack() as stack:
             stack.enter_context(patch.object(run, "ROOT", Path(folder)))
             stack.enter_context(patch.object(run, "load_config", return_value={}))
@@ -33,7 +33,7 @@ class PipelineTests(unittest.TestCase):
             create = stack.enter_context(patch.object(run.model_generation, "create_job"))
             stack.enter_context(patch.object(run.model_generation, "refresh_job", return_value={"status": "SUCCEEDED"}))
             stack.enter_context(patch.object(run.model_generation, "download_model", return_value="model.glb"))
-            stack.enter_context(patch.object(run, "preview_result", return_value={"preview_error": "PREVIEW_RENDER_FAILED"} if preview_error else {"preview_path": "model.png"}))
+            self.preview_renderer = stack.enter_context(patch.object(run, "preview_result", return_value={"preview_error": "PREVIEW_RENDER_FAILED"} if preview_error else {"preview_path": "model.png"}))
             stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
             stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
             self.events = []
@@ -41,7 +41,7 @@ class PipelineTests(unittest.TestCase):
             output_folder = Path(folder) / 'output/sketch_to_model/test-run'
             output_folder.mkdir(parents=True)
             (output_folder / 'benchmark.jsonl').write_text('')
-            code = run.main(["--game-stage", game_stage], output_folder=output_folder, on_event=self.events.append, on_response=self.responses.append, animation_options=animation_options)
+            code = run.main(["--game-stage", game_stage] + (["--skip-preview"] if skip_preview else []), output_folder=output_folder, on_event=self.events.append, on_response=self.responses.append, animation_options=animation_options)
             interpretation.assert_called_once_with(data_uri, {}, prompt=run.SKETCH_PROMPT, game_stage=game_stage, **({"animation_options": animation_options} if game_stage == "otter" else {}))
             saved = list(Path(folder).glob("output/sketch_to_model/*/input.png"))
             self.assertEqual(len(saved), 1)
@@ -104,8 +104,27 @@ class PipelineTests(unittest.TestCase):
             self.assertNotIn(key, payload)
 
     def test_otter_reaction_survives_generation(self):
-        description = {"item": {"name": "Flower", "description": "A flower to enjoy.", "movable": True, "texture_key": "fabric", "color": "#CC8877"}, "reaction": "Cheer_with_Both_Hands"}
+        description = {"item": {"name": "Flower", "description": "A flower to enjoy.", "movable": True, "texture_key": "fabric", "color": "#CC8877"}, "reaction": "Cheer_with_Both_Hands", "otter_happy": True, "otter_response": "This flower makes me smile!"}
         code, _, _ = self.run_mock_pipeline(description, game_stage="otter", animation_options={"Cheer_with_Both_Hands": "Raises both hands overhead in celebration."})
         self.assertEqual(code, 0)
         self.assertEqual(self.events[1]["reaction"], description["reaction"])
         self.assertEqual(self.events[-1]["reaction"], description["reaction"])
+        self.assertIs(self.events[-1]["otter_happy"], True)
+        self.assertEqual(self.events[-1]["otter_response"], description["otter_response"])
+
+    def test_game_generation_skips_preview_and_delivers_model(self):
+        item = {"name": "Chair", "description": "A chair.", "type": "UNKNOWN", "movable": True, "texture_key": "wood", "color": "#D9C6A0"}
+        code, _, _ = self.run_mock_pipeline({"item": item}, skip_preview=True)
+        self.assertEqual(code, 0)
+        self.preview_renderer.assert_not_called()
+        self.assertNotIn("preview", [event["stage"] for event in self.events])
+        self.assertEqual(self.events[-1]["status"], "SUCCEEDED")
+        self.assertEqual(self.events[-1]["model_path"], "model.glb")
+        self.assertNotIn("preview_path", self.events[-1])
+        self.assertNotIn("preview_error", self.events[-1])
+
+    def test_standalone_generation_keeps_preview(self):
+        code, _, _ = self.run_mock_pipeline({"item": {"name": "Chair", "description": "A chair.", "texture_key": "wood", "color": "#D9C6A0"}})
+        self.assertEqual(code, 0)
+        self.preview_renderer.assert_called_once_with("model.glb")
+        self.assertEqual(self.events[-1]["preview_path"], "model.png")

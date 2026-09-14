@@ -26,7 +26,7 @@ class GameBridgeTests(unittest.TestCase):
 
     def test_live_delegates_and_filters_status_fields(self):
         def pipeline(argv, *, output_folder, on_event):
-            self.assertEqual(argv, ['--image', str(self.folder / 'request/input.png'), '--game-stage', 'river'])
+            self.assertEqual(argv, ['--skip-preview', '--image', str(self.folder / 'request/input.png'), '--game-stage', 'river'])
             self.assertEqual(output_folder, self.folder / 'response/artifacts')
             on_event({'stage': 'model', 'status': 'FAILED', 'error': 'POLL_TIMEOUT', 'signed_url': 'secret', 'texture_path': str(output_folder / 'texture.png')})
             return 1
@@ -100,9 +100,11 @@ class GameBridgeTests(unittest.TestCase):
         def pipeline(argv, *, output_folder, on_event, animation_options):
             self.assertEqual(animation_options, options)
             self.assertEqual(argv[-1], "otter")
-            on_event({"stage": "reference_image", "status": "PENDING", "reaction": "Shrug"})
+            on_event({"stage": "reference_image", "status": "PENDING", "reaction": "Shrug", "otter_happy": False, "otter_response": "I am still feeling blue."})
             on_event({"stage": "complete", "status": "SUCCEEDED"})
             return 0
         with patch.object(run.pipeline, "main", side_effect=pipeline):
             self.assertEqual(run.execute(self.folder, "otter-test", "E04", "live", "otter", animation_options=options), 0)
         self.assertEqual(self.status()["reaction"], "Shrug")
+        self.assertIs(self.status()["otter_happy"], False)
+        self.assertEqual(self.status()["otter_response"], "I am still feeling blue.")

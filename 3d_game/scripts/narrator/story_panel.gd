@@ -170,7 +170,7 @@ func _resume_world() -> void:
 
 func set_busy(value: bool) -> void:
 	busy = value
-	entry.disabled = value
+	entry.disabled = value or not get_node("/root/Journey").microphone_unlocked
 	thinking.visible = value
 	if value:
 		thinking_time = 0
@@ -313,6 +313,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _start_recording() -> void:
+	if not get_node("/root/Journey").microphone_unlocked: return
 	story.skip(true)
 	dialogue_epoch += 1
 	_show_line("You","Listening…")
@@ -381,7 +382,7 @@ func _update_tools() -> void:
 		var unlocked: bool = get_node("/root/Journey").microphone_unlocked
 		Layout.corner(draw, -256 if unlocked else -144, -160 if unlocked else -48)
 		if opened or revealing_boss: draw.disabled = true
-	entry.disabled = busy or locked or revealing_boss or (story.chapter == 5 and story.scene.get("boss_revealed") == false) or (story.chapter == 4 and story.scene.has_method("near_otter") and not story.scene.near_otter())
+	entry.disabled = not get_node("/root/Journey").microphone_unlocked or busy or locked or revealing_boss or (story.chapter == 5 and story.scene.get("boss_revealed") == false) or (story.chapter == 4 and story.scene.has_method("near_otter") and not story.scene.near_otter())
 	entry.set_pressed_no_signal(mic.recording)
 	stop_button.disabled = busy
 	stop_button.tooltip_text = "Stop recording" if mic.recording else "Close speech"

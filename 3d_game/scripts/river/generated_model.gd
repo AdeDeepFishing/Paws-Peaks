@@ -64,6 +64,7 @@ static func load_visual(path: String, span: float, crossing: bool, item: Diction
 	if not item.is_empty() and not apply_palette(result, item):
 		result.free()
 		return null
+	preload("res://scripts/river/generated_object_diagnostics.gd").attach(result)
 	return result
 
 static func apply_palette(visual: Node3D, item: Dictionary) -> bool:

@@ -6,7 +6,8 @@ extends Node3D
 @export var chapter := "02"
 @export var stage_title := "Woodland Path"
 @export var fallback_spawn := Vector3(0, 2, 5)
-@export var entrance_offset := Vector3(0, 0, 4)
+@export var spawn_offset := Vector3.ZERO
+@export var entrance_offset := Vector3(0, 0, 8)
 var entering := true
 
 @export var camera_pullback := 6.0
@@ -42,6 +43,7 @@ func _ready() -> void:
 	spawn = fallback_spawn
 	var marker: Node3D = art.find_child("Player_spawn", true, false)
 	if marker: spawn = marker.global_position + Vector3.UP * 2
+	spawn += spawn_offset
 	player.respawn(spawn)
 	_build_ui()
 	player.set_input_enabled(false)

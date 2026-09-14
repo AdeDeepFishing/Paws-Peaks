@@ -78,7 +78,7 @@ class InterpretTests(unittest.TestCase):
 
     def test_otter_selects_a_catalog_reaction_in_the_same_call(self):
         options = app.reaction_options()
-        result = {"item": {key: value for key, value in ITEM.items() if key != "type"}, "reaction": "Big_Wave_Hello"}
+        result = {"item": {key: value for key, value in ITEM.items() if key != "type"}, "reaction": "Cheer_with_Both_Hands", "otter_happy": True, "otter_response": "That thoughtful gift cheers me up!"}
         with patch.object(app, "urlopen", return_value=io.BytesIO(json.dumps(provider_response(result)).encode())) as transport:
             self.assertEqual(app.interpret("test-image", CONFIG, game_stage="otter", animation_options=options), result)
         transport.assert_called_once()
@@ -90,11 +90,21 @@ class InterpretTests(unittest.TestCase):
         schema = payload["text"]["format"]["schema"]
         self.assertEqual(schema["properties"]["reaction"]["enum"], list(options))
         self.assertIn("reaction", schema["required"])
+        self.assertEqual(schema["properties"]["otter_happy"], {"type": "boolean"})
+        self.assertIn("otter_happy", schema["required"])
+        self.assertIn("otter_response", schema["required"])
+        self.assertEqual(app.validate_interpretation({**result, "otter_happy": False}, "otter")["otter_happy"], False)
+        for field, bad in [("otter_happy", "yes"), ("otter_happy", 1), ("otter_response", ""), ("otter_response", "x" * 161)]:
+            with self.subTest(field=field, bad=bad), self.assertRaises(app.AppError):
+                app.validate_interpretation({**result, field: bad}, "otter")
+        for field in ["otter_happy", "otter_response"]:
+            with self.assertRaises(app.AppError):
+                app.validate_interpretation({k: v for k, v in result.items() if k != field}, "otter")
         self.assertNotIn("type", schema["properties"]["item"]["properties"])
         self.assertNotIn("Allowed item classes", prompt)
         with self.assertRaises(app.AppError):
             app.validate_interpretation({**result, "item": {**result["item"], "type": "GIFT"}}, "otter")
-        for reaction in [None, "unknown_clip", 3]:
+        for reaction in [None, "unknown_clip", 3, "Swim_Idle", "Idle_11", "Confused_Scratch", "Big_Wave_Hello", "Walking"]:
             with self.assertRaises(app.AppError):
                 app.validate_interpretation({**result, "reaction": reaction}, "otter")
         with self.assertRaises(app.AppError):

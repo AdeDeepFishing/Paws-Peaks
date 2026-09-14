@@ -196,3 +196,31 @@ The item (six fields in Stages 1–3, five in Stage 4) includes `texture_key` an
 model. See [Material palette](MATERIAL_PALETTE.md) for the shared reference color,
 whole-object rendering and asset catalog. Stage 1's fixture uses brown wood;
 Stage 2's uses ivory bone. Material selection is independent of mobility and class.
+
+
+## Local generated-object diagnostics
+
+Launch with `-- --generated-object-diagnostics` to log every loaded generated
+object's world position at spawn and once per second, plus a removal event.
+Each JSONL row includes a local object ID, elapsed milliseconds, wall-clock time,
+world position, velocity, and scene visibility. If a camera is available, it also
+includes the projected origin and whether that origin is inside the viewport.
+That viewport flag does not test occlusion by terrain or other geometry.
+
+Logs are written beneath Godot's `user://diagnostics/` directory, named
+`generated-objects-<timestamp>-<pid>.jsonl`; the absolute path is printed at startup
+of the first tracked object. On macOS this is under
+`~/Library/Application Support/Godot/app_userdata/3d_game/diagnostics/`.
+No credentials, request payloads, model paths or provider responses are logged.
+Diagnostics are disabled without the flag and do not make AI calls themselves.
+Normal live gameplay still uses its configured providers when submitting drawings.
+
+Example for the otter stage:
+
+```sh
+/Applications/Godot.app/Contents/MacOS/Godot --path 3d_game res://scenes/sunset_cove/sunset_cove.tscn -- --generated-object-diagnostics
+```
+
+The log reports the model root, whose ground-centered pivot follows its physics
+body or equipped parent. It starts with this new run; older sessions cannot be
+reconstructed from it.

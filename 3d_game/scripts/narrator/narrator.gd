@@ -29,6 +29,7 @@ var audio: AudioStreamPlayer
 var last_error := ""
 var caption_deadline := 0
 var checkpoint := ""
+var scripted_narration := false
 var guidance_text := ""
 var guidance_due := false
 var reaction_due := false
@@ -54,6 +55,7 @@ func _ready() -> void:
 func _scene_changed() -> void:
 	var current := get_tree().current_scene
 	if current == scene: return
+	scripted_narration = false
 	if is_instance_valid(guidance_status): guidance_status.show()
 	guidance_status = null
 	guidance_text = ""
@@ -149,6 +151,7 @@ func crossed_exit() -> void:
 		_enqueue({"op": "leave", "crossed_exit": true})
 
 func reset_journey() -> void:
+	get_node("/root/Journey").microphone_unlocked = false
 	epoch += 1
 	queue.clear()
 	state = {}
@@ -176,10 +179,10 @@ func _process(delta: float) -> void:
 	if playable:
 		playable = scene.get("entering") != true and scene.process_mode != Node.PROCESS_MODE_DISABLED
 	panel.entry.visible = playable and chapter in [4, 5] and get_node("/root/Journey").microphone_unlocked and not panel.canvas_panel.visible and state.get("ending") == null
-	panel.entry.disabled = panel.busy or (playable and chapter == 4 and scene.has_method("near_otter") and not scene.near_otter())
-	panel.entry.tooltip_text = "Approach the otter to talk." if panel.entry.disabled else "Speak with the character."
+	if playable: panel._update_tools()
+	panel.entry.tooltip_text = "Approach the otter to talk." if chapter == 4 and panel.entry.disabled else "Speak with the character."
 	if not enabled: return
-	if playable and not panel.opened: _observe_guidance()
+	if playable and not panel.opened and not scripted_narration: _observe_guidance()
 	if playable and panel.opened:
 		var current_guidance := _current_guidance()
 		if is_instance_valid(guidance_status) and not current_guidance.is_empty():
@@ -205,7 +208,7 @@ func _process(delta: float) -> void:
 		active = {}
 		_fail("The Storykeeper is taking too long. Your words and drawing are safe; try again.")
 	if active.is_empty() and not queue.is_empty(): _dispatch()
-	if playable and not panel.opened and not panel.revealing_boss and auto_narration and (guidance_due or verbosity != "quiet") and queue.is_empty() and active.is_empty():
+	if playable and not panel.opened and not panel.revealing_boss and not scripted_narration and auto_narration and (guidance_due or verbosity != "quiet") and queue.is_empty() and active.is_empty():
 		var player = scene.get("player")
 		var occupied: bool = player == null or not player.input_enabled or player.drawing_active
 		if not occupied and (comment_due or guidance_due) and Time.get_ticks_msec() / 1000.0 >= next_comment:
@@ -251,6 +254,7 @@ func _dispatch() -> void:
 	if request.op != "voice": active = metadata
 
 func _consume(request: Dictionary, response: Dictionary) -> void:
+	if scripted_narration and request.op in ["respond", "guide", "read_drawing"] and not request.get("scripted", false): return
 	if request.op == "transcribe":
 		if not panel.opened or request.get("dialogue_epoch") != panel.dialogue_epoch: return
 		if request.get("partial", false) and not panel.mic.recording: return
@@ -311,6 +315,9 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 		if is_instance_valid(scene) and scene.has_method("complete_boss_encounter"): scene.complete_boss_encounter()
 
 func _fail(message: String) -> void:
+	if scripted_narration:
+		panel.start_speech(0.0)
+		return
 	last_error = message
 	panel.set_busy(false)
 	panel.show_error(message)
@@ -344,7 +351,7 @@ func _observe_guidance() -> void:
 
 
 func transcribe(wav: PackedByteArray, partial := false) -> void:
-	if chapter not in [4, 5] or not enabled: return
+	if chapter not in [4, 5] or not enabled or not get_node("/root/Journey").microphone_unlocked: return
 	if partial and _has_op("transcribe"): return
 	_ensure_worker()
 	if not partial:
@@ -360,3 +367,35 @@ func _drawing_is_current(id: String) -> bool:
 	for drawing in scene.find_children("DrawingRequest", "", true, false):
 		if drawing.active_id == id and drawing.state in ["PENDING", "READY"]: return true
 	return false
+
+
+func begin_scripted_line(text: String) -> void:
+	scripted_narration = true
+	skip()
+	panel.set_busy(false)
+	queue = queue.filter(func(request): return request.get("op") not in ["respond", "guide", "read_drawing", "voice"])
+	guidance_text = text
+	_current_guidance()
+	if is_instance_valid(guidance_status): guidance_status.hide()
+	record("guidance_changed", {"text": text})
+	comment_due = false
+	guidance_due = false
+	reaction_due = false
+	panel.present({"text": text, "speaker": "narrator"}, false)
+	if enabled:
+		_ensure_worker()
+		_enqueue({"op": "guide", "trigger": "event", "guidance": text, "scripted": true})
+	else:
+		panel.start_speech(0.0)
+
+func end_scripted_narration() -> void:
+	scripted_narration = false
+	var latest := _current_guidance()
+	if latest != guidance_text:
+		guidance_text = latest
+		# Queue the new guidance before a player reply can reference it.
+		record("guidance_changed", {"text": latest})
+	comment_due = false
+	guidance_due = false
+	reaction_due = false
+	if is_instance_valid(guidance_status): guidance_status.visible = not panel.caption.visible

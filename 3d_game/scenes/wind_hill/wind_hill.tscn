@@ -25,7 +25,8 @@ chapter = "03"
 stage_title = "Wind Hill"
 fallback_spawn = Vector3(0, 2, -0.5)
 camera_pullback = 0.0
-entrance_offset = Vector3(-4, 0, 0)
+spawn_offset = Vector3(-3, 0, 0)
+entrance_offset = Vector3(-5, 0, 0)
 return_scene = "res://scenes/woodland/woodland_path.tscn"
 return_label = "Back to woodland"
 

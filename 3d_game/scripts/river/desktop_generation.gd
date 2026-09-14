@@ -6,6 +6,8 @@ signal reference_image_ready(request_id: String, path: String)
 
 var partial_item: Dictionary = {}
 var reaction := ""
+var otter_happy := false
+var otter_response := ""
 var reference_path := ""
 
 @export_enum("Mock bridge", "Offline model", "Live AI") var mode := 1
@@ -37,6 +39,8 @@ func _start(payload: Dictionary) -> void:
 	finished = false
 	partial_item = {}
 	reaction = ""
+	otter_happy = false
+	otter_response = ""
 	reference_path = ""
 	last_stage = ""
 	job_dir = ""
@@ -129,7 +133,12 @@ func consume_status(status: Dictionary) -> void:
 			if not status.get("reaction") is String or not request.animation_options.has(status.get("reaction")):
 				fail("The otter reaction was not valid.", "INVALID_MODEL_OUTPUT")
 				return
+			if not request.valid_otter_mood(status):
+				fail("The otter mood response was not valid.", "INVALID_MODEL_OUTPUT")
+				return
 			reaction = status.reaction
+			otter_happy = status.otter_happy
+			otter_response = status.otter_response
 		partial_item = status.item.duplicate(true)
 		interpretation_ready.emit(request_id, partial_item.duplicate(true))
 	if not _active(str(status.get("request_id", ""))):
@@ -149,7 +158,7 @@ func consume_status(status: Dictionary) -> void:
 			fail("The returned model file was not valid.")
 			return
 		finished = true
-		request.accept_response({"schema_version": 2, "request_id": request_id, "status": "recognized", "item": status.get("item"), "model_path": model_path, "reaction": reaction})
+		request.accept_response({"schema_version": 2, "request_id": request_id, "status": "recognized", "item": status.get("item"), "model_path": model_path, "reaction": reaction, "otter_happy": otter_happy, "otter_response": otter_response})
 
 func fail(message: String, code: String = "GENERATION_FAILED") -> void:
 	_cancel_job()

@@ -82,7 +82,9 @@ def schema_for(game_stage, animation_options=None):
     if game_stage == "otter":
         del schema["properties"]["item"]["properties"]["type"]
         schema["properties"]["item"]["required"].remove("type")
-        schema["required"].append("reaction")
+        schema["required"].extend(["reaction", "otter_happy", "otter_response"])
+        schema["properties"]["otter_happy"] = {"type": "boolean"}
+        schema["properties"]["otter_response"] = {"type": "string", "minLength": 1, "maxLength": 160}
         schema["properties"]["reaction"] = {"type": "string", "enum": list(reaction_options(animation_options))}
     return schema
 
@@ -90,11 +92,15 @@ def schema_for(game_stage, animation_options=None):
 def validate_interpretation(value, game_stage="river", animation_options=None):
     allowed_types = classes_for(game_stage)
     invalid = AppError("INVALID_MODEL_OUTPUT", "OpenAI returned an invalid item. Try again.")
-    fields = {"item", "reaction"} if game_stage == "otter" else {"item"}
+    fields = {"item", "reaction", "otter_happy", "otter_response"} if game_stage == "otter" else {"item"}
     if not isinstance(value, dict) or set(value) != fields:
         raise invalid
     if game_stage == "otter" and (not isinstance(value["reaction"], str)
                                   or value["reaction"] not in reaction_options(animation_options)):
+        raise invalid
+    if game_stage == "otter" and (type(value["otter_happy"]) is not bool
+            or not isinstance(value["otter_response"], str)
+            or not 1 <= len(value["otter_response"].strip()) <= 160):
         raise invalid
     item = value["item"]
     if not isinstance(item, dict) or set(item) != (set(ITEM_PROPERTIES) - {"type"} if game_stage == "otter" else set(ITEM_PROPERTIES)):
@@ -147,7 +153,11 @@ def interpret(image, config, prompt=PROMPT, game_stage="river", animation_option
     if game_stage == "otter":
         animation_options = reaction_options(animation_options)
         prompt += ("\n2. After identifying the object, choose one suitable reaction for the otter "
-                   "as if it has just seen that object. Use the animation descriptions below. "
+                   "as if it has just received that offering. The otter is sad and the player wants to cheer it up. "
+                   "Decide whether this particular offering would make it happy; do not automatically approve every object. "
+                   "Return otter_happy as a boolean and otter_response as a short, warm English reply from the otter "
+                   "explaining why the offering does or does not cheer it up (maximum 160 characters). "
+                   "Choose a reaction consistent with this decision. Use the animation descriptions below. "
                    "Return the exact animation key in the top-level reaction field. "
                    "Do not change the object to fit an animation. Stage 4 does not classify objects; omit type.\n"
                    + json.dumps(animation_options, ensure_ascii=False))
