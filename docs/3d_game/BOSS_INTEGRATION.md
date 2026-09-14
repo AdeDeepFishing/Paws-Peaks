@@ -75,8 +75,9 @@ runs also reported existing ObjectDB cleanup warnings. These engine-level
 diagnostics are not treated as clean passes for those failed runs. Web export
 and browser performance have not been tested for this asset.
 
-Personality, dialogue, agent calls, accepted drawings, attacks and an actual boss
-victory condition are not implemented here. The #63 Markdown file was not used.
+The original #36 asset delivery did not implement personality or victory.
+The follow-up [narrator integration](NARRATOR_AGENT.md) adds dialogue, drawing
+interpretation, release and confirmed stay endings. Combat is not part of this design.
 
 ```sh
 godot --headless --path 3d_game --script res://tests/boss_smoke.gd

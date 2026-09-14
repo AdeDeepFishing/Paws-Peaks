@@ -143,3 +143,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and presentation_phase == "book":
 		get_viewport().set_input_as_handled()
 		_explore()
+
+func _start_entrance() -> void:
+	# The epilogue owns its reveal; chapter entrance walks must not unlock its book.
+	entering = false
+	player.walking_in = false
+	player.set_input_enabled(false)
+	hud_root.show()

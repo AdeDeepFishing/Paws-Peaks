@@ -7,6 +7,9 @@ signal explore_requested
 const INK := Color("294a43")
 const GOLD := Color("b4955d")
 const SIZE := Vector2(1000, 590)
+var ending_title: Label
+var ending_subtitle: Label
+var conclusion: Label
 var photo: TextureRect
 var replay: Button
 var explore: Button
@@ -61,12 +64,12 @@ func _build_pages() -> void:
 	material.shader = preload("res://shaders/ending/keepsake.gdshader")
 	photo.material = material
 	content.add_child(photo)
-	_label_at("A New Dawn", Vector2(62, 440), Vector2(400, 46), 31, true)
-	_label_at("Every little drawing left a little light.", Vector2(62, 489), Vector2(400, 26), 15)
+	ending_title = _label_at("A New Dawn", Vector2(62, 440), Vector2(400, 46), 31, true)
+	ending_subtitle = _label_at("Every little drawing left a little light.", Vector2(62, 489), Vector2(400, 26), 15)
 	_label_at("THE JOURNEY, REMEMBERED", Vector2(62, 554), Vector2(400, 22), 10, false, Color("857b65"))
 	_label_at("T H E   L A S T   P A G E", Vector2(532, 45), Vector2(410, 22), 12, false, Color("857b65"))
 	_label_at("Journey\ncomplete.", Vector2(532, 177), Vector2(410, 116), 46, true)
-	_label_at("A few small drawings.\nA world of possibilities.", Vector2(548, 307), Vector2(378, 52), 17)
+	conclusion = _label_at("A few small drawings.\nA world of possibilities.", Vector2(548, 307), Vector2(378, 52), 17)
 	chapters_value = _label_at("0 / 5", Vector2(567, 382), Vector2(150, 32), 25, true)
 	sketches_value = _label_at("0", Vector2(757, 382), Vector2(150, 32), 25, true)
 	_label_at("CHAPTERS VISITED", Vector2(567, 417), Vector2(150, 22), 10, false, Color("857b65"))
@@ -172,3 +175,9 @@ func _star(center: Vector2, outer: float, inner: float, color: Color) -> void:
 		var angle := i * TAU / 8.0 - PI / 2.0
 		points.append(center + Vector2(cos(angle), sin(angle)) * (outer if i % 2 == 0 else inner))
 	content.draw_colored_polygon(points, color)
+
+func set_stay_ending() -> void:
+	ending_title.text = "A Place to Stay"
+	ending_subtitle.text = "You chose a place in this story."
+	conclusion.text = "An ending freely chosen.\nA world to remember."
+	explore.text = "Look around this memory"

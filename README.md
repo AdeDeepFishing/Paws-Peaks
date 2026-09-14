@@ -238,18 +238,14 @@ Boss personality and encounter gameplay remain separate. See
 
 ## Preview the dawn ending
 
-Continue deeper into Stage 5's clearing to enter **A New Dawn**. The temporary
-exit covers the full width of the forest, including jumping. The ending uses
-the supplied dawn forest. A slower final page turn leads into a soft sunrise,
-then a storybook victory spread with a keepsake of the scene and actual session
-counts. **Stay in the dawn** restores exploration; **The last page** reopens the
-book. **Begin a new journey** clears the recap and returns to the daylight map
-and Start CTA before a fresh river. **Back to forest** remains available while
-exploring the dawn.
+In Stage 5, talk or draw to persuade the Storykeeper to open the way, then walk
+through the clearing to reach **A New Dawn**. Explicitly choosing and confirming
+to stay instead leads to **A Place to Stay**. Both endings turn the final page and
+show the journey recap. Replay returns to the daylight map and clears the journey.
 Direct entry: `3d_game/scenes/ending/dawn_forest.tscn`.
 
-Boss victory is the intended final trigger; the visual is integrated, but the
-boss encounter is not implemented yet. Walk around the Storykeeper to reach
-the temporary preview exit.
-See [Ending integration](docs/3d_game/ENDING_INTEGRATION.md) for the preview
-switch, future victory hook, asset provenance and verification.
+The old automatic preview gate is disabled in normal play. See
+[The Storykeeper](docs/3d_game/NARRATOR_AGENT.md) for dialogue, endings and current
+limitations, and [narrator setup](docs/backend/BACKEND.md#narrator-and-speech) for
+OpenAI, ElevenLabs and the optional local authoring bench. The desktop narrator
+requires the local Python backend. It is not available in a Web export yet.

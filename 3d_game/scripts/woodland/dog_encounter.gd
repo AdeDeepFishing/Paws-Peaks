@@ -237,6 +237,7 @@ func _react_to_offering() -> void:
 		objective.text = "Watch the dog collect your drawing."
 
 func _on_collected() -> void:
+	get_node("/root/Narrator").record("npc_interaction_resolved", {"result": "The dog collected the offering and cleared the path.", "item": request.result})
 	objective.text = "The path is clear. Continue into the woods."
 	status.text = "A new friend! Follow the path to the next chapter."
 	var thanks := Label3D.new()

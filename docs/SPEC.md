@@ -1146,3 +1146,22 @@ appears at that point. Stage 1 keeps its existing start flow.
 `3d_game/tests/stage_entrance_smoke.gd` checks all four arrivals with movement,
 sprint, and jump held throughout the entrance, plus drawing lockout and the final
 position. Use `-- --visual` for approach and arrival screenshots.
+
+
+## September 14: The Storykeeper and spoken narration (#63, #66)
+
+This update resolves the earlier open E05 identity and ending decisions. The warm,
+talkative narrator becomes the physical Storykeeper in Chapter 5 and fears ending
+the adventure. Free dialogue and drawing ideas can convince him to open the exit;
+leaving completes only when the player crosses it. A voluntary stay ending requires
+explicit intent plus a neutral confirmation; temporary rest is never terminal.
+The referee and performer are separate model calls, with game-owned state guards.
+
+The desktop MVP adds persistent evidence journals, bounded cross-chapter memory,
+English subtitles and ElevenLabs speech, plus a local authoring bench with narrator
+checkpoints and branches. Stage 1–4 encounter rules remain authoritative. Current
+memory coverage is recorded chapter/drawing/use/NPC events, not every movement.
+Music remains the teammate's work. A separate otter voice slot is reserved for later.
+Full world-save restoration, Web hosting and new skeletal animation delivery are
+not implemented by this update. See [Narrator integration](3d_game/NARRATOR_AGENT.md)
+and [backend setup and validation](backend/BACKEND.md#narrator-and-speech).

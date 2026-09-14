@@ -254,6 +254,7 @@ func _release_protection() -> void:
 func _on_cleared() -> void:
 	if not resolving: return
 	solved = true
+	get_node("/root/Narrator").record("encounter_completed", {"result": "The drawing protected the player and the bird cleared the path.", "item": request.result})
 	resolving = false
 	player.set_input_enabled(true)
 	objective.text = "The sky is clear. Continue to Sunset Cove."

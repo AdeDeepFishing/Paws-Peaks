@@ -265,6 +265,7 @@ func build_bridge() -> bool:
 	if not can_build_bridge():
 		return false
 	bridge_built = true
+	get_node("/root/Narrator").record("object_use_resolved", {"result": "Built a usable crossing; the player has not crossed yet.", "item": current_item})
 	bridge.show()
 	$Bridge/Deck/CollisionShape3D.set_deferred("disabled", false)
 	status_label.text = "Your bridge is ready. Walk across to the far bank!"
@@ -274,6 +275,7 @@ func build_bridge() -> bool:
 
 func _finish() -> void:
 	completed = true
+	get_node("/root/Narrator").record("encounter_completed", {"result": "Crossed the river safely.", "item": current_item})
 	_update_hud()
 	_play("bridge")
 	status_label.text = "Follow the path into the woodland."

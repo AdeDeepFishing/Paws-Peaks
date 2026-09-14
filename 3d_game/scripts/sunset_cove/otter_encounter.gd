@@ -114,6 +114,7 @@ func _on_request_state(state: String) -> void:
 			if request.state != "READY" or request.active_id != rendered_id: return
 			generation_preview.model_presented()
 			otter.play_option(request.reaction)
+			get_node("/root/Narrator").record("npc_interaction_resolved", {"result": "Showed a generated drawing to the otter; its reaction animation played. No gift transfer is implied.", "item": request.result, "reaction": request.reaction})
 			status.text = "Your drawing is here. You can show the otter another."
 
 func _build_drawing() -> void:

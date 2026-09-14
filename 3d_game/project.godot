@@ -24,6 +24,7 @@ config/icon="res://icon.svg"
 Journey="*res://scripts/overworld/journey.gd"
 
 GenerationWorker="*res://scripts/river/generation_worker.gd"
+Narrator="*res://scripts/narrator/narrator.gd"
 
 [display]
 
