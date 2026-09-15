@@ -19,7 +19,6 @@ var standing_model: Node3D
 var action := ""
 var conversation := ""
 var idle_time := 0.0
-var action_time := 0.0
 var blocks_movement: bool:
 	get: return action in ["knockdown", "arise"]
 
@@ -93,10 +92,6 @@ func _ready() -> void:
 	set_motion(false, false, true)
 
 func _process(delta: float) -> void:
-	if action == "knockdown":
-		action_time += delta
-		# Bound the long help performance, then play the complete getting-up clip.
-		if action_time >= 2.0: play_action("arise")
 	if state in ["idle", "idle_variant"]:
 		idle_time += delta
 		if idle_time >= 6.0 + animator.get_animation("gameplay/idle_variant").length:
@@ -128,12 +123,10 @@ func play_action(next: String) -> void:
 	if next not in ONE_SHOTS: return
 	if blocks_movement and next != "arise": return
 	action = next
-	action_time = 0.0
 	_play(next)
 
 func cancel_action() -> void:
 	action = ""
-	action_time = 0.0
 
 func _action_finished(clip: StringName) -> void:
 	if str(clip) != "gameplay/" + action: return
