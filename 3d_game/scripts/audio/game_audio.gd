@@ -308,8 +308,8 @@ func _build_menu_close() -> void:
 	focus.set_corner_radius_all(5)
 	menu_close.add_theme_stylebox_override("focus", focus)
 	overlay.add_child(menu_close)
-	overlay.resized.connect(func(): menu_close.position = Vector2(overlay.size.x - 61, -37))
-	menu_close.position = Vector2(overlay.size.x - 61, -37)
+	overlay.resized.connect(func(): menu_close.position = Vector2(overlay.size.x - 61, 0))
+	menu_close.position = Vector2(overlay.size.x - 61, 0)
 	menu_close.pressed.connect(close_menu)
 
 func _back_to_map() -> void:
