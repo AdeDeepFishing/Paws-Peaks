@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="3d_game/icon.png" alt="The Tale We Drew game icon" width="160" height="160">
+</p>
+
 # The Tale We Drew
 
 **Draw something. Help someone.**
