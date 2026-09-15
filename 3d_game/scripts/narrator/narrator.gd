@@ -38,7 +38,7 @@ var guidance_status: Label
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Automated test scenes never spend provider credits implicitly.
-	enabled = not OS.get_cmdline_args().has("--script") and not OS.has_feature("web")
+	enabled = not OS.get_cmdline_args().has("--script")
 	panel = StoryPanel.new()
 	panel.story = self
 	var layer := CanvasLayer.new()
@@ -100,6 +100,7 @@ func record(kind: String, payload: Dictionary) -> void:
 		next_comment = Time.get_ticks_msec() / 1000.0 + 1.0
 
 func _ensure_worker() -> void:
+	if OS.has_feature("web"): return
 	if process_id > 0 and OS.is_process_running(process_id): return
 	var backend: String = ProjectSettings.get_setting("generation/backend_directory", "")
 	if backend.is_empty(): backend = ProjectSettings.globalize_path("res://").path_join("../backend").simplify_path()
@@ -225,7 +226,7 @@ func _process(delta: float) -> void:
 				ask("", PackedByteArray(), true)
 
 func _dispatch() -> void:
-	if process_id <= 0 or not OS.is_process_running(process_id):
+	if not OS.has_feature("web") and (process_id <= 0 or not OS.is_process_running(process_id)):
 		queue.clear()
 		_fail("The story service is unavailable. You can keep exploring and try again later.")
 		return
@@ -240,6 +241,9 @@ func _dispatch() -> void:
 		request["revision"] = state.revision
 	if request.op == "respond":
 		request["guidance"] = guidance_text if _current_guidance() == guidance_text else ""
+	if OS.has_feature("web"):
+		_dispatch_web(request)
+		return
 	var directory := worker_dir.path_join(request.input_id)
 	DirAccess.make_dir_recursive_absolute(directory)
 	var file := FileAccess.open(directory.path_join("request.tmp"), FileAccess.WRITE)
@@ -307,7 +311,7 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 	elif request.op == "voice" and voice_enabled and request.utterance_id == last_utterance and not get_node("/root/Journey").busy:
 		var path := str(response.get("audio_path", "")).simplify_path()
 		var allowed := worker_dir.get_base_dir().get_base_dir().path_join("narrator_agent/" + str(state.run_id)) + "/"
-		if path.begins_with(allowed) and path.ends_with(".mp3"):
+		if (path.begins_with(allowed) or (OS.has_feature("web") and path.begins_with("user://web/audio/"))) and path.ends_with(".mp3"):
 			var file := FileAccess.open(path, FileAccess.READ)
 			if file and file.get_length() <= 8388608:
 				var stream := AudioStreamMP3.new()
@@ -403,3 +407,32 @@ func end_scripted_narration() -> void:
 	guidance_due = false
 	reaction_due = false
 	if is_instance_valid(guidance_status): guidance_status.visible = not panel.caption.visible
+
+func _dispatch_web(request: Dictionary) -> void:
+	var metadata := request.duplicate(true)
+	metadata.erase("image_base64")
+	metadata.erase("audio_base64")
+	metadata["started"] = Time.get_ticks_msec()
+	# Serialize browser story requests to retain the existing revision contract.
+	active = metadata
+	var api = get_node("/root/GenerationWorker").web
+	var result: Dictionary = await api.send("/api/story", request)
+	if not result.has("id"):
+		if active.get("input_id") == request.input_id: active = {}
+		_consume(metadata, {"ok": false, "message": "The story service is unavailable. Please try again."})
+		return
+	while active.get("input_id") == request.input_id:
+		var response: Dictionary = await api.send("/api/story/" + str(request.input_id))
+		if active.get("input_id") != request.input_id: return
+		if response.get("pending", false):
+			await get_tree().create_timer(0.3).timeout
+			continue
+		if response.has("audio_asset"):
+			var asset: String = response.audio_asset
+			var local := "user://web/audio/" + asset
+			if await api.download(asset, local): response["audio_path"] = local
+			else: response = {"ok": false, "message": "Speech audio could not be downloaded."}
+		if active.get("input_id") != request.input_id: return
+		active = {}
+		_consume(metadata, response)
+		return

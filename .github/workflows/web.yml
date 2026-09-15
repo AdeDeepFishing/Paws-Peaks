@@ -1,0 +1,23 @@
+name: Web build
+on:
+  pull_request:
+    paths: ['3d_game/**', 'tools/web/**', 'backend/web_service/**', 'vercel.json', '.github/workflows/web.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check HTTP adapter offline
+        run: python3 -m unittest discover -s backend/tests -p test_web_service.py -v
+      - name: Export browser build
+        run: bash tools/web/build.sh
+      - name: Retain browser build for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-web
+          path: web-build/
+          retention-days: 2

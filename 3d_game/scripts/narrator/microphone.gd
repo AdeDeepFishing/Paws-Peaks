@@ -33,6 +33,8 @@ func start() -> void:
 	capture.buffer_length = 0.5
 	AudioServer.add_bus_effect(bus_index, capture)
 	player = AudioStreamPlayer.new()
+	# Microphone input must remain a stream in Web builds (not a cached sample).
+	player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	player.stream = AudioStreamMicrophone.new()
 	player.bus = "PlayerTalkMic"
 	add_child(player)

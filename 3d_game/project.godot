@@ -113,6 +113,9 @@ ui_down={
 
 [rendering]
 
+renderer/rendering_method.web="gl_compatibility"
+renderer/rendering_method.mobile.web="gl_compatibility"
+
 anti_aliasing/quality/msaa_3d=2
 
 [audio]
