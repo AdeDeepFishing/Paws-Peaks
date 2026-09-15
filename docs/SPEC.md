@@ -1,4 +1,4 @@
-# Paws & Peaks — Game Jam Specification
+# The Tale We Drew — Game Jam Specification
 
 > Version: 0.8 | Updated: 2026-09-13 | Status: Working draft
 >
@@ -76,7 +76,7 @@ AI-generated durability.
 
 | Topic | Status | Decision or working assumption |
 |---|---|---|
-| Game name | Confirmed | Paws & Peaks |
+| Game name | Confirmed September 15 | The Tale We Drew |
 | Team name | Existing team identity | Four Otters |
 | Team and schedule | Confirmed | Two designers, two developers, Godot beginners; Day 1 is September 12, production runs through September 15, 2026 |
 | Production start | Confirmed by user | Work and asset generation may begin now; this is not a claim that any specific asset license or service access has been verified |
@@ -1282,3 +1282,6 @@ and move the river starting character clear of narration. Precompute Chapter 5
 collision and wait for environment preparation to reduce the measured entry
 pause. See [Public playtest fixes](3d_game/PUBLIC_PLAYTEST.md) for focused results
 and the separate browser-backend hosting requirement.
+
+September 15 title update: the confirmed game name is **The Tale We Drew**. The
+map/cover title, chapter labels and application/window name use this spelling.

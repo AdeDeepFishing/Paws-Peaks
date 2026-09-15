@@ -90,7 +90,7 @@ func _build_start_button() -> void:
 func _build_title() -> void:
 	for index in 2:
 		var line := Label3D.new()
-		line.text = "The Tale" if index == 0 else "We Draw"
+		line.text = "The Tale" if index == 0 else "We Drew"
 		line.font = TITLE_FONT
 		line.font_size = 160
 		line.outline_size = 0

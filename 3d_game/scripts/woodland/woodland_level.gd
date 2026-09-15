@@ -84,7 +84,7 @@ func _build_ui() -> void:
 	card.hide()
 	var stack := VBoxContainer.new()
 	card.add_child(stack)
-	_label(stack, "PAWS & PEAKS  /  CHAPTER " + chapter, 14)
+	_label(stack, "THE TALE WE DREW  /  CHAPTER " + chapter, 14)
 	_label(stack, stage_title, 28)
 	objective = _label(stack, "Explore the path · Scene preview", 16)
 	status = _label(root, "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint", 16)

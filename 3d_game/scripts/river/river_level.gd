@@ -415,7 +415,7 @@ func _build_ui() -> void:
 	title_card.hide()
 	var title_stack := VBoxContainer.new()
 	title_card.add_child(title_stack)
-	_label(title_stack, "PAWS & PEAKS   /   CHAPTER 01", 14)
+	_label(title_stack, "THE TALE WE DREW   /   CHAPTER 01", 14)
 	title = _label(title_stack, "Across the River", 30)
 	objective = _label(title_stack, "Find a way across the river.", 17)
 	generation_modes = OptionButton.new()
