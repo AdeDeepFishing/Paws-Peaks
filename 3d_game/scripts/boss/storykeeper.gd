@@ -6,22 +6,50 @@ var grounded := false
 var anger_clip := ""
 var moved_aside := false
 
+const SOURCES := {
+	"idle": preload("res://models/boss/behaviors/idle.glb"),
+	"block": preload("res://models/boss/behaviors/block.glb"),
+	"angry": preload("res://models/boss/behaviors/angry.glb"),
+	"satisfied": preload("res://models/boss/behaviors/satisfied.glb")
+}
+var variants: Dictionary = {}
+var behavior := ""
+
 func _ready() -> void:
-	animator = $Character.find_child("AnimationPlayer", true, false)
-	if animator:
-		for clip in animator.get_animation_list():
-			if "BlockPageCycle" in clip:
-				anger_clip = clip
-				animator.get_animation(clip).loop_mode = Animation.LOOP_NONE
-		animator.animation_finished.connect(func(_clip): _idle())
-		_idle()
+	_play("idle")
 	_place_on_ground.call_deferred()
 
+func _play(next: String) -> void:
+	if behavior == next and animator and animator.is_playing(): return
+	# These deliveries have different rigs and additional paper/heart nodes.
+	# Keep each complete scene, with only the active scene visible and processing.
+	if not variants.has(next):
+		var model: Node3D = SOURCES[next].instantiate()
+		$Character.add_child(model)
+		var player: AnimationPlayer = model.find_child("AnimationPlayer", true, false)
+		var selected := ""
+		for clip in player.get_animation_list():
+			if clip != "RESET": selected = clip
+		var animation: Animation = player.get_animation(selected).duplicate(true)
+		animation.loop_mode = Animation.LOOP_LINEAR if next == "idle" else Animation.LOOP_NONE
+		var library := AnimationLibrary.new()
+		library.add_animation("reaction", animation)
+		player.add_animation_library("behavior", library)
+		player.animation_finished.connect(func(_clip): _idle())
+		variants[next] = {"model": model, "player": player}
+	for key in variants:
+		variants[key].model.visible = key == next
+		if key != next: variants[key].player.stop()
+	behavior = next
+	animator = variants[next].player
+	anger_clip = "behavior/reaction"
+	animator.play("behavior/reaction")
+
 func _idle() -> void:
-	if anger_clip.is_empty(): return
-	animator.play(anger_clip)
-	animator.seek(0.0,true)
-	animator.pause()
+	_play("idle")
+
+func block_enter() -> void:
+	if not moved_aside: _play("block")
 
 func _place_on_ground() -> void:
 	await get_tree().physics_frame
@@ -33,16 +61,17 @@ func _place_on_ground() -> void:
 		grounded = true
 
 func express(emotion: String) -> void:
-	if emotion == "angry" and not moved_aside and not anger_clip.is_empty():
-		animator.play(anger_clip,0.2)
-		animator.seek(0.0,true)
-	elif not animator.is_playing():
-		_idle()
+	if moved_aside:
+		if emotion in ["accepting", "amused", "warm"]: _play("satisfied")
+		return
+	if emotion == "angry": _play("angry")
+	elif emotion in ["warm", "accepting", "amused"]: _play("satisfied")
+	else: _idle()
 
 func make_way() -> void:
 	if moved_aside: return
 	moved_aside = true
-	_idle()
+	_play("satisfied")
 	# Move the body and its collider together to open the path.
 	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(self, "rotation:y", PI / 2.0, 1.8)

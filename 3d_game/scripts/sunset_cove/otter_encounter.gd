@@ -16,6 +16,7 @@ var sketch_anchor := Vector3.ZERO
 var offered: Node3D
 var microphone_gift: Node2D
 var gift_pending := false
+var greeted_player := false
 
 func _ready() -> void:
 	super._ready()
@@ -40,6 +41,9 @@ func _process(delta: float) -> void:
 		objective.text = "The otter feels heartbroken. Offer something to cheer it up."
 		status.text = "The otter looks unhappy. Draw an offering to cheer it up."
 		status.set_meta("narrator_guidance", status.text)
+	if not entering and otter.mood_revealed and not greeted_player and near_otter() and player.velocity.length() < 0.1 and not drawing:
+		greeted_player = true
+		player.visual.play_action("greet")
 	draw_button.disabled = entering or gift_pending or not near_otter() or not player.is_on_floor() or request.state == "PENDING"
 	draw_button.tooltip_text = "E · Draw again" if is_instance_valid(offered) else "E · Draw"
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
@@ -132,6 +136,7 @@ func _on_request_state(state: String) -> void:
 			generation_preview.model_presented()
 			otter.play_option(request.reaction)
 			otter.accept_offering(request.otter_happy)
+			if request.otter_happy: player.visual.play_action("celebrate")
 			objective.text = "You cheered up the otter!" if otter.happy else "Try another offering to cheer up the otter."
 			get_node("/root/Narrator").record("npc_interaction_resolved", {"result": "Presented a generated offering to the otter; its reaction animation played.", "item": request.result, "reaction": request.reaction, "otter_happy": request.otter_happy, "otter_response": request.otter_response})
 			status.text = "Otter: " + request.otter_response

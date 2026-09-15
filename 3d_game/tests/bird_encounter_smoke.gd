@@ -62,8 +62,8 @@ func run():
 	check(is_equal_approx(level.bird.visual.get_child(0).scale.x, 2.8), "Bird is 30 percent smaller than the previous giant")
 	check(level.bird.animators.size() == 1, "One bird uses the delivered flapping clip")
 	check(await wait_for(func(): return level.bird.phase == "swooping", 9.0), "Bird arrives, circles, then swoops")
-	await frames(45)
-	check(level.bird.dodge > 0.5, "Protagonist visibly ducks without damage")
+	await frames(65)
+	check(level.player.visual.action == "knockdown", "Bird contact starts the delivered knockdown without health damage")
 	await capture("dodge")
 	level._open_drawing()
 	var stopped: Vector3 = level.bird.visual.position

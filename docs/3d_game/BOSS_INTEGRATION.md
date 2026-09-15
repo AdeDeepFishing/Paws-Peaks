@@ -102,3 +102,10 @@ A thin box collider rotates with it, opening space beside the boss. No synthetic
 skeletal turn is claimed. Earlier-stage narrator tone remains warm; Stage 5 is
 proud and easily irritated, with negative mood changes for dismissiveness or
 hostility, not for drawing quality or innocent misunderstandings.
+
+## September 15 behavior delivery (#67)
+
+The supplied sway, entrance page cycle, furious pages and satisfied/heart
+performances now drive the boss reactions. They supersede the paused first-frame
+idle and single anger cycle above. See [Character behaviors](CHARACTER_BEHAVIORS.md)
+for mappings, unavailable gestures, and focused verification.

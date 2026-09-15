@@ -23,6 +23,8 @@ For example, run Stage 5 from the repository root:
 
 Keep the following additional checks focused on their distinct responsibilities:
 
+- `character_behaviors_smoke.gd`: delivered hero actions, transitions and cancellation,
+  matching model scale, boss reaction variants and release; optional visual captures.
 - `dog_presentation_smoke.gd`: reveal timing, automatic offering after walking
   away, cancellation during reveal, and camera/control restoration.
 - `offering_settle_smoke.gd`: real mesh collision, gravity and resting orientation,

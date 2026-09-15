@@ -1263,3 +1263,12 @@ and +/− keyboard zoom on every chapter map.
 Use the supplied The End artwork for the epilogue, retaining access to the
 existing journey recap, replay, and continued exploration. See
 [Title UI](3d_game/TITLE_UI.md) for integration and verification details.
+
+## September 15: supplied character behaviors (#67)
+
+Integrate the ten delivered main-character presentations with locomotion,
+greetings, voice conversation, bird knockdown/recovery and celebration. Integrate
+the four delivered Storykeeper presentations with idle, reveal, anger and positive
+responses. Keep game-controlled movement and collision. The original #67 gesture
+list remains partially undelivered; see [Character behaviors](3d_game/CHARACTER_BEHAVIORS.md)
+for the implemented mapping and remaining scope.

@@ -69,6 +69,7 @@ func _story_changed(state: Dictionary) -> void:
 		status.text = objective.text
 		status.set_meta("narrator_guidance", status.text)
 		$Storykeeper.make_way()
+		player.visual.play_action("celebrate")
 		daybreak.go(1.0, get_node("/root/Journey").duration_scale)
 	if state.get("ending") == "stay" and not stay_presented:
 		stay_presented = true
@@ -172,6 +173,8 @@ func finish_daybreak(timing: float) -> void:
 
 func _reveal_boss() -> void:
 	boss_revealed = true
+	$Storykeeper.block_enter()
+	player.visual.play_action("greet")
 	var character: Node3D = $Storykeeper/Character
 	character.show()
 	var final_scale := character.scale
