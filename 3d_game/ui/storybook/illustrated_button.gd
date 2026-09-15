@@ -28,6 +28,10 @@ func _ready() -> void:
 	artwork.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_sync()
 
+# Painted hover artwork provides feedback without a floating text popup.
+func _get_tooltip(_at_position: Vector2) -> String:
+	return ""
+
 func _process(_delta: float) -> void:
 	_sync()
 

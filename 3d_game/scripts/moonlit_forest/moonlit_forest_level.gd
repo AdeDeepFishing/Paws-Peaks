@@ -50,11 +50,13 @@ func _process(delta: float) -> void:
 		# Let live narration begin before the paper moves; offline/error paths are bounded.
 		if narrator.enabled and reveal_timer < 8.0 and (narrator.panel.reveal_text.is_empty() or (narrator.voice_enabled and not narrator.panel.speech_started)):
 			draw_button.disabled = true
+			drawing_shine.set_active(false)
 			return
 		reveal_started = true
 		player.set_input_enabled(false)
 		get_node("/root/Narrator").panel.animate_boss_reveal(_reveal_boss)
 	draw_button.disabled = entering or stay_presented or not boss_revealed or $ObjectGeneration.request.state == "PENDING"
+	drawing_shine.set_active(not draw_button.disabled and not get_node("/root/Narrator").panel.opened)
 	if released and not entering and player.position.z <= -12 and not preview_ending_enabled and not get_node("/root/Narrator").panel.opened:
 		get_node("/root/Narrator").crossed_exit()
 
