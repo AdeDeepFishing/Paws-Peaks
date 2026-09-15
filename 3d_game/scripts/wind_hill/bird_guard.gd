@@ -85,7 +85,8 @@ func _process(delta: float) -> void:
 			var t := clampf(elapsed / 1.8, 0.0, 1.0)
 			_move(_curve(start, swoop_target, swoop_target + Vector3(-4.5, 2.8, -1.0), t), delta)
 			dodge = sin(PI * t)
-			if t >= 0.5 and not hit_this_swoop:
+			# Start the authored fall before the bird reaches its closest point.
+			if t >= 0.2 and not hit_this_swoop:
 				hit_this_swoop = true
 				var player = level.player
 				if player.input_enabled and player.is_on_floor() and not player.drawing_active and player.position.distance_to(swoop_target - Vector3(0, 1.1, 0)) < 2.5:
