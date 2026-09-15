@@ -60,3 +60,10 @@ This is desktop playtest preparation. Generation still uses the desktop Python
 worker/mailbox transport; narrator startup is disabled in Web builds. A browser
 backend transport and public hosting configuration are separate release work.
 Defaulting to Live AI does not establish a working Vercel-hosted AI game.
+
+## Drawing clear action
+
+The shared drawing toolbar X clears all sketch strokes and keeps drawing open
+so the player can start again. Submit becomes disabled until new ink is added.
+Escape retains the existing close/cancel behavior. A focused toolbar check passed
+for clearing, preserving the open page, and drawing again.

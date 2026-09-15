@@ -37,7 +37,7 @@ static func paper(parent: Node, kind: String) -> TextureRect:
 	parent.add_child(image)
 	return image
 
-static func toolbar(parent: Control, surface: Control, cancel: Callable, submit: Callable) -> PanelContainer:
+static func toolbar(parent: Control, surface: Control, _cancel: Callable, submit: Callable) -> PanelContainer:
 	var toolbar := PanelContainer.new()
 	toolbar.name = "DrawingActions"
 	parent.add_child(toolbar)
@@ -53,7 +53,8 @@ static func toolbar(parent: Control, surface: Control, cancel: Callable, submit:
 	row.name = "HBoxContainer"
 	row.add_theme_constant_override("separation", 52)
 	toolbar.add_child(row)
-	var back := tool(row, "cancel", cancel)
+	var back := tool(row, "cancel", surface.clear)
+	back.tooltip_text = "Clear drawing"
 	back.name = "Cancel"
 	var send := tool(row, "confirm", submit)
 	send.name = "Submit"

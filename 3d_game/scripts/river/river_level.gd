@@ -361,12 +361,12 @@ func _update_controller_hints(device: int = -1, connected: bool = false) -> void
 	if hint_device < 0:
 		book_key = "E"
 		controls.text = "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint\nE  Draw    Esc  Close"
-		drawing_cancel.text = "Cancel · Esc"
+		drawing_cancel.text = "Clear drawing"
 	else:
 		var keys := controller_labels(Input.get_joy_name(hint_device))
 		book_key = keys.draw
 		controls.text = "Stick / D-pad  Move    %s  Jump    %s  Sprint\n%s  Draw    %s  Close" % [keys.jump, keys.sprint, book_key, keys.close]
-		drawing_cancel.text = "Cancel · " + keys.close
+		drawing_cancel.text = "Clear drawing"
 	_update_hud()
 
 func _build_ui() -> void:
