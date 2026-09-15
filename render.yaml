@@ -2,13 +2,9 @@ services:
   - type: web
     name: the-tale-we-drew-api
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./backend/web_service/Dockerfile
     healthCheckPath: /health
-    disk:
-      name: game-data
-      mountPath: /data
-      sizeGB: 10
     envVars:
       - key: ALLOWED_ORIGINS
         value: https://the-tale-we-drew.vercel.app

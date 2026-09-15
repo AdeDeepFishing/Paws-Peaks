@@ -1,4 +1,4 @@
-# Web deployment: Vercel game + persistent Python API
+# Web deployment: Vercel game + Python API
 
 ## Architecture
 
@@ -14,19 +14,27 @@ progress and downloads private assets with its session token. Narration, speech
 recognition, and speech generation use the existing story service through the
 same asynchronous adapter. Desktop file-mailbox behavior remains available.
 
-A persistent backend is required: generation can outlast Vercel Hobby's
+A separate long-running backend is required: generation can outlast Vercel Hobby's
 [300-second function limit](https://vercel.com/docs/functions/limitations).
-The supplied Render Blueprint uses a paid Starter service and persistent disk;
-review Render's displayed cost before creating it. No cloud service is created
-by these repository files alone.
+The supplied Render Blueprint uses a Free web service without a disk. No cloud
+service is created by these repository files alone. This is a small-playtest
+configuration, not durable production storage. Render sleeps free services after
+15 idle minutes; waking takes about a minute. Restart, redeploy, or sleep deletes
+sessions, generated assets, and the file-based request counters. Reload the game
+after a restart; do not assume daily limits survive it. Provider calls still cost
+credits. See [Render Free limits](https://render.com/docs/free).
+
+Before a demonstration, open the API's /health URL and wait for its ready response.
+The client's initial session request allows 75 seconds and a later action can
+retry a failed session connection; it does not automatically resubmit paid jobs.
 
 ## 1. Deploy the API on Render
 
 1. Sign in to Render with GitHub and choose **New → Blueprint**.
 2. Select `AdeDeepFishing/Paws-Peaks`, using the reviewed branch or `main` after
    merge. Render reads the root `render.yaml`.
-3. Review the Starter plan and 10 GB disk cost. Use one service instance/process;
-   this implementation uses local persistent storage, not a shared database.
+3. Confirm the service plan is **Free**, with no disk or database. Use one
+   service instance/process; storage is temporary, not a shared database.
 4. Copy these values from your local `backend/.env` into the backend service:
    - `OPENAI_API_KEY`
    - `MESHY_API_KEY`
@@ -43,7 +51,7 @@ by these repository files alone.
    `{"ready": true}`. This health check makes no provider calls.
 
 The Docker image includes backend code only. `.dockerignore` excludes credentials,
-local environments, output jobs, and game assets. Data is stored under `/data/web`.
+local environments, output jobs, and game assets. Data is stored temporarily under `/data/web`.
 
 ## 2. Connect the existing Vercel project
 
@@ -86,7 +94,7 @@ See [Deployment Protection](https://vercel.com/docs/deployment-protection).
 - Tune `MAX_SESSIONS_PER_DAY`, `MAX_GENERATIONS_PER_SESSION`,
   `MAX_GENERATIONS_PER_DAY`, and `MAX_STORY_REQUESTS_PER_SESSION` on the backend.
   Request-count limits are not a dollar-denominated provider budget.
-- Restarted pending tasks report failure; the service does not automatically
+- With persistent storage, restarted pending tasks report failure; the service does not automatically
   repeat paid jobs. Browser disconnects do not terminate accepted tasks.
 - Expired session data is removed after 48 hours when another session is created.
 - Reloading starts a new browser session. Tokens are held in memory, not embedded

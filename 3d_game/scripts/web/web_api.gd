@@ -5,7 +5,6 @@ signal session_ready
 var api_url := ""
 var token := ""
 var starting := false
-var attempted := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -17,8 +16,7 @@ func session() -> bool:
 	if starting:
 		await session_ready
 		return not token.is_empty()
-	if attempted: return not token.is_empty()
-	attempted = true
+	if not token.is_empty(): return true
 	if not api_url.begins_with("https://"): return false
 	starting = true
 	var result := await send("/api/session", {}, false)
@@ -31,7 +29,8 @@ func send(path: String, data: Variant = null, authenticated := true) -> Dictiona
 	if authenticated and not await session():
 		return {"ok": false, "error": "SERVICE_UNAVAILABLE", "message": "The online service is unavailable. Please try again later."}
 	var http := HTTPRequest.new()
-	http.timeout = 35.0
+	# Free hosting can take about a minute to wake for the first session.
+	http.timeout = 75.0 if path == "/api/session" else 35.0
 	http.body_size_limit = 1500000
 	add_child(http)
 	var headers := PackedStringArray(["Content-Type: application/json"])
