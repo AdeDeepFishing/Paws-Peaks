@@ -1,5 +1,7 @@
 extends "res://tests/dog_presentation_smoke.gd"
 
+const JourneyTest = preload("res://tests/journey_test_helpers.gd")
+
 func pointer(control: Control) -> void:
 	var event := InputEventMouseButton.new()
 	event.position = control.get_global_rect().get_center()
@@ -65,13 +67,25 @@ func run():
 	await keypress(KEY_SPACE)
 	await frames(90)
 	check(current_scene == level and not root.get_node("Journey").busy, "Walking and jumping after closing menu never return to the opening map")
-	# Keyboard activation of the menu CTA resumes the same collected encounter.
+	# Keyboard activation of X resumes the same collected encounter.
 	await pointer(mix.menu_button)
-	for i in 3: await keypress(KEY_DOWN)
+	mix.menu_close.grab_focus()
 	await keypress(KEY_SPACE)
 	check(not mix.menu.visible and current_scene == level and level.dog.solved,
-		"Keyboard Return to Game keeps the solved dog encounter")
+		"Keyboard X keeps the solved dog encounter")
 	check(not root.get_node("Journey").busy, "Resume does not start a map transition")
+	await pointer(mix.menu_button)
+	await pointer(mix.map_return)
+	var journey := root.get_node("Journey")
+	for i in 600:
+		if journey.phase == "start": break
+		await frames(1)
+	check(current_scene.name == "Overworld", "Dog menu CTA opens the map")
+	if current_scene.name != "Overworld": quit(1); return
+	check(current_scene.review_stage == 2, "Dog menu opens Chapter II, not the beginning")
+	current_scene.start_button.pressed.emit()
+	await JourneyTest.complete(self)
+	check(current_scene == level and level.dog.solved, "Map return keeps the collected dog encounter")
 	current_scene.queue_free()
 	current_scene = null
 	await frames(3)
