@@ -42,16 +42,17 @@ static func toolbar(parent: Control, surface: Control, _cancel: Callable, submit
 	toolbar.name = "DrawingActions"
 	parent.add_child(toolbar)
 	toolbar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	toolbar.anchor_top = .76
-	toolbar.anchor_bottom = .76
-	toolbar.offset_left = -126
-	toolbar.offset_right = 126
+	toolbar.anchor_top = .86
+	toolbar.anchor_bottom = .86
+	toolbar.offset_left = -140
+	toolbar.offset_right = 140
 	toolbar.offset_top = -44
 	toolbar.offset_bottom = 44
 	toolbar.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var row := HBoxContainer.new()
 	row.name = "HBoxContainer"
-	row.add_theme_constant_override("separation", 52)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 84)
 	toolbar.add_child(row)
 	var back := tool(row, "cancel", surface.clear)
 	back.tooltip_text = "Clear drawing"
