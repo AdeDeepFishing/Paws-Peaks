@@ -4,6 +4,11 @@
 **/__pycache__
 **/output
 .git
-3d_game
+3d_game/*
+!3d_game/assets
+3d_game/assets/*
+!3d_game/assets/materials
+3d_game/assets/materials/*
+!3d_game/assets/materials/palette.json
 docs
 web-build
