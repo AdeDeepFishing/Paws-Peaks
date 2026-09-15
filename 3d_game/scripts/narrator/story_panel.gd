@@ -279,10 +279,11 @@ func _build_canvas() -> void:
 	canvas_panel.add_child(surface)
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Layout.toolbar(canvas_panel, surface, _finish_drawing, _share_drawing)
-	Layout.drawing_tools(canvas_panel)
+	Layout.drawing_tools(canvas_panel, _finish_drawing)
 	canvas_panel.hide()
 
 func _finish_drawing() -> void:
+	surface.drawing = false
 	canvas_panel.hide()
 	_resume_world()
 	opened = false

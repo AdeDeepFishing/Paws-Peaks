@@ -10,7 +10,6 @@ var overlay: Control
 var surface: Control
 var hint: Label
 var submit_button: Button
-var cancel_button: Button
 var generation_preview: Control
 var sketch_anchor := Vector3.ZERO
 var offered: Node3D
@@ -47,7 +46,6 @@ func _process(delta: float) -> void:
 	draw_button.disabled = entering or gift_pending or not near_otter() or not player.is_on_floor() or request.state == "PENDING"
 	draw_button.tooltip_text = "E · Draw again" if is_instance_valid(offered) else "E · Draw"
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
-	cancel_button.visible = request.state == "PENDING"
 	if drawing and not near_otter(): _close_drawing()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -58,7 +56,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel"):
 		if drawing: _close_drawing()
-		elif request.state == "PENDING": request.cancel()
 		else: return
 		get_viewport().set_input_as_handled()
 
@@ -183,11 +180,6 @@ func _build_drawing() -> void:
 	hud_root.add_child(modes)
 	modes.hide()
 	modes.item_selected.connect(func(index: int): generation.configure(modes.get_item_id(index)))
-	cancel_button = Button.new()
-	cancel_button.text = "Stop waiting"
-	preload("res://ui/storybook/layout.gd").debug_control(cancel_button, 2)
-	hud_root.add_child(cancel_button)
-	cancel_button.pressed.connect(func(): request.cancel())
 	overlay = Control.new()
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud_root.get_parent().add_child(overlay)
@@ -198,5 +190,5 @@ func _build_drawing() -> void:
 	hint.hide()
 	var actions := preload("res://ui/storybook/layout.gd").toolbar(overlay, surface, _close_drawing, _submit)
 	submit_button = actions.get_node("HBoxContainer/Submit")
-	preload("res://ui/storybook/layout.gd").drawing_tools(overlay)
+	preload("res://ui/storybook/layout.gd").drawing_tools(overlay, _close_drawing)
 	overlay.hide()

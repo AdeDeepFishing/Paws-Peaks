@@ -34,7 +34,7 @@ func _process(_delta: float) -> void:
 func _sync() -> void:
 	if kind == "pen":
 		var narrator = get_node_or_null("/root/Narrator")
-		if narrator and (narrator.panel.opened or narrator.panel.revealing_boss): disabled = true
+		if not has_meta("closes_sketch") and narrator and (narrator.panel.opened or narrator.panel.revealing_boss): disabled = true
 		var shine = get_node_or_null("DrawingShine")
 		if shine: shine.visible = shine.active and not disabled
 	text = ""

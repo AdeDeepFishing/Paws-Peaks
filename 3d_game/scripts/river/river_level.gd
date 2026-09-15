@@ -45,7 +45,6 @@ var choices: OptionButton
 var undo_button: Button
 var clear_button: Button
 var submit_button: Button
-var cancel_button: Button
 var audio: AudioStreamPlayer
 var tones: Dictionary = {}
 var book_key := "E"
@@ -86,10 +85,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_open_book()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel") and request.state == "PENDING":
-		request.cancel()
-		status_label.text = "Stopped waiting. Your drawing is safe."
-		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel") and panel_mode != "" and not completed:
 		_close_panel(false)
 		get_viewport().set_input_as_handled()
@@ -114,7 +109,6 @@ func _update_drawing_entry() -> void:
 	book.disabled = presentation.busy or not in_drawing_area or completed or bridge_built or request.state == "PENDING"
 	drawing_shine.set_active(not book.disabled)
 	book.tooltip_text = "%s · %s" % [book_key, "Draw again" if request.state in ["FAILED", "READY"] else "Draw"]
-	cancel_button.visible = not presentation.busy and request.state == "PENDING" and not completed
 
 func _open_book() -> void:
 	if get_node("/root/Narrator").panel.opened: return
@@ -482,16 +476,6 @@ func _build_ui() -> void:
 	book.add_theme_font_size_override("font_size", 20)
 	preload("res://ui/storybook/layout.gd").corner(book, -144, -48)
 	drawing_shine = preload("res://ui/drawing_shine.gd").attach(book)
-	cancel_button = _button(root, "Stop waiting", func():
-		request.cancel()
-		status_label.text = "Stopped waiting. Your drawing is saved." + (" The provider job may still be running." if generation.mode == 2 else "")
-		_update_hud()
-	)
-	cancel_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	cancel_button.offset_left = -240
-	cancel_button.offset_right = -28
-	cancel_button.offset_top = -150
-	cancel_button.offset_bottom = -102
 	preload("res://ui/storybook/layout.gd").debug_control(generation_modes, 0)
 	preload("res://ui/storybook/layout.gd").debug_control(map_button, 1)
 	status_label.hide()
@@ -527,7 +511,7 @@ func _build_drawing_overlay(root: Control) -> void:
 	drawing_toolbar = preload("res://ui/storybook/layout.gd").toolbar(drawing_overlay, surface, func(): _close_panel(true), _submit)
 	drawing_cancel = drawing_toolbar.get_node("HBoxContainer/Cancel")
 	submit_button = drawing_toolbar.get_node("HBoxContainer/Submit")
-	preload("res://ui/storybook/layout.gd").drawing_tools(drawing_overlay)
+	preload("res://ui/storybook/layout.gd").drawing_tools(drawing_overlay, _close_panel.bind(true))
 	surface.changed.connect(func():
 		undo_button.disabled = not surface.has_drawing()
 		clear_button.disabled = not surface.has_drawing()

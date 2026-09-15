@@ -63,10 +63,12 @@ static func toolbar(parent: Control, surface: Control, _cancel: Callable, submit
 	surface.excluded_control = toolbar
 	return toolbar
 
-static func drawing_tools(parent: Control) -> void:
-	var pen := tool(parent, "pen")
-	pen.name = "InactivePen"
-	pen.disabled = true
+static func drawing_tools(parent: Control, close_sketch: Callable) -> void:
+	var pen := tool(parent, "pen", close_sketch)
+	pen.name = "CloseSketch"
+	pen.set_meta("closes_sketch", true)
+	pen.disabled = false
+	pen.tooltip_text = "Close sketch · E"
 	corner(pen, -144, -48)
 	var mic := tool(parent, "microphone")
 	mic.name = "InactiveMicrophone"

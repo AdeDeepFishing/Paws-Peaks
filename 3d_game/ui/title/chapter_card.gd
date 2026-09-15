@@ -56,7 +56,8 @@ func configure(stage: int, resume := false) -> void:
 
 func set_progress(value: float) -> void:
 	progress = value
-	_layout()
+	if paper != null:
+		paper.position.y = size.y - paper.size.y * progress
 
 func _layout() -> void:
 	if paper == null: return

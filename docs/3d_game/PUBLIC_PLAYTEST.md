@@ -67,3 +67,10 @@ The shared drawing toolbar X clears all sketch strokes and keeps drawing open
 so the player can start again. Submit becomes disabled until new ink is added.
 Escape retains the existing close/cancel behavior. A focused toolbar check passed
 for clearing, preserving the open page, and drawing again.
+
+### Drawing controls and map follow-up
+
+- All chapters wait for submitted generation without a Stop waiting button or Escape cancellation. Existing failure and timeout handling remains in place.
+- The pen on each drawing overlay closes the sketch and preserves strokes for reopening. X clears the sketch without closing it.
+- Map title projection now updates immediately with camera transforms, including post-process tween updates, to avoid a one-frame offset. Chapter paper uses a gentle sine entrance, and progress updates only move the paper instead of rebuilding text layout every frame.
+- Focused offline check passed: affected scripts compile, the shared overlay pen remains usable during narrator drawing, close/reopen preserves strokes, X still clears, and title projection stays within 0.1 pixels of its anchor across 61 camera updates. No live AI calls or full suite was run for this follow-up.

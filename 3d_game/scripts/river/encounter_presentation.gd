@@ -33,8 +33,7 @@ func begin(anchor: Vector3) -> void:
 	busy = false
 	level.normal_hud.show()
 	level.player.set_input_enabled(true)
-	# Keep this camera framing until the request resolves. Exploration and the
-	# Stop waiting action remain available after the initial camera movement.
+	# Keep this camera framing until the request resolves; exploration remains available.
 	settled.emit()
 
 func reveal(target: Vector3) -> void:
