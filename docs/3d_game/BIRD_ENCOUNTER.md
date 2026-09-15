@@ -139,3 +139,10 @@ opaque cover, early protection departure and clear route using an existing GLB.
 It checks centered, substantial sketch framing, complete mist bounds and a fixed
 camera while the bird moves. Forward+ captures were inspected against the user's
 marked composition; measured preview heights were approximately 53–55% of the viewport.
+
+## September 15 main-character delivery (#67)
+
+The supplied SideLyingHelp and Arise clips replace the earlier squash/duck visual
+on a nearby unprotected swoop contact. The player briefly stays in place, plays
+recovery, and resumes movement; drawing/protection/respawn clear the reaction.
+No health loss is introduced. See [Character behaviors](CHARACTER_BEHAVIORS.md).

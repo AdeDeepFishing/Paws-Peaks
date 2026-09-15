@@ -14,6 +14,7 @@ var surface: Control
 var canvas_panel: Control
 var confirmation: VBoxContainer
 var opened := false
+var player_has_spoken := false
 var busy := false
 var dialogue_epoch := 0
 var mic: Node
@@ -151,6 +152,7 @@ func _talk() -> void:
 
 func close_dialogue() -> void:
 	opened = false
+	player_has_spoken = false
 	dialogue_epoch += 1
 	if mic and mic.recording: mic.stop(false)
 	if entry: entry.set_pressed_no_signal(false)
@@ -176,7 +178,7 @@ func set_busy(value: bool) -> void:
 	thinking.visible = value
 	if value:
 		thinking_time = 0
-		if opened:
+		if opened and player_has_spoken:
 			player_caption.show()
 		else: caption.show()
 
@@ -188,6 +190,7 @@ func reset_story() -> void:
 
 func _show_line(speaker: String, text: String) -> void:
 	if speaker == "You":
+		player_has_spoken = true
 		player_text.text = text
 		player_caption.show()
 		return
@@ -276,10 +279,11 @@ func _build_canvas() -> void:
 	canvas_panel.add_child(surface)
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Layout.toolbar(canvas_panel, surface, _finish_drawing, _share_drawing)
-	Layout.drawing_tools(canvas_panel)
+	Layout.drawing_tools(canvas_panel, _finish_drawing)
 	canvas_panel.hide()
 
 func _finish_drawing() -> void:
+	surface.drawing = false
 	canvas_panel.hide()
 	_resume_world()
 	opened = false
@@ -290,7 +294,9 @@ func _share_drawing() -> void:
 	if story.scene.has_node("ObjectGeneration") and not story.scene.get_node("ObjectGeneration").submit(png): return
 	_finish_drawing()
 	opened = true
-	_show_line("You","Shared a drawing.")
+	player_has_spoken = false
+	player_text.text = ""
+	player_caption.hide()
 	story.ask("", png)
 
 func _draw_idea() -> void:

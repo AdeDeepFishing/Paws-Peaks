@@ -22,6 +22,7 @@ var animators: Array[AnimationPlayer] = []
 var start := Vector3.ZERO
 var swoop_target := Vector3.ZERO
 var dodge := 0.0
+var hit_this_swoop := false
 var protection_top := 4.5
 @onready var level = get_parent()
 
@@ -84,6 +85,11 @@ func _process(delta: float) -> void:
 			var t := clampf(elapsed / 1.8, 0.0, 1.0)
 			_move(_curve(start, swoop_target, swoop_target + Vector3(-4.5, 2.8, -1.0), t), delta)
 			dodge = sin(PI * t)
+			if t >= 0.5 and not hit_this_swoop:
+				hit_this_swoop = true
+				var player = level.player
+				if player.input_enabled and player.is_on_floor() and not player.drawing_active and player.position.distance_to(swoop_target - Vector3(0, 1.1, 0)) < 2.5:
+					player.visual.play_action("knockdown")
 			if t >= 1.0:
 				dodge = 0.0
 				_enter("regrouping")
@@ -106,6 +112,7 @@ func _process(delta: float) -> void:
 
 func protect(top: float) -> bool:
 	if phase in ["blocked", "departing", "cleared"]: return false
+	level.player.visual.cancel_action()
 	protection_top = top
 	visual.show()
 	dodge = 0.0
@@ -115,6 +122,7 @@ func protect(top: float) -> bool:
 
 func _enter(next: String) -> void:
 	phase = next
+	if next == "swooping": hit_this_swoop = false
 	elapsed = 0.0
 	start = visual.position
 	if next == "departing": departure_started.emit()

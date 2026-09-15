@@ -1,4 +1,4 @@
-# Paws & Peaks — Game Jam Specification
+# The Tale We Drew — Game Jam Specification
 
 > Version: 0.8 | Updated: 2026-09-13 | Status: Working draft
 >
@@ -76,7 +76,7 @@ AI-generated durability.
 
 | Topic | Status | Decision or working assumption |
 |---|---|---|
-| Game name | Confirmed | Paws & Peaks |
+| Game name | Confirmed September 15 | The Tale We Drew |
 | Team name | Existing team identity | Four Otters |
 | Team and schedule | Confirmed | Two designers, two developers, Godot beginners; Day 1 is September 12, production runs through September 15, 2026 |
 | Production start | Confirmed by user | Work and asset generation may begin now; this is not a claim that any specific asset license or service access has been verified |
@@ -1263,3 +1263,25 @@ and +/− keyboard zoom on every chapter map.
 Use the supplied The End artwork for the epilogue, retaining access to the
 existing journey recap, replay, and continued exploration. See
 [Title UI](3d_game/TITLE_UI.md) for integration and verification details.
+
+## September 15: supplied character behaviors (#67)
+
+Integrate the ten delivered main-character presentations with locomotion,
+greetings, voice conversation, bird knockdown/recovery and celebration. Integrate
+the four delivered Storykeeper presentations with idle, reveal, anger and positive
+responses. Keep game-controlled movement and collision. The original #67 gesture
+list remains partially undelivered; see [Character behaviors](3d_game/CHARACTER_BEHAVIORS.md)
+for the implemented mapping and remaining scope.
+
+## September 15: public-playtest presentation (#72)
+
+Use Live AI by default in every chapter and remove player-facing preview mode
+selectors and duplicate navigation buttons. Keep player speech captions for
+spoken input, restore visible Storykeeper mood, unify the microphone gift art,
+and move the river starting character clear of narration. Precompute Chapter 5
+collision and wait for environment preparation to reduce the measured entry
+pause. See [Public playtest fixes](3d_game/PUBLIC_PLAYTEST.md) for focused results
+and the separate browser-backend hosting requirement.
+
+September 15 title update: the confirmed game name is **The Tale We Drew**. The
+map/cover title, chapter labels and application/window name use this spelling.

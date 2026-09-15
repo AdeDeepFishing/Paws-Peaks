@@ -1,5 +1,7 @@
 extends Node3D
 
+const COLLISION_CACHE = preload("res://models/stage05/collision_shapes.res")
+
 const FOLIAGE_SHADER := preload("res://scripts/moonlit_forest/painted_foliage.gdshader")
 const SKY_SHADER := preload("res://scripts/moonlit_forest/painted_sky.gdshader")
 const BARK_SHADER := preload("res://scripts/moonlit_forest/painted_bark.gdshader")
@@ -10,9 +12,20 @@ const BARK_PREFIXES := ["Flowing_painted_trunk", "Midground_painted_trunk", "Bou
 @export var directional_energy_scale := 0.5
 @export var local_energy_scale := 0.3
 
+signal preparation_finished
+var prepared := false
+
+func wait_until_prepared() -> void:
+	if not prepared: await preparation_finished
+
 func _ready() -> void:
+	var frame_start := Time.get_ticks_usec()
 	var materials := {}
 	for mesh in find_children("*", "MeshInstance3D", true, false):
+		# Keep the map/page responsive instead of doing the entire forest in one frame.
+		if Time.get_ticks_usec() - frame_start >= 6000:
+			await get_tree().process_frame
+			frame_start = Time.get_ticks_usec()
 		var label := str(mesh.name)
 		# glTF does not carry the delivery's per-mesh shadow flags. The sky and
 		# celestial decorations must not enclose the level in a giant shadow.
@@ -51,18 +64,15 @@ func _ready() -> void:
 					glow.emission_energy_multiplier = 2.5
 					materials[original] = glow
 				mesh.set_surface_override_material(surface, materials[original])
-		if label == "Continuous_organic_forest_terrain" or label.begins_with("Painted_rounded_rock") or label.begins_with("Flowing_painted_trunk") or label.begins_with("Midground_painted_trunk") or label.begins_with("Buttress_root") or label.begins_with("Embedded_trail_edge_stone"):
-			mesh.create_trimesh_collision()
-			for collider in mesh.find_children("*", "CollisionShape3D", true, false):
-				if collider.shape is ConcavePolygonShape3D:
-					collider.shape.backface_collision = true
-	for animator in find_children("*", "AnimationPlayer", true, false):
-		for clip in animator.get_animation_list():
-			if animation_name in clip:
-				# The supplied cloud/flight paths are not seamless at 12 seconds.
-				# Reverse their playback instead of teleporting to the first frame.
-				animator.get_animation(clip).loop_mode = Animation.LOOP_PINGPONG
-				animator.play(clip)
+		var shapes: Dictionary = COLLISION_CACHE.get_meta("shapes")
+		var mesh_path := str(get_path_to(mesh))
+		if shapes.has(mesh_path):
+			var body := StaticBody3D.new()
+			var collider := CollisionShape3D.new()
+			collider.shape = shapes[mesh_path]
+			body.add_child(collider)
+			mesh.add_child(body)
+	_start_animation()
 	var key_light: DirectionalLight3D = find_child(key_light_name, true, false)
 	if key_light:
 		key_light.shadow_enabled = true
@@ -71,6 +81,18 @@ func _ready() -> void:
 	# previews. Keep painted colors readable without washing out the glowing plants.
 	for light in find_children("*", "Light3D", true, false):
 		light.light_energy *= directional_energy_scale if light is DirectionalLight3D else local_energy_scale
+
+	prepared = true
+	preparation_finished.emit()
+
+func _start_animation() -> void:
+	for animator in find_children("*", "AnimationPlayer", true, false):
+		for clip in animator.get_animation_list():
+			if animation_name in clip:
+				# The supplied cloud/flight paths are not seamless at 12 seconds.
+				# Reverse their playback instead of teleporting to the first frame.
+				animator.get_animation(clip).loop_mode = Animation.LOOP_PINGPONG
+				animator.play(clip)
 
 func _foliage_material(original: BaseMaterial3D, strength: float) -> ShaderMaterial:
 	var material := _paint_material(original, FOLIAGE_SHADER)

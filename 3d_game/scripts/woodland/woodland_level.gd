@@ -84,7 +84,7 @@ func _build_ui() -> void:
 	card.hide()
 	var stack := VBoxContainer.new()
 	card.add_child(stack)
-	_label(stack, "PAWS & PEAKS  /  CHAPTER " + chapter, 14)
+	_label(stack, "THE TALE WE DREW  /  CHAPTER " + chapter, 14)
 	_label(stack, stage_title, 28)
 	objective = _label(stack, "Explore the path · Scene preview", 16)
 	status = _label(root, "WASD / Arrows  Move    SPACE  Jump    SHIFT  Sprint", 16)
@@ -101,6 +101,7 @@ func _build_ui() -> void:
 	navigation.offset_top = 200
 	navigation.add_theme_constant_override("separation", 10)
 	root.add_child(navigation)
+	navigation.hide()
 	_navigation_button(navigation, "BackButton", return_label, return_scene, paper)
 	draw_button = preload("res://ui/storybook/illustrated_button.gd").new("pen")
 	draw_button.tooltip_text = "E · Draw"
@@ -142,6 +143,7 @@ func _label(parent: Node, text: String, size: int) -> Label:
 	return label
 
 func _start_entrance() -> void:
+	if has_method("wait_until_prepared"): await call("wait_until_prepared")
 	await get_tree().physics_frame
 	var start := to_global(spawn + entrance_offset)
 	var query := PhysicsRayQueryParameters3D.create(start + Vector3.UP * 20, start + Vector3.DOWN * 40, 3, [player.get_rid()])

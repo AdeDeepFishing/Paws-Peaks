@@ -13,12 +13,13 @@ var mood_layer: CanvasLayer
 var boss_revealed := false
 var reveal_started := false
 var reveal_timer := 0.0
+var prepared := false
+signal preparation_finished
 
 func _ready() -> void:
 	super._ready()
 	daybreak = preload("res://scripts/moonlit_forest/daybreak.gd").new()
 	add_child(daybreak)
-	daybreak.setup(self)
 	objective.text = "Meet the Storykeeper. Share an idea, a drawing, or a goodbye."
 	status.text = objective.text
 	status.set_meta("narrator_guidance", status.text)
@@ -32,20 +33,30 @@ func _ready() -> void:
 	$ObjectGeneration.setup()
 	$Storykeeper/Character.hide()
 	mood_layer.hide()
+	await get_node(art_path).wait_until_prepared()
+	daybreak.setup(self)
+	prepared = true
+	preparation_finished.emit()
+
+func wait_until_prepared() -> void:
+	if not prepared: await preparation_finished
 
 func _process(delta: float) -> void:
 	super._process(delta)
+	mood_layer.visible = boss_revealed and not stay_presented and not get_node("/root/Narrator").panel.canvas_panel.visible and not get_node("/root/Journey").busy
 	if not entering and not reveal_started:
 		reveal_timer += delta
 		var narrator = get_node("/root/Narrator")
 		# Let live narration begin before the paper moves; offline/error paths are bounded.
 		if narrator.enabled and reveal_timer < 8.0 and (narrator.panel.reveal_text.is_empty() or (narrator.voice_enabled and not narrator.panel.speech_started)):
 			draw_button.disabled = true
+			drawing_shine.set_active(false)
 			return
 		reveal_started = true
 		player.set_input_enabled(false)
 		get_node("/root/Narrator").panel.animate_boss_reveal(_reveal_boss)
 	draw_button.disabled = entering or stay_presented or not boss_revealed or $ObjectGeneration.request.state == "PENDING"
+	drawing_shine.set_active(not draw_button.disabled and not get_node("/root/Narrator").panel.opened)
 	if released and not entering and player.position.z <= -12 and not preview_ending_enabled and not get_node("/root/Narrator").panel.opened:
 		get_node("/root/Narrator").crossed_exit()
 
@@ -69,6 +80,7 @@ func _story_changed(state: Dictionary) -> void:
 		status.text = objective.text
 		status.set_meta("narrator_guidance", status.text)
 		$Storykeeper.make_way()
+		player.visual.play_action("celebrate")
 		daybreak.go(1.0, get_node("/root/Journey").duration_scale)
 	if state.get("ending") == "stay" and not stay_presented:
 		stay_presented = true
@@ -107,12 +119,11 @@ func _build_mood() -> void:
 	add_child(mood_layer)
 	var card := PanelContainer.new()
 	mood_layer.add_child(card)
-	card.hide()
 	card.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	card.offset_left = -338
 	card.offset_right = -28
-	card.offset_top = 104
-	card.offset_bottom = 204
+	card.offset_top = 158
+	card.offset_bottom = 258
 	var paper := StyleBoxFlat.new()
 	paper.bg_color = Color(0.07, 0.13, 0.14, 0.82)
 	paper.set_corner_radius_all(14)
@@ -172,6 +183,9 @@ func finish_daybreak(timing: float) -> void:
 
 func _reveal_boss() -> void:
 	boss_revealed = true
+	mood_layer.show()
+	$Storykeeper.block_enter()
+	player.visual.play_action("greet")
 	var character: Node3D = $Storykeeper/Character
 	character.show()
 	var final_scale := character.scale

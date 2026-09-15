@@ -18,7 +18,6 @@ var hint: Label
 var submit_button: Button
 var choices: OptionButton
 var modes: OptionButton
-var cancel_request: Button
 var drawing := false
 var item: Dictionary = {}
 var offered: Node3D
@@ -50,7 +49,6 @@ func _process(delta: float) -> void:
 	draw_button.disabled = entering or dog.distracted or presentation.active or request.state == "PENDING" or not player.is_on_floor()
 	draw_button.tooltip_text = "Path is clear" if dog.solved else "E · Draw"
 	drawing_shine.set_active(not drawing and near and not draw_button.disabled)
-	cancel_request.visible = request.state == "PENDING"
 	modes.disabled = request.state == "PENDING" or dog.distracted or presentation.active
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -63,9 +61,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel") and drawing:
 		_close_drawing()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel") and request.state == "PENDING":
-		request.cancel()
 		get_viewport().set_input_as_handled()
 
 func can_exit() -> bool:
@@ -246,15 +241,8 @@ func _build_drawing() -> void:
 	modes.selected = 2 - generation.mode
 	preload("res://ui/storybook/layout.gd").debug_control(modes, 0)
 	hud_root.add_child(modes)
+	modes.hide()
 	modes.item_selected.connect(func(index: int): generation.configure(modes.get_item_id(index)))
-	cancel_request = Button.new()
-	cancel_request.text = "Stop waiting"
-	preload("res://ui/storybook/layout.gd").debug_control(cancel_request, 2)
-	hud_root.add_child(cancel_request)
-	cancel_request.pressed.connect(func():
-		request.cancel()
-		status.text = "Stopped waiting. Your sketch is safe."
-	)
 	overlay = Control.new()
 	overlay.name = "SceneDrawingOverlay"
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -271,7 +259,7 @@ func _build_drawing() -> void:
 	preload("res://ui/storybook/layout.gd").debug_control(choices, 0)
 	var actions := preload("res://ui/storybook/layout.gd").toolbar(overlay, surface, _close_drawing, _submit)
 	submit_button = actions.get_node("HBoxContainer/Submit")
-	preload("res://ui/storybook/layout.gd").drawing_tools(overlay)
+	preload("res://ui/storybook/layout.gd").drawing_tools(overlay, _close_drawing)
 	surface.changed.connect(func():
 		if surface.has_drawing(): hint.text = "Draw your idea over the scene."
 	)

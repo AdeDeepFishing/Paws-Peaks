@@ -5,7 +5,6 @@ const Model = preload("res://scripts/river/generated_model.gd")
 @onready var generation = $DesktopGeneration
 @onready var level = get_parent()
 var preview: Control
-var cancel_button: Button
 var anchor := Vector3.ZERO
 var object: PhysicsBody3D
 
@@ -14,12 +13,6 @@ func setup() -> void:
 	preview = preload("res://scripts/river/generation_preview.gd").attach(level, request, generation, panel.surface)
 	request.state_changed.connect(_on_state)
 	generation.progress_changed.connect(func(message: String): level.status.text = message)
-	cancel_button = Button.new()
-	cancel_button.text = "Stop generating object"
-	preload("res://ui/storybook/layout.gd").debug_control(cancel_button, 2)
-	level.hud_root.add_child(cancel_button)
-	cancel_button.pressed.connect(request.cancel)
-	cancel_button.hide()
 
 func submit(png: PackedByteArray) -> bool:
 	if request.state == "PENDING": return false
@@ -43,7 +36,6 @@ func submit(png: PackedByteArray) -> bool:
 	return true
 
 func _on_state(state: String) -> void:
-	cancel_button.visible = state == "PENDING"
 	match state:
 		"PENDING": level.status.text = "Creating your drawing while the Storykeeper considers it…"
 		"FAILED": level.status.text = request.message + " Your sketch is safe; try again."

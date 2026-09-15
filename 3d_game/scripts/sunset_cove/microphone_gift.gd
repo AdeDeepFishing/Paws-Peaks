@@ -3,7 +3,7 @@ extends Node2D
 signal received
 signal conjured
 const DURATION := 3.0
-const ICON = preload("res://ui/microphone.svg")
+const ICON = preload("res://ui/storybook/microphone_normal.png")
 var otter: Node3D
 var elapsed := 0.0
 var revealed := false
@@ -51,4 +51,4 @@ func _draw() -> void:
 		var extent := 2.0 + (sin(elapsed * 6 + i) + 1.0) * 1.5
 		draw_line(point - Vector2(extent, 0), point + Vector2(extent, 0), Color("fff4ce"), 2, true)
 		draw_line(point - Vector2(0, extent), point + Vector2(0, extent), Color("fff4ce"), 2, true)
-	draw_texture_rect(ICON, Rect2(-18, -23, 36, 46), false, Color("745635"))
+	draw_texture_rect(ICON, Rect2(-36, -36, 72, 72), false)

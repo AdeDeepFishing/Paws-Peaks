@@ -12,7 +12,7 @@
 [ext_resource type="Script" path="res://scripts/river/desktop_generation.gd" id="9"]
 
 [sub_resource type="Environment" id="Environment"]
-background_mode = 1
+background_mode = 2
 background_color = Color(0.77, 0.54, 0.52, 1)
 ambient_light_source = 2
 ambient_light_color = Color(1, 0.96, 0.9, 1)
@@ -68,4 +68,4 @@ script = ExtResource("8")
 
 [node name="DesktopGeneration" type="Node" parent="."]
 script = ExtResource("9")
-mode = 1
+mode = 2

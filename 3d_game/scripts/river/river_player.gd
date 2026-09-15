@@ -37,7 +37,7 @@ func _physics_process(delta: float) -> void:
 	if not Input.is_action_pressed("jump"):
 		jump_armed = true
 	var direction := Vector3.ZERO
-	if input_enabled and window_focused:
+	if input_enabled and window_focused and not visual.blocks_movement:
 		var axes := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		var camera := get_viewport().get_camera_3d()
 		var yaw := camera.global_rotation.y if camera else 0.0
@@ -66,7 +66,11 @@ func _physics_process(delta: float) -> void:
 	var travel := Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	var moving := travel > 0.1 and direction.length_squared() > 0.001 and (walking_in or (input_enabled and window_focused))
 	moving_seconds = moving_seconds + delta if moving and is_on_floor() else 0.0
-	visual.set_motion(moving, not walking_in and moving_seconds > auto_run_after, is_on_floor(), drawing_active)
+	var narrator := get_node_or_null("/root/Narrator")
+	visual.conversation = ""
+	if narrator and narrator.scene == get_parent() and narrator.panel.mic.recording:
+		visual.conversation = "boss_talk" if narrator.chapter == 5 else "chat"
+	visual.set_motion(moving, not walking_in and (moving_seconds > auto_run_after or Input.is_action_pressed("sprint")), is_on_floor(), drawing_active)
 	_update_idle_hops(delta, direction)
 	if direction.length_squared() > 0.001:
 		var facing := atan2(-direction.x, -direction.z)
@@ -99,6 +103,8 @@ func _notification(what: int) -> void:
 func respawn(at: Vector3) -> void:
 	global_position = at
 	velocity = Vector3.ZERO
+	visual.cancel_action()
+	visual.conversation = ""
 	visual.rotation = Vector3.ZERO
 	moving_seconds = 0.0
 	drawing_active = false
@@ -110,7 +116,7 @@ func _reset_idle_hops() -> void:
 
 func _update_idle_hops(delta: float, direction: Vector3) -> void:
 	# Only the model hops: the grounded collider, camera and encounter state stay put.
-	if not input_enabled or not window_focused or not is_on_floor() or direction.length_squared() > 0.001 or absf(velocity.y) > 0.1:
+	if visual.state not in ["idle", "idle_variant"] or not input_enabled or not window_focused or not is_on_floor() or direction.length_squared() > 0.001 or absf(velocity.y) > 0.1:
 		_reset_idle_hops()
 		return
 	idle_seconds += delta

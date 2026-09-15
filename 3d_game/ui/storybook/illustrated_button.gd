@@ -28,13 +28,17 @@ func _ready() -> void:
 	artwork.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_sync()
 
+# Painted hover artwork provides feedback without a floating text popup.
+func _get_tooltip(_at_position: Vector2) -> String:
+	return ""
+
 func _process(_delta: float) -> void:
 	_sync()
 
 func _sync() -> void:
 	if kind == "pen":
 		var narrator = get_node_or_null("/root/Narrator")
-		if narrator and (narrator.panel.opened or narrator.panel.revealing_boss): disabled = true
+		if not has_meta("closes_sketch") and narrator and (narrator.panel.opened or narrator.panel.revealing_boss): disabled = true
 		var shine = get_node_or_null("DrawingShine")
 		if shine: shine.visible = shine.active and not disabled
 	text = ""

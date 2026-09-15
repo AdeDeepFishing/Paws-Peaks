@@ -90,7 +90,7 @@ func _build_start_button() -> void:
 func _build_title() -> void:
 	for index in 2:
 		var line := Label3D.new()
-		line.text = "The Tale" if index == 0 else "We Draw"
+		line.text = "The Tale" if index == 0 else "We Drew"
 		line.font = TITLE_FONT
 		line.font_size = 160
 		line.outline_size = 0
@@ -223,7 +223,7 @@ func play_route(from_stage: int, to_stage: int, duration_scale: float) -> void:
 	caption.text = "CHAPTER %02d  ·  %s" % [to_stage, TITLES[to_stage - 1]]
 	var closeup := create_tween().set_parallel(true)
 	closeup.tween_method(_set_title_progress, title_progress, 1.0, 1.65 * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	closeup.tween_method(chapter_card.set_progress, 0.0, 1.0, 1.65 * duration_scale).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	closeup.tween_method(chapter_card.set_progress, 0.0, 1.0, 1.65 * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	start_button.disabled = true
 	start_button.show()
 	closeup.tween_method(_set_camera, camera.transform, _close_transform(to_stage), 1.65 * duration_scale).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -274,6 +274,8 @@ func _close_transform(stage: int) -> Transform3D:
 
 func _set_camera(value: Transform3D) -> void:
 	camera.transform = value
+	# Tween updates run after _process; keep the title on the current camera frame.
+	_layout_title()
 
 func _process(delta: float) -> void:
 	_layout_title()
