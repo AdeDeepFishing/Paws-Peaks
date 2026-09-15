@@ -10,7 +10,7 @@ var otter_happy := false
 var otter_response := ""
 var reference_path := ""
 
-@export_enum("Mock bridge", "Offline model", "Live AI") var mode := 1
+@export_enum("Mock bridge", "Offline model", "Live AI") var mode := 2
 
 var request: Node
 @onready var worker: Node = get_node("/root/GenerationWorker")

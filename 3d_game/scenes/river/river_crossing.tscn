@@ -97,7 +97,7 @@ script = ExtResource("6_generation")
 script = ExtResource("3_request")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector3(-6.3, 1.5, -6.3)
+position = Vector3(-5.1, 1.5, -4.1)
 appearance_scale = 2.0
 
 [node name="Plank0" type="MeshInstance3D" parent="Bridge"]

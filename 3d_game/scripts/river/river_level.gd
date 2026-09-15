@@ -2,7 +2,7 @@ extends Node3D
 
 const DrawingSurface = preload("res://scripts/river/drawing_surface.gd")
 const GeneratedModel = preload("res://scripts/river/generated_model.gd")
-const SPAWN := Vector3(-6.3, 1.5, -6.3)
+const SPAWN := Vector3(-5.1, 1.5, -4.1)
 
 @onready var presentation = $EncounterPresentation
 
@@ -420,6 +420,7 @@ func _build_ui() -> void:
 	objective = _label(title_stack, "Find a way across the river.", 17)
 	generation_modes = OptionButton.new()
 	root.add_child(generation_modes)
+	generation_modes.hide()
 	for label in ["Mock bridge · No AI", "Sample model · No AI", "Live AI · Uses credits"]:
 		generation_modes.add_item(label)
 	generation_modes.select(generation.mode)
@@ -446,6 +447,7 @@ func _build_ui() -> void:
 	sound_button.offset_top = 86
 	sound_button.offset_bottom = 130
 	map_button = _button(root, "Back to map", _back_to_map)
+	map_button.hide()
 	map_button.name = "BackToMap"
 	map_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	map_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)

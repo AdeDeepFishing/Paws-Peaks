@@ -1272,3 +1272,13 @@ the four delivered Storykeeper presentations with idle, reveal, anger and positi
 responses. Keep game-controlled movement and collision. The original #67 gesture
 list remains partially undelivered; see [Character behaviors](3d_game/CHARACTER_BEHAVIORS.md)
 for the implemented mapping and remaining scope.
+
+## September 15: public-playtest presentation (#72)
+
+Use Live AI by default in every chapter and remove player-facing preview mode
+selectors and duplicate navigation buttons. Keep player speech captions for
+spoken input, restore visible Storykeeper mood, unify the microphone gift art,
+and move the river starting character clear of narration. Precompute Chapter 5
+collision and wait for environment preparation to reduce the measured entry
+pause. See [Public playtest fixes](3d_game/PUBLIC_PLAYTEST.md) for focused results
+and the separate browser-backend hosting requirement.

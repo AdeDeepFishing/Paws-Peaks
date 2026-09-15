@@ -23,6 +23,9 @@ For example, run Stage 5 from the repository root:
 
 Keep the following additional checks focused on their distinct responsibilities:
 
+- `public_playtest_smoke.gd`: Live AI defaults and the September 15 UI fixes;
+  offline submission fixtures and optional visual captures.
+- `chapter5_transition_smoke.gd`: focused map-to-Chapter-5 desktop frame budget.
 - `character_behaviors_smoke.gd`: delivered hero actions, transitions and cancellation,
   matching model scale, boss reaction variants and release; optional visual captures.
 - `dog_presentation_smoke.gd`: reveal timing, automatic offering after walking

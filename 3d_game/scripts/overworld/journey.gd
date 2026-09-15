@@ -247,6 +247,7 @@ func _run() -> void:
 	await get_tree().scene_changed
 	var level := get_tree().current_scene
 	level.process_mode = Node.PROCESS_MODE_DISABLED
+	if level.has_method("wait_until_prepared"): await level.wait_until_prepared()
 	await get_tree().process_frame
 	await _turn_page(false)
 	level.process_mode = Node.PROCESS_MODE_INHERIT

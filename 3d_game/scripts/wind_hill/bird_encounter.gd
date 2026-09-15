@@ -291,6 +291,7 @@ func _build_drawing() -> void:
 	modes.selected = 0 if generation.mode == 2 else 1
 	preload("res://ui/storybook/layout.gd").debug_control(modes, 0)
 	hud_root.add_child(modes)
+	modes.hide()
 	modes.item_selected.connect(func(index: int): generation.configure(modes.get_item_id(index)))
 	cancel_request = Button.new()
 	cancel_request.text = "Stop waiting"

@@ -1,5 +1,8 @@
 extends Node
 ## Continuous atmosphere port of the designer's forest-daybreak-v1 delivery.
+const DAWN_TEXTURE = preload("res://models/stage05/daybreak/drybrush-dawn-sky.png")
+const CLOUD_ATLAS = preload("res://models/stage05/daybreak/daybreak-cloud-atlas.png")
+
 signal settled
 var value := 0.0
 var transition: Tween
@@ -15,8 +18,8 @@ func setup(world: Node3D) -> void:
 	art = world.get_node(world.art_path)
 	environment = world.get_node("WorldEnvironment").environment.duplicate()
 	world.get_node("WorldEnvironment").environment = environment
-	var dawn_texture = load("res://models/stage05/daybreak/drybrush-dawn-sky.png")
-	var atlas = load("res://models/stage05/daybreak/daybreak-cloud-atlas.png")
+	var dawn_texture = DAWN_TEXTURE
+	var atlas = CLOUD_ATLAS
 	for mesh in art.find_children("*", "MeshInstance3D", true, false):
 		var label := str(mesh.name)
 		if label == "Sky_dome":

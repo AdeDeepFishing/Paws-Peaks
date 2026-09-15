@@ -52,6 +52,8 @@ func block_enter() -> void:
 	if not moved_aside: _play("block")
 
 func _place_on_ground() -> void:
+	if get_parent().has_method("wait_until_prepared"):
+		await get_parent().wait_until_prepared()
 	await get_tree().physics_frame
 	var ray := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 10.0, global_position + Vector3.DOWN * 10.0)
 	ray.exclude = [get_rid()]
