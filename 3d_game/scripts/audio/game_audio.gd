@@ -64,7 +64,7 @@ func _select(track: String) -> void:
 	if selected == track: return
 	selected = track
 	if not streams.has(track):
-		var stream := AudioStreamOggVorbis.load_from_file("res://audio/bgm/" + track + ".ogg")
+		var stream := load("res://audio/bgm/" + track + ".ogg") as AudioStreamOggVorbis
 		if stream == null: return
 		stream.loop = true
 		streams[track] = stream

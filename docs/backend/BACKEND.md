@@ -44,7 +44,9 @@ The worker claims `request/request.json` as `request/claimed.json` and prevents 
 with `started.lock`. To cancel local waiting, create a `cancel` marker in the job
 directory. Cancellation is reported as `FAILED` with `error: CANCELED` at a progress
 boundary; it does not guarantee cancellation of an already-submitted provider job.
-A browser-hosted HTTP interface has not been implemented.
+The browser HTTP adapter is implemented in `backend/web_service/server.py`. See
+[Web deployment](../3d_game/WEB_DEPLOYMENT.md) for contracts, limits, hosting, and
+verification status. The desktop mailbox below remains supported.
 
 ### Example request
 

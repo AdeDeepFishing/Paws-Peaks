@@ -4,10 +4,12 @@ extends Node
 var process_id := -1
 var worker_dir := ""
 var startup_error := ""
+var web: Node
 
 func _ready() -> void:
 	if OS.has_feature("web"):
-		startup_error = "Desktop generation is unavailable in a browser build."
+		web = preload("res://scripts/web/web_api.gd").new()
+		add_child(web)
 		return
 	var backend: String = ProjectSettings.get_setting("generation/backend_directory", "")
 	if backend.is_empty():

@@ -1,0 +1,9 @@
+**/.env
+**/.env.*
+**/.venv
+**/__pycache__
+**/output
+.git
+3d_game
+docs
+web-build

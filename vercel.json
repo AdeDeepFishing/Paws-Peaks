@@ -1,0 +1,48 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "bash tools/web/build.sh",
+  "outputDirectory": "web-build",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).wasm",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/wasm"
+        }
+      ]
+    },
+    {
+      "source": "/index.pck",
+      "headers": [
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/octet-stream"
+        }
+      ]
+    },
+    {
+      "source": "/index.wasm",
+      "headers": [
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
+        }
+      ]
+    }
+  ]
+}

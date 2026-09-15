@@ -21,3 +21,8 @@ backend/output/
 # Operating system files.
 .DS_Store
 Thumbs.db
+
+# Browser build products and public build-time connection settings.
+web-build/
+3d_game/web_config.json
+.vercel/

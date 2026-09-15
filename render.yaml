@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: the-tale-we-drew-api
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./backend/web_service/Dockerfile
+    healthCheckPath: /health
+    disk:
+      name: game-data
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://the-tale-we-drew.vercel.app
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MESHY_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_NARRATOR_VOICE_ID
+        sync: false
+      - key: ELEVENLABS_OTTER_VOICE_ID
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: MESHY_MODEL
+        value: meshy-6
+      - key: NARRATOR_MODEL
+        sync: false
+      - key: ELEVENLABS_MODEL
+        value: eleven_multilingual_v2
+      - key: ELEVENLABS_STT_MODEL
+        value: scribe_v2
+      - key: MAX_GENERATIONS_PER_DAY
+        value: "60"
+      - key: MAX_GENERATIONS_PER_SESSION
+        value: "10"

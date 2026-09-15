@@ -46,6 +46,9 @@ func _start(payload: Dictionary) -> void:
 	job_dir = ""
 	poll_elapsed = 0.0
 	request_id = payload.request_id
+	if OS.has_feature("web"):
+		_start_web(payload)
+		return
 	if not worker.is_running():
 		fail(worker.startup_error if not worker.startup_error.is_empty() else "The generation worker stopped. Restart the game.")
 		return
@@ -85,6 +88,7 @@ func _read_status() -> void:
 			consume_status(status)
 
 func _process(delta: float) -> void:
+	if OS.has_feature("web"): return
 	if mode == 0 or not _active(request_id):
 		return
 	poll_elapsed += delta
@@ -179,3 +183,40 @@ func _cancel_job() -> void:
 
 func _exit_tree() -> void:
 	_cancel_job()
+
+func _start_web(payload: Dictionary) -> void:
+	var id: String = request_id
+	job_dir = "user://web/generation/" + id
+	DirAccess.make_dir_recursive_absolute(job_dir)
+	var data := {"request_id": id, "encounter_id": payload.encounter_id, "game_stage": payload.game_stage, "mode": "live", "image_base64": Marshalls.raw_to_base64(request.snapshot)}
+	if payload.has("animation_options"): data["animation_options"] = payload.animation_options
+	var accepted: Dictionary = await worker.web.send("/api/generation", data)
+	if not _active(id): return
+	if not accepted.has("id"):
+		fail("The drawing service could not accept your sketch. Please try again.", str(accepted.get("error", "NETWORK_ERROR")))
+		return
+	var network_failures := 0
+	while _active(id):
+		var status: Dictionary = await worker.web.send("/api/generation/" + id)
+		if not _active(id): return
+		if status.get("error") == "NETWORK_ERROR":
+			network_failures += 1
+			if network_failures >= 5:
+				fail("The connection was interrupted. Your drawing is safe.")
+				return
+		elif status.get("ok") == false:
+			fail("The drawing service could not finish. Please try again.", str(status.get("error", "GENERATION_FAILED")))
+			return
+		else:
+			network_failures = 0
+			for key in ["reference", "model"]:
+				if status.has(key + "_asset"):
+					var asset: String = status[key + "_asset"]
+					var local := job_dir.path_join(asset)
+					if not await worker.web.download(asset, local):
+						if _active(id): fail("The generated asset could not be downloaded. Please try again.")
+						return
+					if not _active(id): return
+					status[key + "_path"] = local
+			consume_status(status)
+		if _active(id): await get_tree().create_timer(0.7).timeout
