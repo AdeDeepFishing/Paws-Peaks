@@ -32,7 +32,7 @@ No installation or personal API key is required to play the hosted game.
 
 A short gameplay demo follows the journey from sketches to the storybook world.
 
-[Watch the gameplay demo on Google Drive](https://drive.google.com/file/d/11Zt-AjyPov6foGyR_UCbMSraOMo8PkHm/view?usp=sharing)
+[Watch the gameplay demo on Google Drive](https://drive.google.com/file/d/1DkSfG2fj2KFqbJWi1iHfrXBio6elNaGm/view?usp=sharing)
 
 ## A journey in five chapters
 
