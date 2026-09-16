@@ -25,6 +25,14 @@ func run():
 	check(not journey.microphone_unlocked, "Speaking starts locked")
 	check(not otter.happy and not otter.heart.happy, "Otter begins with a broken heart")
 	check(otter.grounded, "Otter starts grounded")
+	var sand_position: Vector3 = otter.global_position
+	otter.grounded = false
+	otter.global_position += Vector3.UP * 100
+	await frames(2)
+	check(not otter.grounded, "Missing ground leaves otter placement pending")
+	otter.global_position = sand_position
+	await frames(3)
+	check(otter.grounded, "Otter retries placement when ground becomes available")
 	var library: AnimationLibrary = otter.animator.get_animation_library("otter")
 	check(library.get_animation_list().size() == 13, "One model has all 13 full animations")
 	for i in 180:

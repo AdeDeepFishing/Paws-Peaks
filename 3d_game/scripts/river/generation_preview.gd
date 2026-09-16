@@ -104,7 +104,7 @@ func _show_interpretation(id: String, item: Dictionary) -> void:
 		return
 	item_name.text = item.name
 	description.text = item.description
-	progress.text = "Giving your drawing shape…"
+	progress.text = "(Giving your drawing shape…)"
 	card.show()
 	_layout()
 
@@ -116,7 +116,7 @@ func _show_reference(id: String, path: String) -> void:
 		return
 	image.texture = ImageTexture.create_from_image(reference)
 	image.modulate.a = 0.9
-	progress.text = "Bringing your object into the world…"
+	progress.text = "(Bringing your object into the world…)"
 	_layout()
 
 func anchor_to_world(camera: Camera3D, anchor: Vector3) -> void:
@@ -169,7 +169,7 @@ func model_presented() -> void:
 
 func _on_state(state: String) -> void:
 	if state == "READY":
-		progress.text = "Your object is ready."
+		progress.text = "(Your object is ready.)"
 	elif state != "PENDING":
 		_clear()
 

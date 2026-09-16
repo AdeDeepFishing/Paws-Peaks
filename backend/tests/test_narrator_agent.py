@@ -10,7 +10,7 @@ from uuid import uuid4
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from narrator_agent.service import Service
+from narrator_agent.service import Service, spoken_text
 from narrator_agent import model
 from utils.common import AppError, load_config, provider_urlopen
 from speech.service import Speech
@@ -44,6 +44,30 @@ class NarratorTests(unittest.TestCase):
         response = self.service.handle(request)
         if "state" in response: self.state = response["state"]
         return response
+    def test_event_citations_never_enter_caption_or_saved_speech_text(self):
+        original = self.model
+        def cite(config, prompt, context, schema, image=None):
+            reply, metric = original(config, prompt, context, schema, image)
+            if schema == model.ACTOR_SCHEMA:
+                reply["text"] = "Follow the path right. [" + context["events"][-1]["id"] + "]"
+            return reply, metric
+        self.service.caller = cite
+        for stage in [4, 5]:
+            with self.subTest(stage=stage):
+                self.send("event", type="stage_entered", stage=stage, payload={})
+                result = self.send("respond", text="Which way?")
+                self.assertEqual(result["utterance"]["text"], "Follow the path right.")
+                saved = self.service.read(self.state["run_id"])["requests"][result["input_id"]]
+                self.assertEqual(saved["utterance"]["text"], "Follow the path right.")
+                self.assertTrue(result["utterance"]["evidence"])
+
+    def test_citation_cleanup_preserves_dialogue(self):
+        first, second = uuid4().hex, uuid4().hex
+        self.assertEqual(spoken_text("A gift [" + first + ", " + second + "], thank you!"), "A gift, thank you!")
+        self.assertEqual(spoken_text("Thank you! " + first), "Thank you!")
+        self.assertEqual(spoken_text("Take 3 steps [carefully]."), "Take 3 steps [carefully].")
+        self.assertEqual(spoken_text("[" + first + "]"), "")
+
     def test_negative_boss_mood_drives_angry_reaction(self):
         self.model.delta = -12
         result = self.send("respond", text="Your story is worthless.")

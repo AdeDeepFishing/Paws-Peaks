@@ -10,5 +10,10 @@
 !3d_game/assets/materials
 3d_game/assets/materials/*
 !3d_game/assets/materials/palette.json
+!3d_game/models
+3d_game/models/*
+!3d_game/models/otter
+3d_game/models/otter/*
+!3d_game/models/otter/animations.json
 docs
 web-build

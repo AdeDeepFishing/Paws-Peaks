@@ -39,12 +39,12 @@ func _ready() -> void:
 	bird.departure_started.connect(_release_protection)
 	bird.swooping.connect(func():
 		if not resolving and request.state != "PENDING":
-			status.text = "Watch out! Draw something to protect yourself."
+			status.text = "Watch out! Draw something to help you past the bird."
 			status.set_meta("narrator_guidance", status.text)
 	)
 	draw_button.pressed.connect(_open_drawing)
-	draw_button.tooltip_text = "Draw protection against the swooping bird."
-	objective.text = "Draw protection from the bird."
+	draw_button.tooltip_text = "Draw protection or something to scare the bird away."
+	objective.text = "Find a way past the bird."
 	_build_drawing()
 	presentation = Presentation.new()
 	presentation.name = "BirdPresentation"
@@ -53,13 +53,13 @@ func _ready() -> void:
 	add_child(presentation)
 	presentation.finished.connect(_finish_presentation)
 	generation_preview = preload("res://scripts/river/generation_preview.gd").attach(self, request, generation, surface)
-	status.text = "A giant bird is guarding the hill. An umbrella or a shield could help."
+	status.text = "A giant bird is guarding the hill. A shield, bow, or magical idea could help."
 	status.set_meta("narrator_guidance", status.text)
 
 func _process(delta: float) -> void:
 	super._process(delta)
 	draw_button.disabled = entering or solved or resolving or presentation.active or request.state == "PENDING" or not player.is_on_floor()
-	draw_button.tooltip_text = "Path is clear" if solved else ("Protected" if resolving else ("E · Use protection" if request.state == "READY" and item.get("type") == "DEFENCE" else "E · Draw"))
+	draw_button.tooltip_text = "Path is clear" if solved else ("Bird is retreating" if resolving else ("E · Use drawing" if request.state == "READY" and item.get("type") in ["DEFENCE", "BOW", "MAGIC"] else "E · Draw"))
 	drawing_shine.set_active(not drawing and not draw_button.disabled)
 	modes.disabled = request.state == "PENDING" or resolving or solved or presentation.active
 
@@ -84,7 +84,7 @@ func constrain_player(body: CharacterBody3D) -> void:
 		body.position.x = GUARD_X
 		body.velocity.x = minf(body.velocity.x, 0.0)
 		if request.state != "PENDING" and not resolving:
-			status.text = "The bird blocks the way. Draw something to protect yourself."
+			status.text = "The bird blocks the way. Draw something to help you past the bird."
 			status.set_meta("narrator_guidance", status.text)
 
 func set_encounter_paused(value: bool) -> void:
@@ -115,7 +115,7 @@ func _open_drawing() -> void:
 	hud_root.hide()
 	overlay.show()
 	choices.visible = request.mock_mode
-	hint.text = "Draw something to protect yourself."
+	hint.text = "Draw something to help you past the bird."
 	submit_button.disabled = not surface.has_drawing()
 
 func _close_drawing() -> void:
@@ -172,14 +172,14 @@ func _on_request_state(state: String) -> void:
 			if is_instance_valid(offered): offered.queue_free()
 			offered = null
 			item = {}
-			status.text = "Giving your drawing shape..."
+			status.text = "(Giving your drawing shape...)"
 		"IDLE", "FAILED":
 			_clear_presentation()
 			status.text = request.message + " Your sketch is safe; try again." if state == "FAILED" else "Stopped waiting. Your sketch is safe."
 		"READY":
 			item = request.result.duplicate(true)
-			if item.get("type") != "DEFENCE" and request.mock_mode:
-				request.fail_current("Try something that could protect you from the bird.")
+			if item.get("type") not in ["DEFENCE", "BOW", "MAGIC"] and request.mock_mode:
+				request.fail_current("Try protection or something that could scare the bird away.")
 				return
 			_offer_item()
 
@@ -204,11 +204,11 @@ func _offer_item() -> void:
 	else:
 		offered = GeneratedModel.load_visual(request.model_path, 3.0, false, item)
 		if offered == null:
-			request.fail_current("The generated protection could not be loaded.")
+			request.fail_current("The generated object could not be loaded.")
 			return
 	offered = GeneratedModel.physics_body(offered, item, true)
 	if offered is RigidBody3D: offered.freeze = true
-	offered.name = "DrawnProtection"
+	offered.name = "DrawnSolution"
 	offered.hide()
 	add_child(offered)
 	offered.global_position = sketch_anchor + Vector3.UP * GeneratedModel.placement_height(item)
@@ -218,10 +218,22 @@ func _finish_presentation() -> void:
 	if request.state != "READY" or not is_instance_valid(offered): return
 	if item.get("type") == "DEFENCE":
 		_raise_protection()
+	elif item.get("type") in ["BOW", "MAGIC"]:
+		_scare_bird()
 	else:
-		objective.text = "Try something that could protect you from the bird."
-		status.text = "Your object is ready, but it cannot block the bird. Try another drawing."
+		objective.text = "Try protection or something that could scare the bird away."
+		status.text = "Your object is ready, but the bird is still guarding the path. Try another drawing."
 		status.set_meta("narrator_guidance", status.text)
+
+func _scare_bird() -> void:
+	if request.state != "READY" or not is_instance_valid(offered) or resolving or solved: return
+	resolving = true
+	player.set_input_enabled(false)
+	bird.paused = false
+	bird.scare_away()
+	objective.text = "Your drawing scares the bird away."
+	status.text = "The bird backs away from your creation and takes flight."
+	status.set_meta("narrator_guidance", status.text)
 
 func _raise_protection() -> void:
 	if request.state != "READY" or not is_instance_valid(offered) or resolving or solved: return
@@ -252,7 +264,7 @@ func _raise_protection() -> void:
 	status.set_meta("narrator_guidance", status.text)
 
 func _release_protection() -> void:
-	if not resolving or not is_instance_valid(offered): return
+	if not resolving or item.get("type") != "DEFENCE" or not is_instance_valid(offered): return
 	var model := offered
 	var token := resolution_epoch
 	# The wind takes only the drawing. Detach before animating any transform.
@@ -274,7 +286,7 @@ func _on_cleared() -> void:
 	if not resolving: return
 	solved = true
 	player.visual.play_action("celebrate")
-	get_node("/root/Narrator").record("encounter_completed", {"result": "The drawing protected the player and the bird cleared the path.", "item": request.result})
+	get_node("/root/Narrator").record("encounter_completed", {"result": "The drawing made the bird retreat and cleared the path.", "item": request.result})
 	resolving = false
 	player.set_input_enabled(true)
 	objective.text = "The sky is clear. Continue to Sunset Cove."

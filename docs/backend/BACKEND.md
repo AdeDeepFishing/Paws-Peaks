@@ -15,8 +15,139 @@ benchmarking, and backlog. Game-side integration stays in
 - [Development requirements](#contracts-and-failure-handling)
 - [Samples and credits](#samples-and-credits)
 - [Backlog](#backlog)
+- [AI architecture diagrams](#ai-architecture)
+- [AI prompt guide](AI_PROMPTS.md) — drawing, chat, evaluation, and voice
 - [Generated examples](GENERATED_EXAMPLES.md)
 - [Historical benchmarks](#historical-benchmarks)
+
+## AI architecture
+
+The game uses AI to interpret drawings, generate objects, write character replies,
+and handle speech. Game code controls movement, encounter progression, and endings.
+
+These diagrams describe the current code paths, not a verified hosted deployment.
+For exact prompt behavior, see the [AI prompt guide](AI_PROMPTS.md).
+
+### 1. Where the AI runs
+
+```mermaid
+flowchart TB
+    Web["Godot web game<br/>Static files on Vercel"]
+    Desktop["Godot desktop game"]
+    API["Python HTTPS service on Render<br/>Sessions, asynchronous jobs, asset delivery"]
+    Local["Local Python workers<br/>File mailboxes"]
+    Features["Shared Python features<br/>Drawing pipeline, story service, speech"]
+    OpenAI["OpenAI<br/>Interpretation, image editing, dialogue"]
+    Meshy["Meshy<br/>Image to 3D"]
+    Eleven["ElevenLabs<br/>Speech recognition and synthesis"]
+
+    Web <-->|"HTTPS requests, polling, results"| API
+    Desktop <-->|"Local requests and results"| Local
+    API --> Features
+    Local --> Features
+    Features <--> OpenAI
+    Features <--> Meshy
+    Features <--> Eleven
+```
+
+Provider credentials stay in the Python environment. The browser receives results
+and assets through the backend. Vercel serves the game; Render runs its AI requests.
+
+Code: [web service](../../backend/web_service/server.py),
+[desktop drawing bridge](../../backend/game_bridge/run.py),
+[desktop story worker](../../backend/narrator_agent/run.py).
+
+### 2. Drawing becomes a game object
+
+```mermaid
+flowchart TD
+    Sketch["Player sketch + current stage"]
+    Interpret["OpenAI interpretation<br/>Creative object identity + physical properties"]
+    Image["OpenAI image edit<br/>One transparent reference image"]
+    Mesh["Meshy generation<br/>Create task, poll, download GLB"]
+    Game["Godot<br/>Show model, apply materials and physics"]
+    Rules["Encounter rules<br/>React to the item and update the path"]
+
+    Sketch --> Interpret
+    Sketch -->|"Original drawing"| Image
+    Interpret -->|"Name, description, material, color"| Image
+    Image --> Mesh
+    Mesh -->|"3D model"| Game
+    Interpret -->|"Item data; Stage 4 reaction"| Game
+    Game --> Rules
+```
+
+The three AI stages run sequentially. Progress messages appear while the game
+waits. A Meshy status poll checks the existing task; it does not create another model.
+
+| Chapter | How the interpretation affects play |
+| --- | --- |
+| River | A fixed BRIDGE enables the implemented crossing. |
+| Dog | FOOD or TOY distracts the dog. |
+| Bird | DEFENCE provides cover; BOW or MAGIC scares the bird away. |
+| Otter | No classification: AI returns happiness, a reply, and an animation choice. |
+| Storykeeper | The object can be generated while a separate dialogue evaluation considers the drawing's meaning. |
+
+Recognizing an imaginative object does not automatically mean it solves an
+encounter. UNKNOWN is a compatibility fallback, not a reason to stop generation.
+
+Code: [pipeline](../../backend/sketch_to_model/run.py),
+[interpretation](../../backend/interpret/run.py),
+[image prompt](../../backend/image_edit/prompts.py),
+[stage classes and hints](../../backend/stage_config.py).
+
+### 3. Chat, narration, and voice
+
+```mermaid
+flowchart TD
+    Typed["Typed player message"]
+    Mic["Microphone recording"]
+    STT["ElevenLabs speech recognition"]
+    Review["Player reviews transcript"]
+    Drawing["Stage 5 drawing"]
+    Events["Game events + journal + current guidance"]
+    Context["Story service<br/>Build context and route request"]
+    Judge["OpenAI Storykeeper judge<br/>Interpret intent and propose mood change"]
+    Rules["Backend rules<br/>Validate score and ending permissions"]
+    Actor["OpenAI character reply<br/>Narrator / Storykeeper or Stage 4 otter"]
+    Clean["Validate reply and remove internal IDs"]
+    State["Godot encounter state"]
+    Caption["Godot caption"]
+    TTS["ElevenLabs speech synthesis"]
+    Audio["Godot audio playback"]
+    Authored["Authored introductions and guidance"]
+
+    Mic --> STT --> Review --> Context
+    Typed --> Context
+    Drawing --> Context
+    Events --> Context
+    Context -->|"Stage 5 player input"| Judge
+    Judge --> Rules
+    Rules -->|"Authoritative result"| Actor
+    Rules -->|"Validated state"| State
+    Context -->|"Earlier stages and event comments"| Actor
+    Actor --> Clean
+    Clean --> Caption
+    Clean --> TTS --> Audio
+    Authored --> Caption
+    Authored --> TTS
+```
+
+Voice input becomes the same text used by chat; it does not use a separate
+conversation model. Stage 4 chat uses the otter persona. Stage 5 player input
+normally uses two model calls: a judge followed by the character's reply.
+Event comments do not earn mood points.
+
+The journal supplies confirmed memories. The backend clamps mood, opens the
+exit at 95, and requires confirmation for a stay ending. Godot applies the
+returned state. Authored lines can skip dialogue generation but still use TTS.
+Loading messages are UI status, not narrated dialogue.
+
+Code: [context, routing, and state rules](../../backend/narrator_agent/service.py),
+[judge and character prompts](../../backend/narrator_agent/model.py),
+[transcription](../../backend/speech/transcribe.py),
+[speech synthesis](../../backend/speech/service.py),
+[game narrator](../../3d_game/scripts/narrator/narrator.gd).
 
 ## Sketch-to-model interface
 
@@ -30,7 +161,7 @@ not invoke them separately or supply provider prompts, keys, or class lists.
 The current desktop transport is a local file mailbox, not an HTTP endpoint.
 Godot's `GenerationWorker` autoload starts the Python bridge once at game startup;
 `game_bridge/run.py` is the transport adapter for sketch-to-model, not another
-public generation service. Startup makes no provider calls.
+public generation service. Starting the drawing listener alone makes no provider calls; gameplay can separately request narration and speech.
 
 1. Create a unique request directory inside the running worker's directory.
 2. Save the drawing bytes as `request/input.png` before publishing the request.
@@ -77,14 +208,16 @@ Stage 1 (River), live generation:
 | Input | Contract |
 |---|---|
 | `request_id` | Unique string for this submission; 1–100 ASCII letters, digits, underscores, or hyphens |
-| `encounter_id` | `E01`–`E04`, matching the selected game stage |
-| `game_stage` | `river`, `dog`, `crows`, or `otter`; see [stage mapping](#approved-classes) |
-| `mode` | `live` runs the three paid generation steps; `fixture` returns saved sample assets without provider calls, available for River and Dog |
+| `encounter_id` | `E01`–`E05`, matching the selected game stage |
+| `game_stage` | `river`, `dog`, `crows`, `otter`, or `storykeeper`; see [stage mapping](#approved-classes) |
+| `mode` | `live` runs the three paid generation steps; `fixture` returns saved sample assets without provider calls, bundled for River and Dog; Otter can replay a completed local live request; Bird/Storykeeper have no fixture |
 | `animation_options` | Stage 4 map of playable animation keys to their saved descriptions, validated against the otter catalog and supplied to the first AI call; other stages omit it |
 | `request/input.png` | One drawing in the request directory, supplied separately from JSON; game-generated PNG, at most 1 MiB |
 
-`stage_number` is backend configuration, not a request field. The request contains
-no image URL, Base64 field, provider credentials, or second image. Two-image support
+`stage_number` is backend configuration, not a request field. The desktop request contains
+no image URL, Base64 field, provider credentials, or second image. The HTTP adapter
+instead accepts `image_base64` and only live generation; it returns scoped asset URLs
+rather than local paths. Two-image support
 is [backlogged](#backlog).
 
 ### Example response
@@ -109,12 +242,13 @@ paths within the originating job directory; live generated assets are under its
     "description": "A sturdy little bridge ready to span the creek.",
     "type": "BRIDGE",
     "movable": false,
+    "mass_kg": 200,
+    "placement": "fixed",
     "texture_key": "wood",
     "color": "#B88755"
   },
   "reference_path": "/example/worker/E01-example/response/artifacts/reference.png",
   "model_path": "/example/worker/E01-example/response/artifacts/model.glb",
-  "preview_path": "/example/worker/E01-example/response/artifacts/model.png",
   "request_received_at": 1789257600.0,
   "response_received_at": 1789257620.0,
   "updated_at": 1789257620.0,
@@ -130,6 +264,7 @@ paths within the originating job directory; live generated assets are under its
 | `stage` | Progress: `starting`, `description`, `reference_image`, `model`, `preview`, `complete`, or `error` |
 | `status` | `PENDING`, `SUCCEEDED`, or `FAILED` |
 | `reaction` | Stage 4 only: selected animation key, published with the item and retained through completion |
+| `otter_happy`, `otter_response` | Stage 4 only: boolean happiness and a nonblank otter reply of at most 160 characters |
 | `item` | Validated interpretation; appears before model completion; [field bounds](#item-validation) |
 | Asset paths | `reference_path`, `model_path`, and `preview_path` appear as assets become available |
 | `request_received_at` | Unix seconds when the backend observes the published request, before queueing; retained through completion |
@@ -199,10 +334,10 @@ benchmark logs to this same operation.
 
 ## Three-call flow
 
-Interpretation makes a best-effort guess of a reasonably common object, then
-classifies it in the same AI call for Stages 1–3. Stage 4 instead selects an
-otter reaction from the supplied animation descriptions and returns `item` plus
-`reaction`, with no `item.type`.
+Interpretation makes a creative, common-sense guess from the drawing and scenario.
+Wild, magical, and hybrid objects are welcome. Stages 1–3 classify the result;
+Stage 4 returns `item`, `reaction`, `otter_happy`, and `otter_response`, without
+`item.type`. Stage 5 uses `type: UNKNOWN`; its separate story service judges meaning.
 The prompt requests this reasoning order; offline tests verify the contract and
 routing, not the model's actual reasoning or recognition quality.
 
@@ -213,13 +348,15 @@ identifies the Meshy job.
 
 | AI call | Input | Output |
 |---|---|---|
-| **1. Interpret** | `SKETCH` + interpretation prompt + stage classes (Stages 1–3) or animation descriptions (Stage 4) | `{ "item": ITEM }`, where `ITEM` contains `name`, `description`, `type`, `movable`, `texture_key`, and `color`; Stage 4 omits `type` and adds top-level `reaction`; no `status` field |
+| **1. Interpret** | `SKETCH` + interpretation prompt + stage classes (Stages 1–3) or animation descriptions (Stage 4) | `{ "item": ITEM }`, where `ITEM` contains `name`, `description`, `type`, `movable`, `mass_kg`, `placement`, `texture_key`, and `color`; Stage 4 omits `type` and adds `reaction`, `otter_happy`, and `otter_response`; Stage 5 uses `UNKNOWN`; no `status` field |
 | **2. Image edit** | `SKETCH` + `ITEM.name` + `ITEM.description` + `ITEM.texture_key` + `ITEM.color` + style instructions + image settings | `REFERENCE_IMAGE`: one 816 × 816 object-reference PNG, prompted to use `ITEM.color` as its dominant base color |
 | **3. 3D generation** | `REFERENCE_IMAGE` + Meshy T2 settings: target 500 faces, no textures, GLB format | `MODEL_TASK_ID`: task ID used to retrieve the model |
 
-Within the single interpretation call, first identify a reasonably common object
-from the sketch, making a best-effort guess even when confidence is low. The allowed
-classes must not influence that identity. In Stages 1–3, classify the identified
+Within the single interpretation call, imagine a concrete object from the sketch,
+making a creative best-effort guess even when confidence is low.
+When several identities fit the strokes, use the scenario and named class examples
+(excluding `UNKNOWN`) as hints. Respect clear drawings and allow ideas outside the
+examples. In Stages 1–3, classify the identified
 object using the stage's allowed classes; use `UNKNOWN` if none fits. Stage 4
 selects an otter reaction instead, with no object class. Ambiguity alone does
 not stop generation. Also classify mobility from the identified object: portable
@@ -244,10 +381,11 @@ implemented schema.
 
 The interpreted item is available before image editing starts. The bridge publishes
 cumulative item, reference-image, model, and preview updates; see the
-[public interface](#sketch-to-model-interface). The River and Dog encounters display
+[public interface](#sketch-to-model-interface). All five chapters display
 the early interpretation and reference image through their shared
 [generation overlay](../3d_game/DESKTOP_GENERATION.md#lifecycle-and-files).
-The final model preview is rendered locally.
+Game requests skip the PNG preview and render the GLB in Godot; standalone CLI
+runs render a local preview unless `--skip-preview` is supplied.
 
 For model/image defaults and overrides, see [Setup and run](#setup-and-run).
 For polling, artifacts, and retry behavior, see [Outputs and recovery](#outputs-and-recovery).
@@ -348,7 +486,7 @@ Texture experiments and their measured performance are retained in
 [Generated examples](GENERATED_EXAMPLES.md).
 
 `OPENAI_MODEL` configures interpretation in both this pipeline and the standalone
-narrative CLI. The standalone adapter's `MESHY_MODEL` setting does not override the
+interpretation CLI. The standalone adapter's `MESHY_MODEL` setting does not override the
 pipeline's T2 model.
 
 The image prompt preserves the sketch and description, asks for the whole object with
@@ -372,14 +510,15 @@ keys, preparation, provenance and verification limits.
 
 ## Current multi-stage request contract
 
-**The backend selects classes for Stages 1–3. Stage 4 selects an otter reaction without classifying the object. All four stages
-share the same generation pipeline. The game never supplies a class list.**
+**All five stages share the generation pipeline. The backend owns class sets:
+Stages 1–3 use encounter classes, Stage 4 returns an otter reaction without a
+class, and Stage 5 uses UNKNOWN. The game never supplies a class list.**
 
 ### Approved classes
 
 Stages 1–3 were confirmed on September 13, 2026. Stage 4 classification was removed on September 14. Class labels are case-sensitive.
-Each configuration entry also defines `stage_number` (1–4); the bridge uses this
-number to select the River or Dog fixture. Requests still send the named
+Each configuration entry also defines `stage_number` (1–5); the bridge uses this
+number to select the River or Dog fixture; Otter replay uses saved local results. Requests still send the named
 `game_stage`, which the backend resolves through this configuration.
 The executable source of truth is [`backend/stage_config.py`](../../backend/stage_config.py).
 
@@ -388,17 +527,18 @@ The executable source of truth is [`backend/stage_config.py`](../../backend/stag
 | 1 — River | `river` | `E01` | **`BRIDGE`, `BOAT`, `UNKNOWN`** |
 | 2 — Large Dog | `dog` | `E02` | **`FOOD`, `TOY`, `WEAPON`, `UNKNOWN`** |
 | 3 — Crows | `crows` | `E03` | **`BOW`, `MAGIC`, `DEFENCE`, `UNKNOWN`** |
-| 4 — Otter | `otter` | `E04` | No `type`; returns a `reaction` animation key |
+| 4 — Otter | `otter` | `E04` | No `type`; returns reaction, happiness, and reply |
+| 5 — Storykeeper | `storykeeper` | `E05` | **`UNKNOWN`** |
 
 These are separate allowed sets, not one combined enum. For example, `FOOD` is valid
 for Dog but invalid for Crows; `BOW` is valid for Crows but invalid for Dog. The AI
 must classify within the selected stage's categories. It must not borrow a category
-from another stage. The fifth-stage boss in the broader game specification has no
-backend classification configuration yet.
+from another stage. Stage 5 retains `UNKNOWN` for response compatibility; its
+separate Storykeeper evaluation decides the outcome, not this class.
 
 `UNKNOWN` means the identified or guessed object fits none of the stage's named
 categories. It has the usual item fields and continues through generation. Every
-classified stage (1–3) must include this fallback. Low confidence alone does not stop generation.
+classified stage (1–3 and 5) must include this fallback. Low confidence alone does not stop generation.
 
 ### Request and routing
 
@@ -407,20 +547,22 @@ game challenge; response `stage` describes pipeline progress. Their meanings are
 different. `game_stage` and `encounter_id` must match the table above.
 
 The persistent Python listener validates the request and queues its job. The selected
-class set for Stages 1–3 is passed through to OpenAI interpretation and checked in three places:
+class set for Stages 1–3 and 5 is passed through to OpenAI interpretation and checked in three places:
 
-1. The prompt lists the classes allowed for this game stage.
+1. The prompt presents named classes as examples, excluding UNKNOWN, and explains the fallback.
 2. The strict JSON schema sets `item.type.enum` to exactly that class set.
 3. Backend response validation rejects any type outside the selected set.
 
 Godot validates request/stage identity, field types, string lengths and file paths.
-It does not maintain a second classification enum. Changing backend class sets does
-not require adding the same class names to Godot.
+It does not maintain a second validation enum. New classes can pass the response
+interface, but supporting new solutions also requires changing Godot encounter logic.
 
 ### Shared generation and results
 
-The interpretation result contains only `name`, `description`, `type`, `movable`, `texture_key`, and `color` across
-all stages. Numeric stats and capability tags are not part of the item contract.
+Every item contains `name`, `description`, `movable`, `mass_kg`, `placement`,
+`texture_key`, and `color`. Stages 1–3 and 5 also require `type`. Stage 4 adds
+reaction/happiness/reply fields outside the item. Combat stats and capability tags
+are not part of the contract.
 
 As each result becomes available, the worker appends a cumulative record to
 `response/results.jsonl` and atomically updates `status.json`. Results include local paths:
@@ -438,32 +580,38 @@ status file and records `pool_checked` and `pool_return_code`. Provider credenti
 signed download URLs and raw provider errors are excluded from these game-facing logs.
 
 Godot polls every 0.2 seconds. Item and reference-image signals can arrive before
-completion. `SUCCEEDED` is published after the GLB and preview step; preview failure
-still delivers the GLB with `preview_error`. See [desktop integration](../3d_game/DESKTOP_GENERATION.md)
+completion. Live game requests publish `SUCCEEDED` after the GLB download and skip
+the preview. Standalone CLI runs and River/Dog fixtures render a preview; its failure
+still delivers the GLB with `preview_error`. Otter replay copies saved model/reference assets. See [desktop integration](../3d_game/DESKTOP_GENERATION.md)
 for worker lifetime, cancellation and scene integration.
 
 ### Classification is not challenge completion
 
 Being a valid class does not guarantee that an object solves the challenge. Gameplay
 rules are evaluated separately in Godot. River currently accepts `type: BRIDGE`
-with `movable: false`
+with `placement: fixed`
 for its fixed crossing, with placement committed once per encounter. Recognizing `BOAT` does not
 implement boat movement. Stage 2 renders every returned class, but only FOOD and
 TOY distract the dog and unlock the path. Other classes permit another sketch; submitting
-replaces the previous object. Later-stage success rules remain design work.
+replaces the previous object. Stage 4 applies offering happiness after model
+placement; Stage 5 uses the story service mood/ending rules.
 
 Stage 3 adds backend-owned meanings for its classification step: an identified
 ordinary umbrella, parasol, shield, helmet or protective cover belongs to DEFENCE,
 including protection from weather or animals. The model still identifies the
-actual sketch first; stage context must not change that identity to solve the level.
+sketch using its visual evidence, with scenario context helping resolve ambiguity.
+River requires a fixed BRIDGE and Dog accepts FOOD or TOY. Bird accepts DEFENCE
+through raised protection, or BOW and MAGIC through a scare-away departure.
+UNKNOWN still allows a retry without clearing the path.
 This addresses the September 13 #59 playtest, where generated umbrellas were
 classified UNKNOWN. Offline request tests verify the guidance is sent only for
 Stage 3; new live classification accuracy has not been measured.
 
 ### Changing a class set
 
-Edit only the stage's `classes` tuple in `backend/stage_config.py`, update this table
-and the relevant specification section, then run:
+Edit the stage's `classes` tuple in `backend/stage_config.py`, update this table
+and the relevant specification section. Review scenario hints and Godot encounter
+logic if the new class should solve the challenge, then run:
 
 ```sh
 backend/.venv/bin/python -m unittest discover -s backend/tests -v
@@ -482,23 +630,26 @@ fails with `FIXTURE_NOT_AVAILABLE`. No paid generation is automatically retried.
 
 ### Item validation
 
-Stages 1–3 return exactly `{ "item": { ... } }`. Stage 4 returns
-`{ "item": { ... }, "reaction": "Shrug" }`, omitting `item.type`. The reaction
-must be an exact key from the supplied animation options. Both forms omit
+Stages 1–3 and 5 return exactly `{ "item": { ... } }`. Stage 4 returns
+`{ "item": { ... }, "reaction": "Shrug", "otter_happy": false, "otter_response": "That is a curious gift!" }`,
+omitting `item.type`. The reaction must be an exact catalog key; happiness is a
+boolean and the reply is nonblank, at most 160 characters. Both forms omit
 `status` and require a non-null item; additional properties are rejected:
 
 | Field | Validation |
 |---|---|
 | `name` | Nonempty string, at most 40 characters |
 | `description` | String, at most 160 characters |
-| `type` | Stages 1–3 only: one class allowed by the selected stage; absent in Stage 4 |
+| `type` | Stages 1–3: one allowed class; Stage 5: UNKNOWN; absent in Stage 4 |
+| `mass_kg` | Number from 0.05 to 1000; booleans and nonfinite values rejected |
+| `placement` | One of `drop`, `fixed`, `float` |
 | `movable` | Boolean: `true` for loose/portable objects, `false` for fixed structures |
 | `texture_key` | One key from the shared 15-material palette |
 | `color` | Opaque hex tint matching `^#[0-9A-Fa-f]{6}$` |
 
 `attack_power`, `range`, `speed`, `durability`, and `tags` are removed from the
-schema and are no longer requested from OpenAI. The game validates the same
-six-field object for Stages 1–3 and five-field object for Stage 4. Saved historical results may contain the old fields; the
+schema and are no longer requested from OpenAI. The backend requires eight item fields in Stages 1–3 and 5, seven in Stage 4.
+Godot retains compatibility defaults for older mass/placement responses. Saved historical results may contain the old fields; the
 fixture adapter projects its retained sample onto the current contract.
 
 The standalone interpretation CLI adds `schema_version: 2` and `request_id` to the
@@ -579,7 +730,7 @@ blindly rerunning. `SUBMISSION_UNKNOWN` indicates an uncertain paid submission.
 
 ## Local model preview
 
-After saving the GLB, the pipeline renders `model.png` beside it using the
+In standalone CLI runs without `--skip-preview`, the pipeline renders `model.png` beside it using the
 standard-library CPU renderer in `backend/utils/render.py`. This is a
 clay-shaded view of the actual static geometry, with automatic framing and a light
 background; it does not reproduce textures or the game scene. No AI call, GPU,
@@ -604,10 +755,10 @@ morph targets, sparse accessors and required extensions are unsupported.
 backend/.venv/bin/python -m unittest discover -s backend/tests -v
 ```
 
-The offline suite contains 20 focused tests covering the interpretation contract,
-image editing, model jobs/downloads, game handoff, failure propagation, credential
-transport, sample routing, profiling, and preview rendering. Per-stage duplicate
-checks and peripheral edge-case tests have been removed. Stage sample images remain
+Latest local verification (September 17): **82 offline tests passed**, covering
+interpretation, image editing, model jobs/downloads, game handoff, web sessions,
+narrator state and evidence, speech, credentials, routing, profiling, and previews.
+This does not verify provider output quality or a complete hosted playthrough. Stage sample images remain
 under `backend/tests/stage1/` through `stage4/` for the manual runner below.
 
 Run only the pipeline checks during focused flow work:
@@ -644,7 +795,7 @@ and backend stage classes, retaining the original image and results under ignore
 `backend/output/sketch_to_model/<run-id>/`. This manual runner is excluded from
 unittest discovery; automated routing tests mock its pipeline calls.
 
-Latest palette verification: the 20-test offline backend suite and desktop-generation
+Historical palette verification (September 13): the then-20-test offline backend suite and desktop-generation
 smoke passed. Godot reported two ObjectDB instances at desktop-test shutdown.
 Saved Stage 2 material replays and the UNKNOWN flower render/retry check passed.
 The broader dog smoke has patrol and sketch-placement failures; it is not a passing
@@ -842,8 +993,8 @@ The second image is for interpretation context. Its use by the later image-edit
 step is a separate design decision. The current backend accepts one image only.
 The OpenAI API supports multiple image inputs; see [official image-input documentation](https://developers.openai.com/api/docs/guides/images-vision).
 
-Remaining integration work includes hosted Web execution/desktop packaging,
-later-stage gameplay rules, and validating the 15-second end-to-end latency target
+Remaining work includes full hosted playthrough verification, desktop packaging,
+additional solution routes, and validating the 15-second end-to-end latency target
 with the current prompts. See the shared specification for game-wide open work.
 
 ## Historical benchmarks
@@ -865,8 +1016,9 @@ The retained reports and artifacts are in [Generated examples](GENERATED_EXAMPLE
 
 ## Narrator and speech
 
-Tickets #63 and #66 add a separate local desktop service. The `Narrator` Godot
+The story service supports desktop and web. On desktop, the `Narrator` Godot
 autoload starts `backend/narrator_agent/run.py --serve <mailbox> --parent-pid <pid>`.
+Web clients reach the same service through the HTTP adapter on Render.
 It retains one journal across scene changes. This does not use OpenAI's hosted
 Agents UI: the game owns state and the Python service makes stateless Responses
 calls with strict JSON output. Fixed opening/guidance lines use no model call. Contextual reactions in Stages 1–4 use one performer call; Stage 5 dialogue
@@ -902,7 +1054,10 @@ voice is configured locally. Otter has an independent voice slot and deliberatel
 has no narrator fallback; Stage 4 player dialogue uses the otter prompt and voice. Music is owned
 by the teammate's existing implementation. This feature does not call music generation.
 
-Speech is generated only from a saved narrator utterance, capped at 600 characters.
+Speech is generated only from a saved utterance. Model dialogue is validated at
+600 characters; the speech adapter accepts up to 1,200 for authored/card readings.
+Internal event-ID citations are stripped from generated reply text before it is
+saved for captions and speech; evidence IDs remain in the separate evidence array.
 `POST /v1/text-to-speech/{voice}` returns MP3; cache identity includes text, speaker
 voice, model and settings. Interactive cache storage is per journey. Fixed authored speech uses a shared
 `backend/output/narrator_agent/_authored_speech/` cache across journeys and is copied
@@ -949,6 +1104,7 @@ and the current `revision`. No keys or provider-selected URLs are accepted.
 | `event` | Whitelisted type, stage and bounded payload; appends verified game evidence |
 | `guide` | Current authored `guidance_changed` event text; returns a fixed chapter introduction or direction without a model call |
 | `respond` | Text up to 2,000 characters, optional PNG/JPEG Base64 up to 1 MiB; returns validated decision, utterance and current state |
+| `read_drawing` | Drawing request ID with a recorded interpretation; creates a narrator reading without another language-model call; duplicate readings are skipped |
 | `presented` | A saved utterance ID; records what was actually shown |
 | `transcribe` | Chapters 4/5 only, at most 20 seconds of mono 16 kHz PCM WAV as Base64; returns an editable transcript without invoking dialogue or changing mood |
 | `voice` | A saved utterance ID; returns a local MP3 path, or Base64 in the bench |
@@ -976,7 +1132,9 @@ Private files live at `backend/output/narrator_agent/<run_id>/`: `story.json`,
 submitted drawings, checkpoint files and `speech/`. A checkpoint covers the narrator,
 not a full Godot world save. The journal survives backend restarts; starting a new
 game creates a new run. The bench can restore a checkpoint into a branch. There is
-no user account, cloud synchronization, or browser-hosted backend in this delivery.
+no user account or cross-device synchronization. Web journals live under the
+service data directory and are session-scoped. The current Render configuration
+uses ephemeral storage; see [Web deployment](../3d_game/WEB_DEPLOYMENT.md).
 
 ### Validation on September 14
 
@@ -1050,15 +1208,14 @@ Stage 4 interpretation requires top-level `item`, `reaction`, `otter_happy` and
 English reply from the otter, at most 160 characters, explaining why the offering
 does or does not cheer it up. These fields accompany the early interpretation and
 survive the cumulative game-bridge snapshots through successful completion.
-Other stages keep their existing item-only interpretation contract. This supersedes
-the earlier two-field Stage 4 examples above. No additional provider call is added.
+Other stages keep their existing item-only interpretation contract. The contract and examples above include these fields. No additional provider call is added.
 The game applies happiness only after successful model placement for the active
 request; positive feedback persists for the current scene visit.
 
 
 ### Preview rendering during gameplay
 
-Live desktop game requests pass `--skip-preview` to the sketch-to-model pipeline.
+Live desktop and web game requests pass `--skip-preview` to the sketch-to-model pipeline.
 They complete immediately after the GLB download, omitting the local PNG render,
 `preview` stage, and `preview_path`/`preview_error` fields. The game renders the GLB
 itself. Reference-image generation is still required and is unchanged.
@@ -1091,3 +1248,29 @@ Only fixed BRIDGE objects become the authored crossing. Older responses infer
 existing boss drawing dialogue. Its item class is `UNKNOWN`: generation identifies
 the object, material, mass and placement, while the narrator remains responsible
 for boss mood and completion. No Stage 5 offline fixture is configured.
+
+
+### Contextual drawing interpretation (September 17)
+
+The shared interpretation prompt and sketch pipeline now allow creative guesses
+informed by the scenario when strokes are ambiguous. Named classes are nonexclusive
+idea examples, with UNKNOWN excluded from examples and retained as the schema fallback.
+Dog hints include food and toys; Bird hints include protective items and imagined
+ranged deterrents; BOW and MAGIC now trigger a scare-away departure. The storybook otter
+prefers fish/shellfish but can also appreciate toys and other thoughtful offerings.
+Stage 4 still omits type and returns its reaction and happiness decision. Physical
+properties stay based on the inferred object. Offline request tests verify prompt
+assembly and unchanged response contracts; no live recognition-quality claim is made.
+
+### September 17: concise, imaginative interpretation
+
+The shared interpretation prompt welcomes wild, magical, and hybrid objects with a
+common-sense connection to the sketch and scene. It can complete missing details;
+scenario examples inspire guesses rather than limit them to ordinary objects.
+The pipeline adds only a short description/reconstruction note. Stage hints retain
+river crossings, dog food/toys, bird protection or deterrents, otter fish/shellfish
+and thoughtful gifts, and the Storykeeper's fear of endings.
+
+Required schemas, physical fields, material choices, and otter reaction keys remain
+unchanged. Offline tests check request composition and validation; creative quality
+still needs live drawing playtests.

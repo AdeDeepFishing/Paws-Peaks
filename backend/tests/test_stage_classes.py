@@ -41,14 +41,53 @@ class StageClassTests(unittest.TestCase):
         with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response(value)).encode())) as http:
             self.assertEqual(run.interpret('image', CONFIG, game_stage='crows'), value)
         prompt = json.loads(http.call_args.args[0].data)['input'][0]['content']
-        context = prompt.split('Classification context for step 2 only:', 1)[1]
+        context = prompt.split('Scenario context:', 1)[1]
         self.assertIn('ordinary umbrella', context)
         self.assertIn('shield', context)
         self.assertIn('DEFENCE', context)
-        self.assertIn("Do not change its", prompt)
+        self.assertIn("Preserve a clear subject", prompt)
         self.assertIn(run.PALETTE_PROMPT, prompt)
         http.assert_called_once()
-        # This meaning is stage-specific; it must not steer river identification.
+        # Bird examples must not leak into the river scenario.
         with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response({'item': ITEM})).encode())) as river_http:
             run.interpret('image', CONFIG, game_stage='river')
         self.assertNotIn('ordinary umbrella', json.loads(river_http.call_args.args[0].data)['input'][0]['content'])
+
+
+    def test_contextual_examples_exclude_fallback_but_keep_required_classes(self):
+        for stage, kind, hint in [('river', 'BRIDGE', 'cross a river'),
+                                  ('dog', 'FOOD', 'food or a toy'),
+                                  ('crows', 'BOW', 'scare it from a distance'),
+                                  ('storykeeper', 'UNKNOWN', 'fears the adventure ending')]:
+            value = {'item': {**ITEM, 'type': kind}}
+            with self.subTest(stage=stage), patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response(value)).encode())) as http:
+                run.interpret('image', CONFIG, game_stage=stage)
+                payload = json.loads(http.call_args.args[0].data)
+                prompt = payload['input'][0]['content']
+                self.assertIn(hint, prompt)
+                self.assertNotIn("Do not let the game", prompt)
+                examples = [line for line in prompt.splitlines() if line.startswith('Example idea families')]
+                self.assertEqual(len(examples), 0 if stage == 'storykeeper' else 1)
+                if examples:
+                    self.assertNotIn('UNKNOWN', examples[0])
+                self.assertIn('UNKNOWN', payload['text']['format']['schema']['properties']['item']['properties']['type']['enum'])
+                http.assert_called_once()
+
+    def test_pipeline_prompt_keeps_contextual_guessing_and_otter_preferences(self):
+        from interpret.prompts import SKETCH_PROMPT
+        value = {'item': {key: item for key, item in ITEM.items() if key != 'type'},
+                 'reaction': 'Cheer_with_Both_Hands', 'otter_happy': True,
+                 'otter_response': 'A thoughtful gift!'}
+        with patch.object(run, 'urlopen', return_value=io.BytesIO(json.dumps(provider_response(value)).encode())) as http:
+            run.interpret('image', CONFIG, prompt=SKETCH_PROMPT, game_stage='otter')
+        payload = json.loads(http.call_args.args[0].data)
+        prompt = payload['input'][0]['content']
+        self.assertIn('fish and shellfish', prompt)
+        self.assertIn('toys and other thoughtful gifts', prompt)
+        self.assertIn('scenario as a hint', prompt)
+        self.assertIn('wild, whimsical, magical, or hybrid objects', prompt)
+        self.assertNotIn('reasonably common object', prompt)
+        self.assertNotIn('Example idea families', prompt)
+        self.assertNotIn('item.type', prompt)
+        self.assertNotIn('type', payload['text']['format']['schema']['properties']['item']['properties'])
+        self.assertIn('reaction', payload['text']['format']['schema']['required'])

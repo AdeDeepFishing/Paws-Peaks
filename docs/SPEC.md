@@ -1285,3 +1285,17 @@ and the separate browser-backend hosting requirement.
 
 September 15 title update: the confirmed game name is **The Tale We Drew**. The
 map/cover title, chapter labels and application/window name use this spelling.
+
+
+## September 17: Contextual drawing guesses
+
+Allow scenario context to guide creative interpretation of ambiguous sketches,
+using named stage classes as example ideas and excluding UNKNOWN from those examples.
+This supersedes the earlier instruction to ignore context during identification.
+Preserve clear subjects while allowing wild, magical, or hybrid interpretations and
+inferred details that make common sense in the scene. Examples are not exhaustive
+or guaranteed solutions. Keep Stage 1–2 classification gates and Stage 4's class-free otter
+reaction contract. Stage 3 now accepts BOW and MAGIC as scare-away solutions in
+addition to DEFENCE's raised protection. Deterrents stay where placed while the
+bird departs; the exit opens only after departure. UNKNOWN does not clear the path.
+This supersedes the earlier protection-only Stage 3 rule.

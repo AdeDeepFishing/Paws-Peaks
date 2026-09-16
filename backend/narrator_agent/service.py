@@ -23,6 +23,15 @@ def identifier(value):
 def require(ok, code="INVALID_REQUEST"):
     if not ok: raise AppError(code, "The request no longer matches the current story. Please try again.")
 
+def spoken_text(text):
+    """Remove internal journal citations before saving captions or synthesizing speech."""
+    event_id = r"\b[0-9a-fA-F]{32}\b"
+    text = re.sub(r"\[\s*" + event_id + r"(?:[\s,;]+" + event_id + r")*\s*\]", "", text)
+    text = re.sub(event_id, "", text)
+    text = re.sub(r"[ \t]+([.,!?;:])", r"\1", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 class Service:
     def __init__(self, directory, config, caller=model.call):
         self.directory = Path(directory)
@@ -290,6 +299,8 @@ class Service:
                 elif actor["emotion"] == "angry": actor["emotion"] = "hesitant"
             require(set(actor["evidence"]) <= evidence_ids and actor["emotion"] in model.EMOTIONS, "INVALID_MODEL_OUTPUT")
             require(isinstance(actor["text"], str) and 0 < len(actor["text"]) <= 600, "INVALID_MODEL_OUTPUT")
+            actor["text"] = spoken_text(actor["text"])
+            require(bool(actor["text"]), "INVALID_MODEL_OUTPUT")
             if guidance and context["input"]["trigger"] != "dialogue":
                 # Preserve exact direction and action even when the performer paraphrases.
                 if guidance not in actor["text"]:
