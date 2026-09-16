@@ -110,7 +110,7 @@ func _on_request_state(state: String) -> void:
 	match state:
 		"PENDING":
 			otter.wait_for_drawing(sketch_anchor)
-			status.text = "Preparing your drawing for the otter…"
+			status.text = "(Preparing your drawing for the otter…)"
 		"FAILED":
 			otter.stop_waiting()
 			status.text = request.message + " Try another drawing."

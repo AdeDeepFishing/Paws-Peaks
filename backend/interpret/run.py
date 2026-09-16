@@ -18,7 +18,7 @@ from utils.common import AppError, MAX_IMAGE_BYTES, ROOT, image_input, load_conf
 from utils.common import provider_urlopen as urlopen
 from utils.profiling import Profiler, measure, metric
 
-from stage_config import STAGES, classes_for
+from stage_config import STAGES, SCENARIO_HINTS, classes_for
 from material_palette import KEYS as TEXTURE_KEYS, PROMPT as PALETTE_PROMPT
 
 API_URL = "https://api.openai.com/v1/responses"
@@ -41,38 +41,32 @@ SCHEMA = {
                  "required": list(ITEM_PROPERTIES), "properties": ITEM_PROPERTIES},
     },
 }
-PROMPT = """Interpret the main object in this image for Paws & Peaks, a warm storybook game.
-Accept rough sketches. First identify the object before making any game decisions:
-1. Identify the object from its visible strokes, silhouette, proportions, and parts.
-Make a best-effort guess of a reasonably common object even when confidence is low.
-Choose the most plausible common object suggested by the image. Do not let the game
-context influence the object's identity.
-Also decide whether the identified object is movable: true for portable or loose
-objects such as food, toys, tools, or a freestanding chair; false for fixed structures
-such as a bridge or building. Base this on the object itself, not the game context.
-Estimate mass_kg in kilograms from the object identity, apparent size, and material.
-Use a plausible physical mass between 0.05 and 1000; clamp extreme estimates to these
-limits. For example, a bone is lighter than a chair, and a stone is heavier than a
-similarly sized plush toy. Do not change the estimate to solve the challenge.
-Choose placement based on the object: drop for loose objects that fall and settle
-(e.g. bones, stones, toys); fixed for ground-attached objects (e.g. trees, bridges,
-buildings); float for objects naturally suspended in air (e.g. clouds or balloons).
-This controls initial placement, before any scripted pickup or equipment action.
-Choose one texture_key from the material palette for the object's dominant material.
-Choose the closest suitable material from the palette.
-Choose color as an opaque #RRGGBB hex tint suitable for the identified object.
-Prefer warm, muted storybook colors. The saved textures are neutral grayscale; material
-and color are independent. Do not put color names or file paths in texture_key.
-Always return an item; do not return an uncertainty status or a null item.
-Write a short English name. In description, write one complete English sentence naming the object and its possible usefulness.
-Aim for 80-120 characters and never exceed 160. Shorten the wording to finish the sentence; never cut off a word or phrase.
-Describe a potential use, without claiming the player has already used it or solved the challenge.
+PROMPT = """Imagine the object behind this rough drawing for The Tale We Drew, a warm storybook game.
+Use the shapes as a starting point and the scenario as a hint. Be generous and creative:
+wild, whimsical, magical, or hybrid objects are welcome when their form and possible use
+make common sense in the story. Fill in missing details and complete cropped sketches.
+Examples are inspiration, not a menu. Preserve a clear subject, but let ambiguity invite
+imagination. Return your best concrete guess even when uncertain, consistently across fields.
+
+Return the schema's item fields:
+- name: a short English name.
+- description: one complete English sentence naming the object and how it might help,
+  at most 160 characters. Describe its potential, leaving the actual outcome to gameplay.
+- movable: true for portable or loose objects (food, toys, tools, a chair);
+  false for attached structures (a bridge or building).
+- mass_kg: a plausible mass for your imagined object, size, and material, from 0.05 to
+  1000 kg. A bone is lighter than a chair; stone is heavier than similarly sized plush.
+- placement: drop for loose objects such as bones, stones, and toys; fixed for attached
+  trees, bridges, and buildings; float for airborne clouds or balloons. This is initial
+  placement before any scripted pickup.
+- texture_key: the palette key closest to its dominant material.
+- color: an opaque #RRGGBB tint, preferably warm and muted. Palette textures are neutral
+  grayscale, so material and color are independent.
 """
 
 
-CLASSIFICATION_PROMPT = """2. Only after identifying the object, classify that object using the allowed classes.
-Use UNKNOWN if the identified object does not fit any named class. Do not change its
-identity to fit a class or solve the challenge.
+CLASSIFICATION_PROMPT = """Set item.type to the closest schema class after imagining the object.
+Use UNKNOWN if none fits; it is a fallback label, not an idea or a generation failure.
 """
 
 
@@ -154,26 +148,25 @@ def parse_response(response, game_stage="river", animation_options=None):
 def interpret(image, config, prompt=PROMPT, game_stage="river", animation_options=None):
     """Make one synchronous provider call in the backend worker."""
     allowed_types = classes_for(game_stage)
+    prompt += "\nScenario context: " + SCENARIO_HINTS[game_stage]
+    examples = [name for name in allowed_types if name != "UNKNOWN"]
+    if examples:
+        prompt += ("\nExample idea families for this problem (not exhaustive): "
+                   + ", ".join(examples) + ".")
     if game_stage != "otter":
         if "UNKNOWN" not in allowed_types:
             raise AppError("CONFIG_ERROR", "Stage classes must include UNKNOWN for unmatched objects.")
         prompt += "\n" + CLASSIFICATION_PROMPT
-        prompt += ("\nClassification context for step 2 only: game stage " + game_stage
-                   + ". Allowed item classes: " + ", ".join(allowed_types)
-                   + ". Use UNKNOWN if no named class fits the object identified in step 1.")
     guidance = STAGES[game_stage].get("classification_guidance", "")
     if guidance:
         prompt += "\n" + guidance
     if game_stage == "otter":
         animation_options = reaction_options(animation_options)
-        prompt += ("\n2. After identifying the object, choose one suitable reaction for the otter "
-                   "as if it has just received that offering. The otter is sad and the player wants to cheer it up. "
-                   "Decide whether this particular offering would make it happy; do not automatically approve every object. "
-                   "Return otter_happy as a boolean and otter_response as a short, warm English reply from the otter "
-                   "explaining why the offering does or does not cheer it up (maximum 160 characters). "
-                   "Choose a reaction consistent with this decision. Use the animation descriptions below. "
-                   "Return the exact animation key in the top-level reaction field. "
-                   "Do not change the object to fit an animation. Stage 4 does not classify objects; omit type.\n"
+        prompt += ("\nRespond as the sad otter receiving this gift. Consider playful and unexpected reasons "
+                   "it might delight the otter, and decide honestly whether it cheers it up. "
+                   "Return otter_happy, a warm English otter_response explaining its reaction "
+                   "(at most 160 characters), and a matching reaction key from the animation catalog below. "
+                   "Stage 4 has no item classification.\n"
                    + json.dumps(animation_options, ensure_ascii=False))
     prompt += "\n" + PALETTE_PROMPT
     key = config["OPENAI_API_KEY"]

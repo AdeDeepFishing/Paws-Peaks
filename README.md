@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img src="3d_game/icon.png" alt="The Tale We Drew game icon" width="160" height="160">
 </p>
 
@@ -113,6 +113,8 @@ backend. See the [Web deployment guide](docs/3d_game/WEB_DEPLOYMENT.md) for setu
 ## Project documentation
 
 - [Game specification](docs/SPEC.md)
+- [AI architecture diagrams](docs/backend/BACKEND.md#ai-architecture)
+- [AI prompts: drawing, chat, and voice](docs/backend/AI_PROMPTS.md)
 - [Backend setup and API contracts](docs/backend/BACKEND.md)
 - [Web deployment](docs/3d_game/WEB_DEPLOYMENT.md)
 - [Narration and dialogue](docs/3d_game/NARRATOR_AGENT.md)

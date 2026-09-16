@@ -121,6 +121,15 @@ func protect(top: float) -> bool:
 	_enter("blocked")
 	return true
 
+func scare_away() -> bool:
+	if phase in ["blocked", "departing", "cleared"]: return false
+	level.player.visual.cancel_action()
+	dodge = 0.0
+	level.player.visual.set_avoidance(0.0)
+	visual.show()
+	_enter("departing")
+	return true
+
 func _enter(next: String) -> void:
 	phase = next
 	if next == "swooping": hit_this_swoop = false

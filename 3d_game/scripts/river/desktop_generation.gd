@@ -75,7 +75,7 @@ func _start(payload: Dictionary) -> void:
 	if DirAccess.rename_absolute(request_dir.path_join("request.tmp"), request_dir.path_join("request.json")) != OK:
 		fail("Could not submit the generation request.")
 		return
-	progress_changed.emit("Starting generation..." if mode == 2 else "Loading the offline sample model...")
+	progress_changed.emit("(Starting generation...)" if mode == 2 else "(Loading the offline sample model...)")
 
 func _active(id: String) -> bool:
 	return not finished and request.state == "PENDING" and request.active_id == id and request_id == id
@@ -124,8 +124,8 @@ func consume_status(status: Dictionary) -> void:
 	var stage: String = str(status.get("stage", ""))
 	if stage != last_stage:
 		last_stage = stage
-		var messages := {"starting": "Starting generation...", "description": "Understanding your drawing...", "reference_image": "Creating the reference image...", "model": "Building the 3D model...", "preview": "Rendering your model preview...", "complete": "Placing your model..."}
-		progress_changed.emit(messages.get(stage, "Generating your object..."))
+		var messages := {"starting": "(Starting generation...)", "description": "(Understanding your drawing...)", "reference_image": "(Creating the reference image...)", "model": "(Building the 3D model...)", "preview": "(Rendering your model preview...)", "complete": "(Placing your model...)"}
+		progress_changed.emit(messages.get(stage, "(Generating your object...)"))
 	if not _active(str(status.get("request_id", ""))):
 		return
 	# Cumulative snapshots retain early results even if polling skips a stage.

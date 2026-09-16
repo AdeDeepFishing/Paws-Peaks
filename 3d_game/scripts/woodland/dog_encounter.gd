@@ -145,7 +145,7 @@ func _on_request_state(state: String) -> void:
 	match state:
 		"PENDING":
 			_clear_presentation()
-			status.text = "Preparing your drawing. You can keep exploring."
+			status.text = "(Preparing your drawing. You can keep exploring.)"
 		"IDLE":
 			sketch_request_id = ""
 			_clear_presentation()

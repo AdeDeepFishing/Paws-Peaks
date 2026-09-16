@@ -49,19 +49,20 @@ func _ready() -> void:
 	_place_on_sand.call_deferred()
 
 func _place_on_sand() -> void:
-	await get_tree().physics_frame
 	var query := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 20, global_position + Vector3.DOWN * 20, 1)
 	query.exclude = [player.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
-		push_error("Otter greeting position needs solid ground")
 		return
 	global_position.y = hit.position.y
 	grounded = true
 	_face_target(player.global_position, 1.0)
 
 func _physics_process(delta: float) -> void:
-	if not grounded: return
+	# Imported terrain can register after the first placement attempt.
+	if not grounded:
+		_place_on_sand()
+		if not grounded: return
 	_face_target(waiting_target if phase == "waiting" else player.global_position, 1.0 - exp(-delta * 6.0))
 	var distance := Vector2(player.global_position.x - global_position.x, player.global_position.z - global_position.z).length()
 	if phase == "reacting":

@@ -27,7 +27,6 @@ var comment_due := false
 var last_utterance := ""
 var audio: AudioStreamPlayer
 var last_error := ""
-var caption_deadline := 0
 var checkpoint := ""
 var scripted_narration := false
 var guidance_text := ""
@@ -72,6 +71,8 @@ func _scene_changed() -> void:
 	chapter = get_node("/root/Journey").stage_for_scene(scene.scene_file_path) if scene else 0
 	comment_due = false
 	if chapter == 0: return
+	panel._show_line("Narrator", "")
+	panel.last_status = ""
 	if enabled:
 		_ensure_worker()
 		if state.is_empty() and not _has_op("new"): _enqueue({"op": "new"})
@@ -192,9 +193,6 @@ func _process(delta: float) -> void:
 		var current_guidance := _current_guidance()
 		if is_instance_valid(guidance_status) and not current_guidance.is_empty():
 			guidance_status.hide()
-	if caption_deadline > 0 and Time.get_ticks_msec() > caption_deadline and not audio.playing and not panel.opened and panel.reveal_text.is_empty():
-		panel.hide_caption()
-		caption_deadline = 0
 	poll += delta
 	if poll < 0.15: return
 	poll = 0.0
@@ -294,7 +292,6 @@ func _consume(request: Dictionary, response: Dictionary) -> void:
 				return
 		guidance_due = false
 		panel.present(response.utterance, request.get("trigger") != "event")
-		caption_deadline = Time.get_ticks_msec() + maxi(12000, str(response.utterance.text).length() * 65)
 		reply_ready.emit(response)
 		_enqueue({"op": "presented", "utterance_id": request.input_id})
 		if voice_enabled: _enqueue({"op": "voice", "utterance_id": request.input_id})

@@ -8,7 +8,7 @@ var caption: PanelContainer
 var caption_text: Label
 var speaker_label: Label
 var thinking: Control
-var thinking_dots: Array[Label] = []
+var thinking_dots: Array[Control] = []
 var thinking_time := 0.0
 var surface: Control
 var canvas_panel: Control
@@ -71,8 +71,17 @@ func _ready() -> void:
 	thinking = Control.new()
 	stack.add_child(thinking)
 	thinking.position = Vector2(185, 112)
+	# Draw the dots as shapes so they do not depend on font glyph coverage.
+	var dot_style := StyleBoxFlat.new()
+	dot_style.bg_color = INK
+	dot_style.set_corner_radius_all(4)
+	dot_style.anti_aliasing = true
 	for i in 3:
-		var dot := _label(thinking, "●", 15)
+		var dot := Panel.new()
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dot.size = Vector2(8, 8)
+		dot.add_theme_stylebox_override("panel", dot_style)
+		thinking.add_child(dot)
 		dot.position = Vector2(i*18,4)
 		thinking_dots.append(dot)
 	thinking.hide()
@@ -234,7 +243,7 @@ func speech_finished() -> void:
 	if revealing_boss: return
 	if not mic.recording and not busy:
 		close_dialogue()
-		if not confirmation.visible: caption.hide()
+		# Keep the latest narrator/NPC line readable after its voice finishes.
 
 func _process(delta: float) -> void:
 	_update_tools()

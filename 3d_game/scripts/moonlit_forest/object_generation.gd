@@ -37,7 +37,7 @@ func submit(png: PackedByteArray) -> bool:
 
 func _on_state(state: String) -> void:
 	match state:
-		"PENDING": level.status.text = "Creating your drawing while the Storykeeper considers it…"
+		"PENDING": level.status.text = "(Creating your drawing while the Storykeeper considers it…)"
 		"FAILED": level.status.text = request.message + " Your sketch is safe; try again."
 		"IDLE": level.status.text = "Stopped generating the object. Your sketch is safe."
 		"READY":

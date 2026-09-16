@@ -171,7 +171,7 @@ func _submit() -> void:
 func _on_request_state(state: String) -> void:
 	match state:
 		"PENDING":
-			status_label.text = "Creating your idea... Explore while you wait."
+			status_label.text = "(Creating your idea... Explore while you wait.)"
 		"READY":
 			_finish_generation(request.active_id)
 		"FAILED":

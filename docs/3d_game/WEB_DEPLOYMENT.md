@@ -50,9 +50,11 @@ retry a failed session connection; it does not automatically resubmit paid jobs.
 7. Deploy. Verify `https://YOUR-SERVICE.onrender.com/health` returns
    `{"ready": true}`. This health check makes no provider calls.
 
-The Docker image includes backend code and the shared material palette JSON.
+The Docker image includes backend code, the shared material palette JSON, and
+the otter animation catalog JSON required before Stage 4 interpretation.
 `.dockerignore` excludes credentials, local environments, output jobs, and all
-other game assets. A build-time server import checks startup dependencies. Data is stored temporarily under `/data/web`.
+other game assets. Build-time checks import the server and prepare the Stage 4 interpretation schema
+to catch a missing animation catalog before deployment. Data is stored temporarily under `/data/web`.
 
 ## 2. Connect the existing Vercel project
 

@@ -62,8 +62,7 @@ func run():
 	check(is_equal_approx(level.bird.visual.get_child(0).scale.x, 2.8), "Bird is 30 percent smaller than the previous giant")
 	check(level.bird.animators.size() == 1, "One bird uses the delivered flapping clip")
 	check(await wait_for(func(): return level.bird.phase == "swooping", 9.0), "Bird arrives, circles, then swoops")
-	await frames(65)
-	check(level.player.visual.action == "knockdown", "Bird contact starts the delivered knockdown without health damage")
+	check(await wait_for(func(): return level.player.visual.action == "knockdown", 2.0), "Bird contact starts the delivered knockdown without health damage")
 	await capture("dodge")
 	level._open_drawing()
 	var stopped: Vector3 = level.bird.visual.position
@@ -142,10 +141,6 @@ func run():
 	check(await wait_for(func(): return not level.entering, 8), "Saved-model scene finishes its entrance")
 	check_submission_fallback(level)
 	level.request.mock_delay = 30.0
-	for kind in ["BOW", "MAGIC"]:
-		draw(level, 0)
-		level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Unsupported idea", "description":"Use protection instead.", "type":kind, "movable":true, "texture_key":"fabric", "color":"#D6B886"}})
-		check(level.request.state == "FAILED" and not level.can_exit(), "Unsupported class gives a retry: " + kind)
 	# Missing model is recoverable and never substitutes a mock in live mode.
 	draw(level, 0)
 	check(level.generation.mode == 0, "Saved-model test never starts the backend")
@@ -168,6 +163,21 @@ func run():
 	level.queue_free()
 	current_scene = null
 	await frames(3)
+	# Recognized deterrents complete the real reveal/departure flow without a worker.
+	for kind in ["BOW", "MAGIC"]:
+		level = fresh()
+		check(await wait_for(func(): return not level.entering, 8), "Deterrent scene entrance")
+		level.request.mock_delay = 30.0
+		draw(level, 0)
+		level.request.accept_response({"schema_version":2, "request_id":level.request.active_id, "status":"recognized", "item":{"name":"Deterrent fixture", "description":"Scares the bird away.", "type":kind, "movable":true, "texture_key":"fabric", "color":"#D6B886"}})
+		check(level.request.state == "READY" and not level.can_exit(), "Recognized deterrent waits for reveal: " + kind)
+		check(await wait_for(func(): return level.bird.phase == "departing", 8), "Deterrent makes bird depart: " + kind)
+		check(not level.can_exit() and level.offered.get_parent() == level, "Deterrent stays placed; exit waits for departure")
+		check(await wait_for(func(): return level.solved, 5), "Deterrent clears route: " + kind)
+		check(level.player.input_enabled and not level.bird.visible, "Deterrent restores movement and removes bird")
+		level.queue_free()
+		current_scene = null
+		await frames(3)
 	print("BIRD ENCOUNTER SMOKE: ", "FAIL" if failed else "PASS")
 	quit(1 if failed else 0)
 

@@ -25,13 +25,16 @@ var idle_seconds := 0.0
 var moving_seconds := 0.0
 var drawing_active := false
 var jump_armed := true
+var placement_pending := false
 @onready var visual: Node3D = $Model
 
 func _ready() -> void:
 	visual.scale = Vector3.ONE * appearance_scale
-	_reset_idle_hops()
+	respawn(global_position)
 
 func _physics_process(delta: float) -> void:
+	if placement_pending and not _place_on_ground():
+		return
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 	if not Input.is_action_pressed("jump"):
@@ -102,6 +105,8 @@ func _notification(what: int) -> void:
 
 func respawn(at: Vector3) -> void:
 	global_position = at
+	placement_pending = true
+	visual.hide()
 	velocity = Vector3.ZERO
 	visual.cancel_action()
 	visual.conversation = ""
@@ -109,6 +114,23 @@ func respawn(at: Vector3) -> void:
 	moving_seconds = 0.0
 	drawing_active = false
 	_reset_idle_hops()
+
+func _place_on_ground() -> bool:
+	# Terrain collision may register after the player enters the scene tree.
+	# Keep the model hidden and gravity paused until a walkable surface exists.
+	var query := PhysicsRayQueryParameters3D.create(
+		global_position + Vector3.UP * 20.0,
+		global_position + Vector3.DOWN * 40.0,
+		collision_mask, [get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty() or hit.normal.dot(up_direction) < cos(floor_max_angle):
+		return false
+	global_position.y = hit.position.y + 0.01
+	velocity = Vector3.ZERO
+	apply_floor_snap()
+	placement_pending = false
+	visual.show()
+	return true
 
 func _reset_idle_hops() -> void:
 	idle_seconds = -idle_hop_delay
