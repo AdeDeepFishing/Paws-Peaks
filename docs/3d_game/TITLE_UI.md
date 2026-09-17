@@ -84,3 +84,19 @@ the existing certificate lookup and shutdown ObjectDB diagnostics.
 
 The pending menu resume/default-volume change remains in PR #85. This PR does not
 close #72 or merge that separate work.
+
+## September 17 playtest follow-up (#103)
+
+During map browsing, zooming out withdraws the chapter paper, heading, and Play/Return
+action over the first 30% of the zoom range. The action is disabled as soon as the
+player zooms away; returning to the chapter close-up restores it. Route and opening
+presentations retain their existing chapter-card entrance.
+
+The epilogue waits for forest preparation before initializing sunrise and restores
+the player visibility normally handled by chapter entrances. Stay a while supports
+visible, grounded movement. Legacy top-right navigation is removed; the menu offers
+The last page during epilogue exploration, preserving access to the recap and replay.
+
+Regression check: `godot --headless --path 3d_game --script res://tests/map_ending_playtest_smoke.gd`.
+Use the same command without `--headless` and with `-- --visual` for a rendered
+epilogue screenshot under `/private/tmp/paws-ending-fixed.png`.

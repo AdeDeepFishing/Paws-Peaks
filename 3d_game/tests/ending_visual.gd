@@ -51,7 +51,9 @@ func run() -> void:
 	await create_timer(0.5).timeout
 	assert(current_scene.presentation_phase == "explore", "Real mouse click restores exploration")
 	await capture("dawn")
-	current_scene.find_child("MemoriesButton", true, false).pressed.emit()
+	var audio = root.get_node("GameAudio")
+	audio.open_menu()
+	audio.map_return.pressed.emit()
 	await create_timer(1.0).timeout
 	await capture("reopened")
 	print("ENDING VISUAL: PASS (last page, dawn, victory, narrow layout, explore and reopen)")

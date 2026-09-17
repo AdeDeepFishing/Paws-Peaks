@@ -266,6 +266,7 @@ func _build_controls() -> void:
 	back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	stack.add_child(back)
 	var map_label := Label.new()
+	map_label.name = "DestinationLabel"
 	map_label.text = "Back to Map"
 	map_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	map_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -315,7 +316,11 @@ func _build_menu_close() -> void:
 func _back_to_map() -> void:
 	if map_return.disabled or not menu.visible: return
 	play_cue("click")
+	var destination := menu_scene
 	close_menu()
+	if is_instance_valid(destination) and destination.has_method("show_book"):
+		destination.show_book()
+		return
 	var error: Error = get_node("/root/Journey").browse_map()
 	if error != OK: open_menu()
 
@@ -339,9 +344,11 @@ func open_menu() -> void:
 	panel_previous_mode = panel.process_mode
 	panel.process_mode = Node.PROCESS_MODE_DISABLED
 	menu_scene = get_tree().current_scene
-	map_return.disabled = not get_node("/root/Journey").can_browse_map()
+	var ending := is_instance_valid(menu_scene) and menu_scene.has_method("show_book")
+	map_return.get_node("DestinationLabel").text = "The last page" if ending else "Back to Map"
+	map_return.disabled = menu_scene.presentation_phase != "explore" if ending else not get_node("/root/Journey").can_browse_map()
 	map_return.modulate.a = 0.45 if map_return.disabled else 1.0
-	map_return.tooltip_text = "Finish the current action to open the map." if map_return.disabled else "Back to Map"
+	map_return.tooltip_text = "Finish the current action to open the map." if map_return.disabled else ("The last page" if ending else "Back to Map")
 	if is_instance_valid(menu_scene):
 		menu_previous_mode = menu_scene.process_mode
 		menu_scene.process_mode = Node.PROCESS_MODE_DISABLED
