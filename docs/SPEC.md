@@ -1299,3 +1299,13 @@ reaction contract. Stage 3 now accepts BOW and MAGIC as scare-away solutions in
 addition to DEFENCE's raised protection. Deterrents stay where placed while the
 bird departs; the exit opens only after departure. UNKNOWN does not clear the path.
 This supersedes the earlier protection-only Stage 3 rule.
+
+## September 17: map overview and epilogue exploration (#103)
+
+Zooming out on a chapter map hides the curved chapter paper, chapter text, and
+Play/Return action so the full map remains unobstructed. Zooming back to the
+chapter close-up restores the card. Hidden chapter actions cannot be activated.
+
+After Stay a while, the epilogue retains a visible, controllable hero and sunrise.
+Remove legacy top-right navigation. Keep access to the ending book, journey recap,
+and replay through The last page in the existing menu.

@@ -126,6 +126,7 @@ func await_start(stage: int = 1, resume_chapter: bool = false) -> void:
 	zoom_amount = 0.0
 	zoom_target = 0.0
 	chapter_card.configure(stage, resume_chapter)
+	chapter_card.show()
 	chapter_card.set_progress(1.0)
 	caption.text = "Draw something, help someone, and have fun ✨" if stage == 1 else "CHAPTER %02d  ·  %s" % [stage, TITLES[stage - 1]]
 	if resume_chapter:
@@ -165,6 +166,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _zoom_by(amount: float) -> void:
 	zoom_target = clampf(zoom_target + amount, 0.0, 1.0)
+	_update_chapter_card()
+
+func _update_chapter_card() -> void:
+	# Withdraw the complete card as the player pulls back to view the map.
+	var progress := 1.0 - smoothstep(0.02, 0.30, zoom_amount)
+	chapter_card.set_progress(progress)
+	chapter_card.visible = progress > 0.001
+	start_button.disabled = zoom_target > 0.02 or zoom_amount > 0.02
+	if start_button.disabled and start_button.has_focus():
+		start_button.release_focus()
 
 func _prepare_art() -> void:
 	var copies := {}
@@ -196,6 +207,7 @@ func configure(from_stage: int, to_stage: int) -> void:
 	_set_traveler(stage_offsets[maxi(from_stage, 1) - 1])
 	hero.set_motion(false, false, true)
 	caption.text = "CHAPTER %02d  ·  %s" % [to_stage, TITLES[to_stage - 1]]
+	chapter_card.show()
 	chapter_card.configure(to_stage)
 	chapter_card.set_progress(0.0)
 	_set_title_progress(0.0 if from_stage == 0 else 1.0)
@@ -281,6 +293,7 @@ func _process(delta: float) -> void:
 	_layout_title()
 	if phase == "start":
 		zoom_amount = lerpf(zoom_amount, zoom_target, 1.0 - exp(-delta * 9.0))
+		_update_chapter_card()
 		_set_camera(_close_transform(review_stage).interpolate_with(_full_transform(), zoom_amount))
 	motion_time += delta
 	for i in stars.size():

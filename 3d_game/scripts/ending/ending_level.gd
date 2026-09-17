@@ -8,14 +8,22 @@ var memory: Texture2D
 var presentation_phase := "arrival"
 var book_tween: Tween
 var ambience: Environment
+signal preparation_finished
+var prepared := false
+
+func wait_until_prepared() -> void:
+	if not prepared: await preparation_finished
 
 func _ready() -> void:
 	super._ready()
 	player.set_input_enabled(false)
+	await get_node(art_path).wait_until_prepared()
 	var daybreak = preload("res://scripts/moonlit_forest/daybreak.gd").new()
 	add_child(daybreak)
 	daybreak.setup(self)
 	daybreak.set_value(2.0)
+	prepared = true
+	preparation_finished.emit()
 	ambience = $WorldEnvironment.environment
 	# F6 remains a complete preview; Journey owns timing for the normal final exit.
 	if not get_node("/root/Journey").busy:
@@ -24,6 +32,7 @@ func _ready() -> void:
 func reveal_dawn(timing: float = 1.0) -> void:
 	if presentation_phase != "arrival": return
 	presentation_phase = "dawn"
+	await wait_until_prepared()
 	await get_tree().create_timer(0.6 * timing).timeout
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
@@ -51,28 +60,6 @@ func _build_ui() -> void:
 	exploration.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	exploration.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	exploration.hide()
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Color("f3ebda")
-	paper.set_corner_radius_all(10)
-	paper.content_margin_left = 20
-	paper.content_margin_right = 20
-	paper.content_margin_top = 12
-	paper.content_margin_bottom = 12
-	var navigation := VBoxContainer.new()
-	exploration.add_child(navigation)
-	navigation.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	navigation.offset_left = -236
-	navigation.offset_right = -28
-	navigation.offset_top = 28
-	navigation.add_theme_constant_override("separation", 10)
-	var memories := Button.new()
-	memories.text = "The last page"
-	memories.name = "MemoriesButton"
-	memories.add_theme_stylebox_override("normal", paper)
-	memories.add_theme_color_override("font_color", Color("294a43"))
-	navigation.add_child(memories)
-	memories.pressed.connect(show_book)
-	_navigation_button(navigation, "BackButton", return_label, return_scene, paper)
 	status = _label(exploration, "Stay a while. A new day is beginning.", 16)
 	status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	status.position += Vector2(28, -52)
@@ -131,6 +118,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _start_entrance() -> void:
 	# The epilogue owns its reveal; chapter entrance walks must not unlock its book.
+	await get_node(art_path).wait_until_prepared()
+	await get_tree().physics_frame
+	player.show()
 	entering = false
 	player.walking_in = false
 	player.set_input_enabled(false)
